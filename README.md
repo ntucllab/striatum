@@ -1,2 +1,2 @@
-# dopamine
+# Striatum
 Contextual bandit in python

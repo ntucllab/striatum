@@ -1,12 +1,12 @@
 """
-Storage interfaces
+History storage
 """
 from abc import abstractmethod
 from datetime import datetime
 
 
 class History(object):
-    """An unrewarded action history entry"""
+    """action/reward history entry"""
     def __init__(self, history_id, action_time, context, action,
                  reward_time=None, reward=None):
         """
@@ -31,11 +31,7 @@ class History(object):
 
 
 class HistoryStorage(object):
-    """The object to store history context, actions and rewards."""
-    @abstractmethod
-    def __init__(self):
-        pass
-
+    """The object to store the history of context, actions and rewards."""
     # @property
     # def histories(self):
     #     """dictionary of history_id mapping to tuple (timestamp, context,

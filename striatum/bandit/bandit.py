@@ -1,98 +1,18 @@
 """
-Base interfaces
+Bandit interfaces
 """
 from abc import abstractmethod
 
 
+# TODO: think about how to use this
 class Action(object):
-
-    """The action object
-    """
-
+    """The action object"""
     @abstractmethod
     def __init__(self):
-        pass
-
-
-class Storage(object):
-
-    """The object to store history context, actions and rewards.
-    """
-
-    @abstractmethod
-    def __init__(self):
-        pass
-
-    @property
-    def history(self):
-        """dictionary of history_id mapping to tuple (timestamp, context,
-        action, reward)"""
-        return self._history
-
-    @property
-    def unrewarded_history(self):
-        """dictionary of history_id mapping to tuple (timestamp, context,
-        action)"""
-        return self._history
-
-    @abstractmethod
-    def get_history(self, history_id):
-        """Get the preivous context, action and reward with history_id.
-
-        Parameters
-        ----------
-        history_id : int
-            The history id of the history record to retrieve.
-
-        Returns
-        -------
-        timestamp : float
-            pass
-
-        context : {array-like, None}
-
-        action : Action object
-
-        reward : {float, None}
-        """
-        pass
-
-    @abstractmethod
-    def add_history(self, context, action, reward=None):
-        """Add a history record.
-
-        Parameters
-        ----------
-        context : {array-like, None}
-
-        action : Action object
-
-        reward : {float, None}, optional (default: None)
-
-        Raise
-        -----
-        """
-        pass
-
-    @abstractmethod
-    def add_reward(self, history_id, reward):
-        """Add reward to a history record.
-
-        Parameters
-        ----------
-        history_id : int
-            The history id of the history record to retrieve.
-
-        reward : float
-
-        Raise
-        -----
-        """
         pass
 
 
 class BaseBandit(object):
-
     """Bandit algorithm
 
     Parameters
@@ -111,7 +31,6 @@ class BaseBandit(object):
     actions : list of Action objects
         List of actions to be chosen from.
     """
-
     def __init__(self, storage, actions, **kwargs):
         self._storage = storage
         self._actions = actions

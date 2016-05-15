@@ -31,7 +31,7 @@ class BaseBandit(object):
     actions : list of Action objects
         List of actions to be chosen from.
     """
-    def __init__(self, storage, actions, **kwargs):
+    def __init__(self, storage, actions):
         self._storage = storage
         self._actions = actions
 
@@ -65,7 +65,7 @@ class BaseBandit(object):
         pass
 
     @abstractmethod
-    def reward(self, history_id):
+    def reward(self, history_id, reward):
         """Reward the preivous action with reward.
 
         Parameters

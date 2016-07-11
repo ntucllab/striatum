@@ -17,35 +17,41 @@ class BaseBandit(object):
 
     Parameters
     ----------
-    history_storage : history_storage object
-        The history_storage object to store history context, actions and rewards.
+    HistoryStorage : HistoryStorage object
+        The HistoryStorage object to store history context, actions and rewards.
+
+    ModelStorage : ModelStorage object
+        The ModelStorage object to store model parameters.
 
     actions : list of Action objects
         List of actions to be chosen from.
 
     Attributes
     ----------
-    history_storage : history_storage object
-        The history_storage object to store history context, actions and rewards.
+    HistoryStorage : HistoryStorage object
+        The HistoryStorage object to store history context, actions and rewards.
+
+    ModelStorage : ModelStorage object
+        The ModelStorage object to store model parameters.
 
     actions : list of Action objects
         List of actions to be chosen from.
     """
-    def __init__(self, history_storage, model_storage, actions):
-        self._history_storage = history_storage
-        self._model_storage = model_storage
+    def __init__(self, HistoryStorage, ModelStorage, actions):
+        self._HistoryStorage = HistoryStorage
+        self._ModelStorage = ModelStorage
         self._actions = actions
 
 
     @property
-    def model_storage(self):
-        """history_storage object that stores history"""
-        return self._history_storage
+    def ModelStorage(self):
+        """HistoryStorage object that stores history"""
+        return self._ModelStorage
 
     @property
-    def history_storage(self):
-        """history_storage object that stores history"""
-        return self._model_storage
+    def HistoryStorage(self):
+        """HistoryStorage object that stores history"""
+        return self._HistoryStorage
 
     @property
     def actions(self):

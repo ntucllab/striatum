@@ -59,5 +59,5 @@ class LinUCB(BaseBandit):
         learn.next()
         action_max = learn.send(context)
         self.last_history_id = self.last_history_id + 1
-        self._history_storage.add_history(np.transpose(np.array([context])), action_max, reward=None)
+        self._history_storage.add_history(np.transpose(np.array([context])), action_max, reward = None)
         return self.last_history_id, action_max

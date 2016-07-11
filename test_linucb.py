@@ -5,11 +5,11 @@ from striatum.bandit import linucb
 import numpy as np
 import matplotlib.pyplot as plt
 
-h1 = history.MemoryHistoryStorage()
-m1 = model.MemoryModelStorage()
 
-def test1(h1,m1,alpha,T):
+def test1(alpha,T):
     ''' Linear payoff '''
+    h1 = history.MemoryHistoryStorage()
+    m1 = model.MemoryModelStorage()    
     d = 5
     actions = [1,2,3]
     policy = linucb.LinUCB(actions,h1,m1,alpha,d)
@@ -36,8 +36,10 @@ def test1(h1,m1,alpha,T):
 
 
 
-def test2(h1,m1,alpha,T):
+def test2(alpha,T):
     # Nonlinear Payoff
+    h1 = history.MemoryHistoryStorage()
+    m1 = model.MemoryModelStorage()    
     d = 5
     actions = [1,2,3,4,5,6,7,8.9,10]
     policy = linucb.LinUCB(actions,h1,m1,alpha,d)
@@ -87,16 +89,15 @@ def test2(h1,m1,alpha,T):
 test1_CTR = np.zeros(shape=(len(np.arange(0,3,0.1)),1))
 i = 0
 for alpha in np.arange(0,3,0.1):
-    test1_CTR[i] = test1(h1,m1,alpha,10000)
+    test1_CTR[i] = test1(alpha,10000)
     i = i + 1
 plt.plot(test1_CTR)
 
-
-# Plot test2 result
-test2_CTR = np.zeros(shape=(len(np.arange(0,10,0.1)),1))
+# Plot test1 result
+test1_CTR = np.zeros(shape=(len(np.arange(0,3,0.1)),1))
 i = 0
-for alpha in np.arange(0,10,0.1):
-    test2_CTR[i] = test2(h1,m1,alpha,1000)
+for alpha in np.arange(0,3,0.1):
+    test1_CTR[i] = test2(alpha,10000)
     i = i + 1
-plt.plot(test2_CTR)
+plt.plot(test1_CTR)
 

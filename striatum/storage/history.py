@@ -157,6 +157,6 @@ class MemoryHistoryStorage(HistoryStorage):
         KeyError
         """
         reward_time = datetime.now()
-        history = self.unrewarded_histories.pop(history_id)
+        history = self.unrewarded_histories[history_id]
         history.update_reward(reward_time, reward)
         self.histories[history.history_id] = history

@@ -10,36 +10,21 @@ LOGGER = logging.getLogger(__name__)
 
 class UCB1(BaseBandit):
 
-    def __init__(self, actions, storage):
-        super(UCB1, self).__init__(storage, actions)
-
-        self.last_reward = None
-        self.last_history_id = None
-
-        self.ucb1_ = self.ucb1()
+    def __init__(self, actions, history_storage, model_storage):
+        super(UCB1, self).__init__(history_storage, model_storage, actions)
+        self._history_storage = history_storage
+        self._model_storage = model_storage
+        self._actions = actions
+        for key in self._actions:
+            self._model_storage._model['empirical_rewards'][key] = np.identity(len(self._actions))
+            self._model_storage._model['n_plays'][key] = np.identity(len(self._actions))
 
     def ucb1(self):
-        def upper_bound(t, n_plays):
-            return np.sqrt(2 * np.log(t) / n_plays)
-
-        t = 0
-        n_arms = len(self.actions)
-        n_plays = np.zeros(n_arms)
-        empirical_reward = np.zeros(n_arms)
-
-        for i in range(n_arms):
-            reward = yield i
-            empirical_reward[i] += reward
-            t += 1
-            n_plays[i] += 1
-
         while True:
-            ucbs = empirical_reward / n_plays + upper_bound(t, n_plays)
-            choice = np.argmax(ucbs)
-            reward = yield choice
-            empirical_reward[choice] += reward
-            n_plays[i] += 1
-            t += 1
+            reward = self._model_storage._model['empirical_rewards']
+            plays = self._model_storage._model['n_plays']
+            action_max = self._actions[np.argmax(reward/plays+np.sqrt(2 * np.log(self.history_id+1) / plays))]
+            yield action_max
 
     def get_action(self, context):
         """Return the action to perform
@@ -57,19 +42,11 @@ class UCB1(BaseBandit):
         action : Actions object
             The action to perform.
         """
-        if context is not None:
-            LOGGER.warning("UCB1 does not support context.")
-
-        if self.last_reward is None:
-            raise ValueError("The last reward have not been passed in.")
-        action = self.ucb1_.send(self.last_reward)
-
-        self.last_reward = None
-
-        history_id = self.storage.add_history(None, action, reward=None)
-        self.last_history_id = history_id
-
-        return history_id, action
+        learn = self.ucb()
+        action_max = learn.next()
+        self.last_history_id = self.last_history_id + 1
+        self._history_storage.add_history(np.transpose(np.array([context])), action_max, reward=None)
+        return self.last_history_id, action_max
 
     def reward(self, history_id, reward):
         """Reward the preivous action with reward.
@@ -83,7 +60,11 @@ class UCB1(BaseBandit):
             A float representing the feedback given to the action, the higher
             the better.
         """
-        if history_id != self.last_history_id:
-            raise ValueError("The history_id should be the same as last one.")
-        self.last_reward = reward
-        self.storage.reward(history_id, reward)
+        reward_action = self._history_storage.unrewarded_histories[history_id].action
+
+        # Update the model
+        self._model_storage._model['emperical_rewards'][reward_action] += 1
+        self._model_storage._model['n_plays'][reward_action] += 1
+
+        # Update the history
+        self._history_storage.add_reward(history_id, reward)

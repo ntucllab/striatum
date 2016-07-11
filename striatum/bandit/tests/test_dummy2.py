@@ -1,10 +1,10 @@
 import unittest
 
-class DummyTest1(unittest.TestCase):
-    def test_dummy1(self):
+class DummyTest2(unittest.TestCase):
+    def test_dummy3(self):
         self.assertTrue(True)
 
-    def test_dummmy2(self):
+    def test_dummmy4(self):
         self.assertFalse(False)
 
 

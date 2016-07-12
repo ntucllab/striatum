@@ -2,7 +2,7 @@
 """
 Created on Mon Jul 11 18:04:26 2016
 
-@author: user
+@author: David Huang
 """
 
 import striatum
@@ -12,7 +12,7 @@ from striatum.bandit import linucb
 import numpy as np
 import unittest
 
-class TestLinUcb(unittest.TestCase):
+class TestLinUcb(unittest.TestCase):    
     def setUp(self):
         self.ModelStorage = model.MemoryModelStorage()
         self.HistoryStorage = history.MemoryHistoryStorage()

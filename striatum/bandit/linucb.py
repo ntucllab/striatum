@@ -32,18 +32,38 @@ class LinUCB(BaseBandit):
             self._ModelStorage._model['theta'][key] = np.zeros((self.d, 1))
 
     def linucb(self):
+
+        """The generator implementing the linear LINUCB algorithm.
+        """
+
         while True:
             context = yield
             xaT = np.array([context])
             xa = np.transpose(xaT)
             AaI_tmp = np.array([self._ModelStorage._model['AaI'][action] for action in self._actions])
             theta_tmp = np.array([self._ModelStorage._model['theta'][action] for action in self._actions])
-            action_max = self._actions[np.argmax(np.dot(xaT, theta_tmp) + self.alpha * np.sqrt(np.dot(np.dot(xaT, AaI_tmp), xa)))]
+
+            # The recommended action should maximize the Linear UCB.
+            action_max = self._actions[np.argmax(np.dot(xaT, theta_tmp) +
+                                                 self.alpha * np.sqrt(np.dot(np.dot(xaT, AaI_tmp), xa)))]
             yield action_max
 
     def reward(self, history_id, reward):
+
+        """Reward the preivous action with reward.
+
+            Parameters
+            ----------
+            history_id : int
+                The history id of the action to reward.
+            reward : float
+                A float representing the feedback given to the action, the higher the better.
+
+        """
+
         context = self._HistoryStorage.unrewarded_histories[history_id].context
         reward_action = self._HistoryStorage.unrewarded_histories[history_id].action
+
         # Update the model
         self._ModelStorage._model['Aa'][reward_action] += np.dot(context, np.transpose(context))
         self._ModelStorage._model['AaI'][reward_action] = np.linalg.solve(self._ModelStorage._model['Aa'][reward_action], np.identity(self.d))
@@ -55,6 +75,22 @@ class LinUCB(BaseBandit):
 
 
     def get_action(self, context):
+
+        """Return the action to perform
+
+            Parameters
+            ----------
+            context : {array-like, None}
+                The context of current state, None if no context avaliable.
+
+            Returns
+            -------
+            history_id : int
+                The history id of the action.
+            action : Actions object
+                The action to perform.
+        """
+
         learn = self.linucb()
         learn.next()
         action_max = learn.send(context)

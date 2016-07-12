@@ -16,35 +16,20 @@ class UCB1(BaseBandit):
         empirical_reward = {}
         n_actions = {}
         for key in self._actions:
-            empirical_reward[key] = 1
-            n_actions[key] = 1
-        n_total = len(self._actions)
+            empirical_reward[key] = 1.0
+            n_actions[key] = 1.0
+        n_total = float(len(self._actions))
         self._ModelStorage.save_model({'empirical_reward': empirical_reward,
                                       'n_actions': n_actions, 'n_total': n_total})
 
 
     def ucb1(self):
-        def upper_bound(t, n_plays):
-            return np.sqrt(2 * np.log(t) / n_plays)
-
-        t = 0
-        n_arms = len(self.actions)
-        n_plays = np.zeros(n_arms)
-        empirical_reward = np.zeros(n_arms)
-
-        for i in range(n_arms):
-            reward = yield i
-            empirical_reward[i] += reward
-            t += 1
-            n_plays[i] += 1
-
         while True:
-            ucbs = empirical_reward / n_plays + upper_bound(t, n_plays)
-            choice = np.argmax(ucbs)
-            reward = yield choice
-            empirical_reward[choice] += reward
-            n_plays[i] += 1
-            t += 1
+            empirical_reward = np.array([self._ModelStorage.get_model()['empirical_reward'][action] for action in self._actions])
+            n_actions = np.array([self._ModelStorage.get_model()['n_action'][action] for action in self._actions])
+            n_total = self._ModelStorage.get_model()['n_total']
+            action_max = self._actions[np.argmax(empirical_reward/n_actions + np.sqrt(2*np.log(n_total)/n_actions)]
+            yield action_max
 
     def get_action(self, context):
         """Return the action to perform
@@ -87,11 +72,11 @@ class UCB1(BaseBandit):
 
         # Update the model
         empirical_reward = self._ModelStorage.get_model()['empirical_reward']
-        n_actions = self._ModelStorage.get_model()['actions']
-        n_total = self._ModelStorage.get_model()['total']
-        empirical_reward[reward_action] += 1
-        n_actions[reward_action] += 1
-        n_total += 1
+        n_actions = self._ModelStorage.get_model()['n_actions']
+        n_total = self._ModelStorage.get_model()['n_total']
+        empirical_reward[reward_action] += 1.0
+        n_actions[reward_action] += 1.0
+        n_total += 1.0
         self._ModelStorage.save_model({'empirical_reward': empirical_reward,
                                        'n_actions': n_actions, 'n_total': n_total})
         # Update the history

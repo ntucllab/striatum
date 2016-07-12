@@ -2,7 +2,6 @@ import logging
 from striatum.bandit.bandit import BaseBandit
 import numpy as np
 
-# TODO: How to deal with new actions?
 
 LOGGER = logging.getLogger(__name__)
 
@@ -13,11 +12,19 @@ class LinUCB(BaseBandit):
 
     def __init__(self, actions, HistoryStorage, ModelStorage, alpha, d = 1):
         """ Initialize the LinUCB model.
-        :param actions:
-        :param HistoryStorage:
-        :param ModelStorage:
-        :param alpha:
-        :param d:
+
+            Parameters
+            ----------
+            actions : {array-like, None}
+                Actions (arms) for recommendation.
+            HistoryStorage: HistoryStorage object
+                The object where we store both unrewarded and rewarded histories.
+            ModelStorage: ModelStorage object
+                The object where we store model parameters.
+            alpha: float
+                The tunning parameter determining the
+            d: int
+                The dimension of a context.
         """
 
         super(LinUCB, self).__init__(HistoryStorage, ModelStorage, actions)
@@ -28,17 +35,19 @@ class LinUCB(BaseBandit):
         self.last_history_id = -1
         self.alpha = alpha
         self.d = d
+
         # Initialize LinUCB Model Parameters
-        Aa = {}
-        AaI = {}
-        ba = {}
-        theta = {}
+        Aa = {}     # dictionary - For any action a in actions, Aa[a] = (DaT*Da + I) the ridge reg solution.
+        AaI = {}    # dictionary - The inverse of each Aa[a] for any action a in actions.
+        ba = {}     # dictionary - The cumulative return of action a, given the context xt.
+        theta = {}  # dictionary - The coefficient vector of actiona with linear model ba = dot(xt, theta)
         for key in self._actions:
             Aa[key] = np.identity(self.d)
             AaI[key] = np.identity(self.d)
             ba[key] = np.zeros((self.d, 1))
             theta[key] = np.zeros((self.d, 1))
         self._ModelStorage.save_model({'Aa': Aa, 'AaI': AaI, 'ba': ba, 'theta': theta})
+
 
     def linucb(self):
 
@@ -57,6 +66,7 @@ class LinUCB(BaseBandit):
                                                  self.alpha * np.sqrt(np.dot(np.dot(xaT, AaI_tmp), xa)))]
             yield action_max
 
+
     def reward(self, history_id, reward):
 
         """Reward the preivous action with reward.
@@ -65,8 +75,8 @@ class LinUCB(BaseBandit):
             ----------
             history_id : int
                 The history id of the action to reward.
-            reward : float
-                A float representing the feedback given to the action, the higher the better.
+            reward : int (or float)
+                A int (or float) representing the feedback given to the action, the higher the better.
 
         """
 
@@ -74,10 +84,15 @@ class LinUCB(BaseBandit):
         reward_action = self._HistoryStorage.unrewarded_histories[history_id].action
 
         # Update the model
-        self._ModelStorage._model['Aa'][reward_action] += np.dot(context, np.transpose(context))
-        self._ModelStorage._model['AaI'][reward_action] = np.linalg.solve(self._ModelStorage._model['Aa'][reward_action], np.identity(self.d))
-        self._ModelStorage._model['ba'][reward_action] += reward * context
-        self._ModelStorage._model['theta'][reward_action] = np.dot(self._ModelStorage._model['AaI'][reward_action], self._ModelStorage._model['ba'][reward_action])
+        Aa = self._ModelStorage.get_model()['Aa']
+        AaI = self._ModelStorage.get_model()['AaI']
+        ba = self._ModelStorage.get_model()['ba']
+        theta = self._ModelStorage.get_model()['theta']
+        Aa[reward_action] += np.dot(context, np.transpose(context))
+        AaI[reward_action] = np.linalg.solve(Aa[reward_action], np.identity(self.d))
+        ba[reward_action] += reward * context
+        theta[reward_action] = np.dot(AaI[reward_action], ba[reward_action])
+        self._ModelStorage.save_model({'Aa': Aa, 'AaI': AaI, 'ba': ba, 'theta': theta})
 
         # Update the history
         self._HistoryStorage.add_reward(history_id, reward)

@@ -21,16 +21,16 @@ class test_linucb(unittest.TestCase):
     
     def test_initialization(self):
         LINUCB = linucb.LinUCB(self.actions, self.HistoryStorage,
-                               self.ModelStorage, 1.00, 2)                
-
+                               self.ModelStorage, 1.00, 2)
+    
     def test_get_first_action(self):
         LINUCB = linucb.LinUCB(self.actions, self.HistoryStorage,
                                self.ModelStorage, 1.00, 2)  
         history_id, action = LINUCB.get_action([1,1])
         self.assertEqual(history_id, 0)
         self.assertIn(action,self.actions)
-        self.assertEqual(LINUCB.HistoryStorage.get_history(history_id).context,
-                         np.transpose(np.array([[1,1]])))
+        self.assertTrue((LINUCB.HistoryStorage.get_history(history_id).context
+                        == np.transpose(np.array([[1,1]]))).all())
         
     
 

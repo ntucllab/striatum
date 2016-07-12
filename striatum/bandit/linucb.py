@@ -28,9 +28,6 @@ class LinUCB(BaseBandit):
         """
 
         super(LinUCB, self).__init__(HistoryStorage, ModelStorage, actions)
-        self._actions = np.array(actions)
-        self._HistoryStorage = HistoryStorage
-        self._ModelStorage = ModelStorage
         self.last_reward = None
         self.last_history_id = -1
         self.alpha = alpha

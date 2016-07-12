@@ -13,7 +13,7 @@ from striatum.bandit import ucb1
 import numpy as np
 import unittest
 
-class TestLinUcb(unittest.TestCase):
+class Ucb1(unittest.TestCase):
     def setUp(self):
         self.ModelStorage = model.MemoryModelStorage()
         self.HistoryStorage = history.MemoryHistoryStorage()

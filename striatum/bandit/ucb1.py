@@ -70,10 +70,8 @@ class UCB1(BaseBandit):
 
         # update the history
         self.last_history_id = self.last_history_id + 1
-        self._HistoryStorage.add_history(action_max, reward=None)
+        self._HistoryStorage.add_history(action_max, reward = None)
         return self.last_history_id, action_max
-
-        return history_id, action
 
     def reward(self, history_id, reward):
         """Reward the preivous action with reward.
@@ -85,7 +83,16 @@ class UCB1(BaseBandit):
             A float representing the feedback given to the action, the higher
             the better.
         """
-        if history_id != self.last_history_id:
-            raise ValueError("The history_id should be the same as last one.")
-        self.last_reward = reward
-        self.storage.reward(history_id, reward)
+        reward_action = self._HistoryStorage.unrewarded_histories[history_id].action
+
+        # Update the model
+        empirical_reward = self._ModelStorage.get_model()['empirical_reward']
+        n_actions = self._ModelStorage.get_model()['actions']
+        n_total = self._ModelStorage.get_model()['total']
+        empirical_reward[reward_action] += 1
+        n_actions[reward_action] += 1
+        n_total += 1
+        self._ModelStorage.save_model({'empirical_reward': empirical_reward,
+                                       'n_actions': n_actions, 'n_total': n_total})
+        # Update the history
+        self._HistoryStorage.add_reward(history_id, reward)

@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-class LinearPayoffSimulation:
+class RandomPayoffSimulation:
     ''' Linear payoff '''
     def __init__(self, T, d, actions):
         self.T = T
@@ -51,5 +51,5 @@ class LinearPayoffSimulation:
         plt.plot(np.arange(0, 3, 0.1),CTR)
 
 if __name__ == '__main__':
-    simulation = LinearPayoffSimulation(1000, 3, [1, 2, 3, 4, 5])
+    simulation = RandomPayoffSimulation(1000, 3, [1, 2, 3, 4, 5])
     simulation.parameter_tuning()

@@ -10,13 +10,18 @@ LOGGER = logging.getLogger(__name__)
 
 class UCB1(BaseBandit):
 
-    def __init__(self, actions, storage):
-        super(UCB1, self).__init__(storage, actions)
-
-        self.last_reward = None
+    def __init__(self, actions, HistoryStorage, ModelStorage):
+        super(UCB1, self).__init__(HistoryStorage, ModelStorage, actions)
         self.last_history_id = None
+        empirical_reward = {}
+        n_actions = {}
+        for key in self._actions:
+            empirical_reward[key] = 1
+            n_actions[key] = 1
+        n_total = len(self._actions)
+        self._ModelStorage.save_model({'empirical_reward': empirical_reward,
+                                      'n_actions': n_actions, 'n_total': n_total})
 
-        self.ucb1_ = self.ucb1()
 
     def ucb1(self):
         def upper_bound(t, n_plays):
@@ -59,12 +64,14 @@ class UCB1(BaseBandit):
 
         if self.last_reward is None:
             raise ValueError("The last reward have not been passed in.")
-        action = self.ucb1_.send(self.last_reward)
 
-        self.last_reward = None
+        # learn the model
+        action_max = self.ucb1_.send(self.last_reward)
 
-        history_id = self.storage.add_history(None, action, reward=None)
-        self.last_history_id = history_id
+        # update the history
+        self.last_history_id = self.last_history_id + 1
+        self._HistoryStorage.add_history(action_max, reward=None)
+        return self.last_history_id, action_max
 
         return history_id, action
 

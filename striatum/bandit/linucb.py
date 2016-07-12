@@ -69,7 +69,7 @@ class LinUCB(BaseBandit):
 
     def reward(self, history_id, reward):
 
-        """Reward the preivous action with reward.
+        """Reward the previous action with reward.
 
             Parameters
             ----------

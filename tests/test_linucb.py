@@ -1,8 +1,21 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jul 11 18:04:26 2016
-
 @author: David Huang
+
+Current Test Cases:
+    1. Initialization
+        The bandit algorithm could be initialized with proper parameters
+    2. get_first_action:
+        We can get the action, and save this query to as a unrewarded history.
+    3. update_reward:
+        When the reward is updated, store the history to the rewarded history dict,
+        and simultaneously update the model parameters.
+    4. delay_reward:
+        Allow delayed reward updating after another get_action query.
+    5. reward_order_descending:
+        Allow firstly reward a new action, and then update an older history.
+
 """
 
 import sys
@@ -39,16 +52,10 @@ class TestLinUcb(unittest.TestCase):
         history_id, action = LINUCB.get_action([1,1])
         LINUCB.reward(history_id, 1)
         self.assertEqual(LINUCB._HistoryStorage.get_history(history_id).reward, 1)
-
-    def test_model_storage(self):
-        LINUCB = linucb.LinUCB(self.actions, self.HistoryStorage,
-                               self.ModelStorage, 1.00, 2)
-        history_id, action = LINUCB.get_action([1,1])
-        LINUCB.reward(history_id, 1)
         self.assertTrue((LINUCB._ModelStorage._model['ba'][action]
-                        == np.transpose(np.array([[1,1]]))).all())
+                        == np.transpose(np.array([[1, 1]]))).all())
         self.assertTrue((LINUCB._ModelStorage._model['Aa'][action]
-                        == np.array([[2.,1.],[1.,2.]])).all())
+                        == np.array([[2., 1.], [1., 2.]])).all())
 
     def test_delay_reward(self):
         LINUCB = linucb.LinUCB(self.actions, self.HistoryStorage,

@@ -69,7 +69,7 @@ class UCB1(BaseBandit):
         return history_id, action
 
     def reward(self, history_id, reward):
-        """Reward the preivous action with reward.
+        """Reward the previous action with reward.
         Parameters
         ----------
         history_id : int

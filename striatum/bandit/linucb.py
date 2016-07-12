@@ -1,99 +1,123 @@
-
 import logging
-
 from striatum.bandit.bandit import BaseBandit
-
 import numpy as np
 
-LOGGER = logging.getLogger(__name__)
 
+LOGGER = logging.getLogger(__name__)
 
 class LinUCB(BaseBandit):
 
     """UCB with Linear Hypotheses
     """
 
-    def __init__(self, actions, storage, alpha=1.0):
-        super(LinearUCB, self).__init__(storage, actions)
+    def __init__(self, actions, HistoryStorage, ModelStorage, alpha, d = 1):
+        """ Initialize the LinUCB model.
 
+            Parameters
+            ----------
+            actions : {array-like, None}
+                Actions (arms) for recommendation.
+            HistoryStorage: HistoryStorage object
+                The object where we store both unrewarded and rewarded histories.
+            ModelStorage: ModelStorage object
+                The object where we store model parameters.
+            alpha: float
+                The tunning parameter determining the
+            d: int
+                The dimension of a context.
+        """
+
+        super(LinUCB, self).__init__(HistoryStorage, ModelStorage, actions)
+        self._actions = np.array(actions)
+        self._HistoryStorage = HistoryStorage
+        self._ModelStorage = ModelStorage
         self.last_reward = None
-        self.last_history_id = None
+        self.last_history_id = -1
+        self.alpha = alpha
+        self.d = d
 
-        self.linucb_ = None
-        self.alpha_ = alpha
+        # Initialize LinUCB Model Parameters
+        Aa = {}     # dictionary - For any action a in actions, Aa[a] = (DaT*Da + I) the ridge reg solution.
+        AaI = {}    # dictionary - The inverse of each Aa[a] for any action a in actions.
+        ba = {}     # dictionary - The cumulative return of action a, given the context xt.
+        theta = {}  # dictionary - The coefficient vector of actiona with linear model ba = dot(xt, theta)
+        for key in self._actions:
+            Aa[key] = np.identity(self.d)
+            AaI[key] = np.identity(self.d)
+            ba[key] = np.zeros((self.d, 1))
+            theta[key] = np.zeros((self.d, 1))
+        self._ModelStorage.save_model({'Aa': Aa, 'AaI': AaI, 'ba': ba, 'theta': theta})
 
-    def linucb(self, x):
-        n_arms = len(self.actions)
-        A = np.eye(n_arms)
-        b = np.ones(n_arms) / np.sqrt(float(n_arms))
+
+    def linucb(self):
+
+        """The generator implementing the linear LINUCB algorithm.
+        """
 
         while True:
-            invA = np.linalg.pinv(A)
-            theta = np.dot(invA, b)
+            context = yield
+            xaT = np.array([context])
+            xa = np.transpose(xaT)
+            AaI_tmp = np.array([self._ModelStorage.get_model()['AaI'][action] for action in self._actions])
+            theta_tmp = np.array([self._ModelStorage.get_model()['theta'][action] for action in self._actions])
 
-            p = np.dot(theta, x) + \
-                self.alpha * np.sqrt(
-                    np.einsum('ij,ji->i', np.dot(x.T, invA), x))
+            # The recommended action should maximize the Linear UCB.
+            action_max = self._actions[np.argmax(np.dot(xaT, theta_tmp) +
+                                                 self.alpha * np.sqrt(np.dot(np.dot(xaT, AaI_tmp), xa)))]
+            yield action_max
 
-            # next context x and last reward
-            at = np.random.choice(np.where(p == np.max(p))[0])
-            x_new, reward = yield at
-
-            A = A + np.dot(x[:, at], x[:, at].T)
-            b = b + reward * x[:, at]
-
-            x = x_new
-
-    def get_action(self, context):
-        """Return the action to perform
-
-        Parameters
-        ----------
-        context : {array-like, None}
-            The context of current state, None if no context avaliable.
-
-        Returns
-        -------
-        history_id : int
-            The history id of the action.
-
-        action : Actions object
-            The action to perform.
-        """
-        if self.linucb_ is None:
-            self.linucb_ = self.linucb(context)
-        if self.last_reward is None:
-            raise ValueError("The last reward have not been passed in.")
-        action = self.linucb_.send(context, self.last_reward)
-
-        self.last_reward = None
-
-        history_id = self.storage.add_history(None, action, reward=None)
-        self.last_history_id = history_id
-
-        return history_id, action
 
     def reward(self, history_id, reward):
-        """Reward the preivous action with reward.
 
-        Parameters
-        ----------
-        history_id : int
-            The history id of the action to reward.
+        """Reward the previous action with reward.
 
-        reward : float
-            A float representing the feedback given to the action, the higher
-            the better.
+            Parameters
+            ----------
+            history_id : int
+                The history id of the action to reward.
+            reward : int (or float)
+                A int (or float) representing the feedback given to the action, the higher the better.
+
         """
-        if history_id != self.last_history_id:
-            raise ValueError("The history_id should be the same as last one.")
 
-        if not isinstance(reward, float):
-            raise ValueError("reward should be a float.")
+        context = self._HistoryStorage.unrewarded_histories[history_id].context
+        reward_action = self._HistoryStorage.unrewarded_histories[history_id].action
 
-        if reward >= 1. or reward <= 0:
-            LOGGER.warning("reward passing in should be between 0 and 1"
-                           "to maintain theoratical guarantee.")
+        # Update the model
+        Aa = self._ModelStorage.get_model()['Aa']
+        AaI = self._ModelStorage.get_model()['AaI']
+        ba = self._ModelStorage.get_model()['ba']
+        theta = self._ModelStorage.get_model()['theta']
+        Aa[reward_action] += np.dot(context, np.transpose(context))
+        AaI[reward_action] = np.linalg.solve(Aa[reward_action], np.identity(self.d))
+        ba[reward_action] += reward * context
+        theta[reward_action] = np.dot(AaI[reward_action], ba[reward_action])
+        self._ModelStorage.save_model({'Aa': Aa, 'AaI': AaI, 'ba': ba, 'theta': theta})
 
-        self.last_reward = reward
-        self.storage.reward(history_id, reward)
+        # Update the history
+        self._HistoryStorage.add_reward(history_id, reward)
+
+
+    def get_action(self, context):
+
+        """Return the action to perform
+
+            Parameters
+            ----------
+            context : {array-like, None}
+                The context of current state, None if no context avaliable.
+
+            Returns
+            -------
+            history_id : int
+                The history id of the action.
+            action : Actions object
+                The action to perform.
+        """
+
+        learn = self.linucb()
+        learn.next()
+        action_max = learn.send(context)
+        self.last_history_id = self.last_history_id + 1
+        self._HistoryStorage.add_history(np.transpose(np.array([context])), action_max, reward = None)
+        return self.last_history_id, action_max

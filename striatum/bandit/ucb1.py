@@ -43,17 +43,14 @@ class UCB1(BaseBandit):
 
     def get_action(self, context):
         """Return the action to perform
-
         Parameters
         ----------
         context : {array-like, None}
             The context of current state, None if no context avaliable.
-
         Returns
         -------
         history_id : int
             The history id of the action.
-
         action : Actions object
             The action to perform.
         """
@@ -72,13 +69,11 @@ class UCB1(BaseBandit):
         return history_id, action
 
     def reward(self, history_id, reward):
-        """Reward the preivous action with reward.
-
+        """Reward the previous action with reward.
         Parameters
         ----------
         history_id : int
             The history id of the action to reward.
-
         reward : float
             A float representing the feedback given to the action, the higher
             the better.

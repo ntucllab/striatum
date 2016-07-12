@@ -1,0 +1,88 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jul 11 18:04:26 2016
+@author: David Huang
+
+Current Test Cases:
+    1. Initialization
+        The bandit algorithm could be initialized with proper parameters
+    2. get_first_action:
+        We can get the action, and save this query to as a unrewarded history.
+    3. update_reward:
+        When the reward is updated, store the history to the rewarded history dict,
+        and simultaneously update the model parameters.
+    4. delay_reward:
+        Allow delayed reward updating after another get_action query.
+    5. reward_order_descending:
+        Allow firstly reward a new action, and then update an older history.
+
+"""
+
+import sys
+sys.path.append("..")
+from striatum.storage import history as history
+from striatum.storage import model as model
+from striatum.bandit import linucb
+import numpy as np
+import unittest
+
+class TestLinUcb(unittest.TestCase):
+    def setUp(self):
+        self.ModelStorage = model.MemoryModelStorage()
+        self.HistoryStorage = history.MemoryHistoryStorage()
+        self.actions = [1,2,3,4,5]
+        self.alpha = 1.00
+
+    def test_initialization(self):
+        LINUCB = linucb.LinUCB(self.actions, self.HistoryStorage,
+                               self.ModelStorage, 1.00, 2)
+
+    def test_get_first_action(self):
+        LINUCB = linucb.LinUCB(self.actions, self.HistoryStorage,
+                               self.ModelStorage, 1.00, 2)
+        history_id, action = LINUCB.get_action([1,1])
+        self.assertEqual(history_id, 0)
+        self.assertIn(action,self.actions)
+        self.assertTrue((LINUCB._HistoryStorage.get_history(history_id).context
+                        == np.transpose(np.array([[1,1]]))).all())
+
+    def test_update_reward(self):
+        LINUCB = linucb.LinUCB(self.actions, self.HistoryStorage,
+                               self.ModelStorage, 1.00, 2)
+        history_id, action = LINUCB.get_action([1,1])
+        LINUCB.reward(history_id, 1)
+        self.assertEqual(LINUCB._HistoryStorage.get_history(history_id).reward, 1)
+        self.assertTrue((LINUCB._ModelStorage._model['ba'][action]
+                        == np.transpose(np.array([[1, 1]]))).all())
+        self.assertTrue((LINUCB._ModelStorage._model['Aa'][action]
+                        == np.array([[2., 1.], [1., 2.]])).all())
+
+    def test_delay_reward(self):
+        LINUCB = linucb.LinUCB(self.actions, self.HistoryStorage,
+                               self.ModelStorage, 1.00, 2)
+        history_id, action = LINUCB.get_action([1,1])
+        history_id_2, action_2 = LINUCB.get_action([0,0])
+        LINUCB.reward(history_id, 1)
+        self.assertTrue((LINUCB._HistoryStorage.get_history(history_id).context
+                        == np.transpose(np.array([[1,1]]))).all())
+        self.assertTrue((LINUCB._HistoryStorage.get_history(history_id_2).context
+                        == np.transpose(np.array([[0,0]]))).all())
+        self.assertEqual(LINUCB._HistoryStorage.get_history(history_id).reward, 1)
+        self.assertEqual(LINUCB._HistoryStorage.get_history(history_id_2).reward, None)
+
+    def test_reward_order_descending(self):
+        LINUCB = linucb.LinUCB(self.actions, self.HistoryStorage,
+                               self.ModelStorage, 1.00, 2)
+        history_id, action = LINUCB.get_action([1,1])
+        history_id_2, action_2 = LINUCB.get_action([0,0])
+        LINUCB.reward(history_id_2, 1)
+        self.assertTrue((LINUCB._HistoryStorage.get_history(history_id).context
+                        == np.transpose(np.array([[1,1]]))).all())
+        self.assertTrue((LINUCB._HistoryStorage.get_history(history_id_2).context
+                        == np.transpose(np.array([[0,0]]))).all())
+        self.assertEqual(LINUCB._HistoryStorage.get_history(history_id).reward, None)
+        self.assertEqual(LINUCB._HistoryStorage.get_history(history_id_2).reward, 1)
+
+
+if __name__ == '__main__':
+    unittest.main()

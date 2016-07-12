@@ -160,3 +160,4 @@ class MemoryHistoryStorage(HistoryStorage):
         history = self.unrewarded_histories.pop(history_id)
         history.update_reward(reward_time, reward)
         self.histories[history.history_id] = history
+

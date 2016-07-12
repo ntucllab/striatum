@@ -31,7 +31,13 @@ class test_linucb(unittest.TestCase):
         self.assertIn(action,self.actions)
         self.assertTrue((LINUCB.HistoryStorage.get_history(history_id).context
                         == np.transpose(np.array([[1,1]]))).all())
-        
+    
+    def test_update_first_reward(self):
+        LINUCB = linucb.LinUCB(self.actions, self.HistoryStorage,
+                               self.ModelStorage, 1.00, 2)  
+        history_id, action = LINUCB.get_action([1,1])
+        LINUCB.reward(history_id, 1)
+        self.assertEqual(LINUCB.HistoryStorage.get_history(history_id).reward, 1)
     
 
 

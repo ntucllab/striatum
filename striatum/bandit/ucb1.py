@@ -12,7 +12,7 @@ class UCB1(BaseBandit):
 
     def __init__(self, actions, HistoryStorage, ModelStorage):
         super(UCB1, self).__init__(HistoryStorage, ModelStorage, actions)
-        self.last_history_id = None
+        self.last_history_id = -1
         empirical_reward = {}
         n_actions = {}
         for key in self._actions:
@@ -26,9 +26,9 @@ class UCB1(BaseBandit):
     def ucb1(self):
         while True:
             empirical_reward = np.array([self._ModelStorage.get_model()['empirical_reward'][action] for action in self._actions])
-            n_actions = np.array([self._ModelStorage.get_model()['n_action'][action] for action in self._actions])
+            n_actions = np.array([self._ModelStorage.get_model()['n_actions'][action] for action in self._actions])
             n_total = self._ModelStorage.get_model()['n_total']
-            action_max = self._actions[np.argmax(empirical_reward/n_actions + np.sqrt(2*np.log(n_total)/n_actions)]
+            action_max = self._actions[np.argmax(empirical_reward/n_actions + np.sqrt(2*np.log(n_total)/n_actions))]
             yield action_max
 
     def get_action(self, context):
@@ -47,15 +47,14 @@ class UCB1(BaseBandit):
         if context is not None:
             LOGGER.warning("UCB1 does not support context.")
 
-        if self.last_reward is None:
-            raise ValueError("The last reward have not been passed in.")
-
         # learn the model
-        action_max = self.ucb1_.send(self.last_reward)
+        learn = self.ucb1()
+        learn.next()
+        action_max = learn.send(context)
 
         # update the history
         self.last_history_id = self.last_history_id + 1
-        self._HistoryStorage.add_history(action_max, reward = None)
+        self._HistoryStorage.add_history(None, action_max, reward = None)
         return self.last_history_id, action_max
 
     def reward(self, history_id, reward):

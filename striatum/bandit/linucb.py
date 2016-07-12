@@ -74,7 +74,6 @@ class LinUCB(BaseBandit):
                 The history id of the action to reward.
             reward : int (or float)
                 A int (or float) representing the feedback given to the action, the higher the better.
-
         """
 
         context = self._HistoryStorage.unrewarded_histories[history_id].context

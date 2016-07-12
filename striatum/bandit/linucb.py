@@ -12,24 +12,33 @@ class LinUCB(BaseBandit):
     """
 
     def __init__(self, actions, HistoryStorage, ModelStorage, alpha, d = 1):
+        """ Initialize the LinUCB model.
+        :param actions:
+        :param HistoryStorage:
+        :param ModelStorage:
+        :param alpha:
+        :param d:
+        """
+
         super(LinUCB, self).__init__(HistoryStorage, ModelStorage, actions)
         self._actions = np.array(actions)
         self._HistoryStorage = HistoryStorage
         self._ModelStorage = ModelStorage
-        self._ModelStorage._model = {
-            'Aa': {}, 'AaI': {}, 'ba': {}, 'theta': {}
-        }
         self.last_reward = None
         self.last_history_id = -1
         self.alpha = alpha
         self.d = d
-
         # Initialize LinUCB Model Parameters
+        Aa = {}
+        AaI = {}
+        ba = {}
+        theta = {}
         for key in self._actions:
-            self._ModelStorage._model['Aa'][key] = np.identity(self.d)
-            self._ModelStorage._model['AaI'][key] = np.identity(self.d)
-            self._ModelStorage._model['ba'][key] = np.zeros((self.d, 1))
-            self._ModelStorage._model['theta'][key] = np.zeros((self.d, 1))
+            Aa[key] = np.identity(self.d)
+            AaI[key] = np.identity(self.d)
+            ba[key] = np.zeros((self.d, 1))
+            theta[key] = np.zeros((self.d, 1))
+        self._ModelStorage.save_model({'Aa': Aa, 'AaI': AaI, 'ba': ba, 'theta': theta})
 
     def linucb(self):
 
@@ -40,8 +49,8 @@ class LinUCB(BaseBandit):
             context = yield
             xaT = np.array([context])
             xa = np.transpose(xaT)
-            AaI_tmp = np.array([self._ModelStorage._model['AaI'][action] for action in self._actions])
-            theta_tmp = np.array([self._ModelStorage._model['theta'][action] for action in self._actions])
+            AaI_tmp = np.array([self._ModelStorage.get_model()['AaI'][action] for action in self._actions])
+            theta_tmp = np.array([self._ModelStorage.get_model()['theta'][action] for action in self._actions])
 
             # The recommended action should maximize the Linear UCB.
             action_max = self._actions[np.argmax(np.dot(xaT, theta_tmp) +

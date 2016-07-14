@@ -63,6 +63,8 @@ class LinUCB(BaseBandit):
                                                  self.alpha * np.sqrt(np.dot(np.dot(xaT, AaI_tmp), xa)))]
             yield action_max
 
+        raise StopIteration
+
 
     def reward(self, history_id, reward):
 

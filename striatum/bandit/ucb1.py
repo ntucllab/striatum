@@ -30,6 +30,7 @@ class UCB1(BaseBandit):
             n_total = self._ModelStorage.get_model()['n_total']
             action_max = self._actions[np.argmax(empirical_reward/n_actions + np.sqrt(2*np.log(n_total)/n_actions))]
             yield action_max
+        raise StopIteration
 
     def get_action(self, context):
         """Return the action to perform

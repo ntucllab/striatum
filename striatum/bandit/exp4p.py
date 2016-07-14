@@ -10,7 +10,7 @@ LOGGER = logging.getLogger(__name__)
 
 class Exp4P(BaseBandit):
 
-    r"""Multi-armed bandit algorithm Exp4.P.
+    """Multi-armed bandit algorithm Exp4.P.
 
     Parameters
     ----------
@@ -39,20 +39,15 @@ class Exp4P(BaseBandit):
            2011u.
     """
 
-    def __init__(self, storage, actions, max_iter, models,
+    def __init__(self, actions, HistoryStorage, ModelStorage, models,
                  delta=0.1, pmin=None):
-        super(Exp4P, self).__init__(storage, actions)
+        super(Exp4P, self).__init__(HistoryStorage, ModelStorage, actions)
 
-        self.last_reward = None
-        self.last_history_id = None
-
+        self.last_history_id = -1
         self.models = models
-
-        # max iters
-        if not isinstance(max_iter, int):
-            raise ValueError("max_iter should be int, the one"
-                             "given is: %f" % pmin)
-        self.max_iter = max_iter
+        self.n_total = 0
+        self.n_experts = len(self.models)           # number of experts (i.e. N in the paper)
+        self.n_actions = len(self.actions)          # number of actions (i.e. K in the paper)
 
         # delta > 0
         if not isinstance(delta, float):
@@ -60,9 +55,9 @@ class Exp4P(BaseBandit):
                              "given is: %f" % pmin)
         self.delta = delta
 
-        # p_min in [0, 1/n_arms]
+        # p_min in [0, 1/n_actions]
         if pmin is None:
-            self.pmin = np.sqrt(np.log(self.N) / self.K / self.T)
+            self.pmin = np.sqrt(np.log(self.n_experts) / self.n_experts / 10000)
         elif not isinstance(pmin, float):
             raise ValueError("pmin should be float, the one"
                              "given is: %f" % pmin)
@@ -72,55 +67,38 @@ class Exp4P(BaseBandit):
         else:
             self.pmin = pmin
 
-        self.exp4p_ = None
+        # Initialize the model storage
+        query_vector = np.zeros(self.n_actions)     # probability distribution for action recommendation)
+        w = np.ones(self.n_experts)                 # weight vector for each expert
+        advice = np.zeros((self.n_experts, self.n_actions))
+        self._ModelStorage.save_model({'query_vector': query_vector, 'w': w, 'advice': advice})
 
-        self.last_action_idx = None
+    def exp4p(self):
 
-    def exp4p(self, x):
         """The generator which implements the main part of Exp4.P.
-
-        Parameters
-        ----------
-        reward: float
-            The reward value.
-
-        Yields
-        ------
-        q: array-like, shape = [K]
-            The query vector which tells ALBL what kind of distribution if
-            should sample from the unlabeled pool.
         """
-        n_exports = len(self.models)
-        n_arms = len(self.advices)
-        w = np.ones(n_exports)
-        advice = np.zeros((n_exports, n_arms))
 
         while True:
+            context = yield
+
+            advice = np.zeros((self.n_experts, self.n_actions))
+            # get the expert advice (probability)
             for i, model in enumerate(self.models):
-                advice[i] = model.predict_proba(x)
+                advice[i, :] = model.predict_proba(context)
 
             # choice vector, shape = (self.K, )
-            W = np.sum(w)
-            p = (1 - n_arms * self.pmin) * w / W + self.pmin
+            w = self._ModelStorage.get_model()['w']
+            w_sum = np.sum(w)
+            p_temp = (1 - self.n_actions * self.pmin) * w / w_sum + self.pmin
 
             # query vector, shape= = (self.n_unlabeled, )
-            query_vector = np.dot(p, advice)
+            query_vector = np.dot(p_temp, advice)
+            self._ModelStorage.save_model({'query_vector': query_vector, 'w': w, 'advice': advice})
 
-            reward, action_idx = yield query_vector
-
-            # shape = (n_exports, 1)
-            rhat = reward * advice[:, action_idx] / query_vector[action_idx]
-
-            # shape = ()
-            yhat = np.dot(advice, rhat)
-            vhat = 1 / p
-            w = w * np.exp(
-                self.pmin / 2 * (
-                    yhat + vhat * np.sqrt(
-                        np.log(n_exports / self.delta) / n_arms / self.max_iter
-                    )
-                )
-            )
+            # give back the
+            action_idx = np.random.choice(np.arange(len(self.actions)), size=1, p = query_vector/sum(query_vector))[0]
+            action_max = self.actions[action_idx]
+            yield action_max
 
         raise StopIteration
 
@@ -130,7 +108,7 @@ class Exp4P(BaseBandit):
         Parameters
         ----------
         context : {array-like, None}
-            The context of current state, None if no context avaliable.
+            The context of current state, None if no context available.
 
         Returns
         -------
@@ -140,30 +118,13 @@ class Exp4P(BaseBandit):
         action : Actions object
             The action to perform.
         """
-        if self.exp4p_ is None:
-            self.exp4p_ = self.exp4p(context)
-            query_vector = self.exp4p_.next()
-        else:
-            query_vector = self.exp4p_.send(self.last_reward,
-                                            self.last_action_idx)
-
-        if self.last_reward is None:
-            raise ValueError("The last reward have not been passed in.")
-
-        action_idx = np.random.choice(
-            np.arange(len(self.actions)),
-            size=1,
-            p=query_vector
-        )[0]
-
-        history_id = self.storage.add_history(context,
-                                              self.actions[action_idx],
-                                              reward=None)
-        self.last_history_id = history_id
-        self.last_reward = None
-        self.last_action_idx = action_idx
-
-        return history_id, self.actions[action_idx]
+        learn = self.exp4p()
+        learn.next()
+        action_max = learn.send(context)
+        self.n_total = self.n_total + 1
+        self.last_history_id = self.last_history_id + 1
+        self._HistoryStorage.add_history(np.transpose(np.array([context])), action_max, reward=None)
+        return self.last_history_id, action_max
 
     def reward(self, history_id, reward):
         """Reward the preivous action with reward.
@@ -187,5 +148,29 @@ class Exp4P(BaseBandit):
             LOGGER.warning("reward passing in should be between 0 and 1"
                            "to maintain theoratical guarantee.")
 
-        self.last_reward = reward
-        self.storage.reward(history_id, reward)
+        reward_action = self._HistoryStorage.unrewarded_histories[history_id].action
+        w_old = self._ModelStorage.get_model()['w']
+        query_vector = self._ModelStorage.get_model()['query_vector']
+        advice = self._ModelStorage.get_model()['advice']
+
+        # Update the model
+        rhat = np.zeros(self.n_actions)
+        rhat[reward_action] = reward/query_vector[reward_action]
+        yhat = np.dot(advice, rhat)
+        vhat = np.zeros(self.n_experts)
+        for i in range(self.n_experts):
+            for j in range(self.n_actions):
+                vhat[i] = vhat[i] + advice[i,j]/query_vector[j]
+
+        w_new = w_old * np.exp(
+                           self.pmin / 2 * (
+                                yhat + vhat * np.sqrt(
+                                    np.log(self.n_experts / self.delta) / self.n_actions / self.n_total
+                                )
+                            )
+                        )
+
+        self._ModelStorage.save_model({'query_vector': query_vector, 'w': w_new, 'advice': advice})
+
+        # Update the history
+        self._HistoryStorage.add_reward(history_id, reward)

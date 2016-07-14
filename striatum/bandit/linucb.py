@@ -28,9 +28,6 @@ class LinUCB(BaseBandit):
         """
 
         super(LinUCB, self).__init__(HistoryStorage, ModelStorage, actions)
-        self._actions = np.array(actions)
-        self._HistoryStorage = HistoryStorage
-        self._ModelStorage = ModelStorage
         self.last_reward = None
         self.last_history_id = -1
         self.alpha = alpha
@@ -77,7 +74,6 @@ class LinUCB(BaseBandit):
                 The history id of the action to reward.
             reward : int (or float)
                 A int (or float) representing the feedback given to the action, the higher the better.
-
         """
 
         context = self._HistoryStorage.unrewarded_histories[history_id].context

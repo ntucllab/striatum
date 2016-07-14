@@ -10,36 +10,26 @@ LOGGER = logging.getLogger(__name__)
 
 class UCB1(BaseBandit):
 
-    def __init__(self, actions, storage):
-        super(UCB1, self).__init__(storage, actions)
+    def __init__(self, actions, HistoryStorage, ModelStorage):
+        super(UCB1, self).__init__(HistoryStorage, ModelStorage, actions)
+        self.last_history_id = -1
+        empirical_reward = {}
+        n_actions = {}
+        for key in self._actions:
+            empirical_reward[key] = 1.0
+            n_actions[key] = 1.0
+        n_total = float(len(self._actions))
+        self._ModelStorage.save_model({'empirical_reward': empirical_reward,
+                                      'n_actions': n_actions, 'n_total': n_total})
 
-        self.last_reward = None
-        self.last_history_id = None
-
-        self.ucb1_ = self.ucb1()
 
     def ucb1(self):
-        def upper_bound(t, n_plays):
-            return np.sqrt(2 * np.log(t) / n_plays)
-
-        t = 0
-        n_arms = len(self.actions)
-        n_plays = np.zeros(n_arms)
-        empirical_reward = np.zeros(n_arms)
-
-        for i in range(n_arms):
-            reward = yield i
-            empirical_reward[i] += reward
-            t += 1
-            n_plays[i] += 1
-
         while True:
-            ucbs = empirical_reward / n_plays + upper_bound(t, n_plays)
-            choice = np.argmax(ucbs)
-            reward = yield choice
-            empirical_reward[choice] += reward
-            n_plays[i] += 1
-            t += 1
+            empirical_reward = np.array([self._ModelStorage.get_model()['empirical_reward'][action] for action in self._actions])
+            n_actions = np.array([self._ModelStorage.get_model()['n_actions'][action] for action in self._actions])
+            n_total = self._ModelStorage.get_model()['n_total']
+            action_max = self._actions[np.argmax(empirical_reward/n_actions + np.sqrt(2*np.log(n_total)/n_actions))]
+            yield action_max
 
     def get_action(self, context):
         """Return the action to perform
@@ -57,16 +47,15 @@ class UCB1(BaseBandit):
         if context is not None:
             LOGGER.warning("UCB1 does not support context.")
 
-        if self.last_reward is None:
-            raise ValueError("The last reward have not been passed in.")
-        action = self.ucb1_.send(self.last_reward)
+        # learn the model
+        learn = self.ucb1()
+        learn.next()
+        action_max = learn.send(context)
 
-        self.last_reward = None
-
-        history_id = self.storage.add_history(None, action, reward=None)
-        self.last_history_id = history_id
-
-        return history_id, action
+        # update the history
+        self.last_history_id = self.last_history_id + 1
+        self._HistoryStorage.add_history(None, action_max, reward = None)
+        return self.last_history_id, action_max
 
     def reward(self, history_id, reward):
         """Reward the previous action with reward.
@@ -78,7 +67,16 @@ class UCB1(BaseBandit):
             A float representing the feedback given to the action, the higher
             the better.
         """
-        if history_id != self.last_history_id:
-            raise ValueError("The history_id should be the same as last one.")
-        self.last_reward = reward
-        self.storage.reward(history_id, reward)
+        reward_action = self._HistoryStorage.unrewarded_histories[history_id].action
+
+        # Update the model
+        empirical_reward = self._ModelStorage.get_model()['empirical_reward']
+        n_actions = self._ModelStorage.get_model()['n_actions']
+        n_total = self._ModelStorage.get_model()['n_total']
+        empirical_reward[reward_action] += 1.0
+        n_actions[reward_action] += 1.0
+        n_total += 1.0
+        self._ModelStorage.save_model({'empirical_reward': empirical_reward,
+                                       'n_actions': n_actions, 'n_total': n_total})
+        # Update the history
+        self._HistoryStorage.add_reward(history_id, reward)

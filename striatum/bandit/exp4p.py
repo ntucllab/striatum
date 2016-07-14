@@ -138,15 +138,6 @@ class Exp4P(BaseBandit):
             A float representing the feedback given to the action, the higher
             the better.
         """
-        if history_id != self.last_history_id:
-            raise ValueError("The history_id should be the same as last one.")
-
-        if not isinstance(reward, float):
-            raise ValueError("reward should be a float.")
-
-        if reward > 1. or reward < 0.:
-            LOGGER.warning("reward passing in should be between 0 and 1"
-                           "to maintain theoratical guarantee.")
 
         reward_action = self._HistoryStorage.unrewarded_histories[history_id].action
         w_old = self._ModelStorage.get_model()['w']

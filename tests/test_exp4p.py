@@ -61,31 +61,31 @@ class Exp4P(unittest.TestCase):
         self.assertEqual(len(EXP4P._ModelStorage._model['query_vector']), 5)
         self.assertEqual(np.shape(EXP4P._ModelStorage._model['advice']), (2,5))
 
-    '''def test_delay_reward(self):
-        LINUCB = linucb.LinUCB(self.actions, self.HistoryStorage,
-                               self.ModelStorage, 1.00, 2)
-        history_id, action = LINUCB.get_action([1,1])
-        history_id_2, action_2 = LINUCB.get_action([0,0])
-        LINUCB.reward(history_id, 1)
-        self.assertTrue((LINUCB._HistoryStorage.get_history(history_id).context
+    def test_delay_reward(self):
+        EXP4P = exp4p.Exp4P(self.actions, self.HistoryStorage, self.ModelStorage,
+                            [self.LogReg, self.MNB], delta=0.1, pmin=None)
+        history_id, action = EXP4P.get_action([1, 1])
+        history_id_2, action_2 = EXP4P.get_action([3,3])
+        EXP4P.reward(history_id, 1)
+        self.assertTrue((EXP4P ._HistoryStorage.get_history(history_id).context
                         == np.transpose(np.array([[1,1]]))).all())
-        self.assertTrue((LINUCB._HistoryStorage.get_history(history_id_2).context
-                        == np.transpose(np.array([[0,0]]))).all())
-        self.assertEqual(LINUCB._HistoryStorage.get_history(history_id).reward, 1)
-        self.assertEqual(LINUCB._HistoryStorage.get_history(history_id_2).reward, None)
+        self.assertTrue((EXP4P._HistoryStorage.get_history(history_id_2).context
+                        == np.transpose(np.array([[3,3]]))).all())
+        self.assertEqual(EXP4P._HistoryStorage.get_history(history_id).reward, 1)
+        self.assertEqual(EXP4P._HistoryStorage.get_history(history_id_2).reward, None)
 
     def test_reward_order_descending(self):
-        LINUCB = linucb.LinUCB(self.actions, self.HistoryStorage,
-                               self.ModelStorage, 1.00, 2)
-        history_id, action = LINUCB.get_action([1,1])
-        history_id_2, action_2 = LINUCB.get_action([0,0])
-        LINUCB.reward(history_id_2, 1)
-        self.assertTrue((LINUCB._HistoryStorage.get_history(history_id).context
+        EXP4P = exp4p.Exp4P(self.actions, self.HistoryStorage, self.ModelStorage,
+                            [self.LogReg, self.MNB], delta=0.1, pmin=None)
+        history_id, action = EXP4P.get_action([1,1])
+        history_id_2, action_2 = EXP4P.get_action([3,3])
+        EXP4P.reward(history_id_2, 1)
+        self.assertTrue((EXP4P._HistoryStorage.get_history(history_id).context
                         == np.transpose(np.array([[1,1]]))).all())
-        self.assertTrue((LINUCB._HistoryStorage.get_history(history_id_2).context
-                        == np.transpose(np.array([[0,0]]))).all())
-        self.assertEqual(LINUCB._HistoryStorage.get_history(history_id).reward, None)
-        self.assertEqual(LINUCB._HistoryStorage.get_history(history_id_2).reward, 1)'''
+        self.assertTrue((EXP4P._HistoryStorage.get_history(history_id_2).context
+                        == np.transpose(np.array([[3,3]]))).all())
+        self.assertEqual(EXP4P._HistoryStorage.get_history(history_id).reward, None)
+        self.assertEqual(EXP4P._HistoryStorage.get_history(history_id_2).reward, 1)
 
 
 if __name__ == '__main__':

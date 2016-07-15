@@ -84,7 +84,19 @@ class Exp4P(BaseBandit):
             advice = np.zeros((self.n_experts, self.n_actions))
             # get the expert advice (probability)
             for i, model in enumerate(self.models):
-                advice[i, :] = model.predict_proba(context)
+                if len(model.classes_) != len(self.actions):
+                    proba = model.predict_proba([context])
+                    k = 0
+                    for action in self.actions:
+                        if action in model.classes_:
+                            action_idx = self.actions.index(action)
+                            advice[i,action_idx] = proba[0][k]
+                            k = k + 1
+                        else:
+                            action_idx = self.actions.index(action)
+                            advice[i, action_idx] = self.pmin
+                else:
+                    advice[i, :] = model.predict_proba([context])
 
             # choice vector, shape = (self.K, )
             w = self._ModelStorage.get_model()['w']
@@ -140,13 +152,14 @@ class Exp4P(BaseBandit):
         """
 
         reward_action = self._HistoryStorage.unrewarded_histories[history_id].action
+        reward_action_idx = self.actions.index(reward_action)
         w_old = self._ModelStorage.get_model()['w']
         query_vector = self._ModelStorage.get_model()['query_vector']
         advice = self._ModelStorage.get_model()['advice']
 
         # Update the model
         rhat = np.zeros(self.n_actions)
-        rhat[reward_action] = reward/query_vector[reward_action]
+        rhat[reward_action_idx] = reward/query_vector[reward_action_idx]
         yhat = np.dot(advice, rhat)
         vhat = np.zeros(self.n_experts)
         for i in range(self.n_experts):

@@ -10,7 +10,7 @@ LOGGER = logging.getLogger(__name__)
 
 class LinThompSamp (BaseBandit):
 
-    def __init__(self, actions, storage, d = 6, delta=0.5, R=0.5, epsilon=0.1):
+    def __init__(self, actions, storage, d=6, delta=0.5, R=0.5, epsilon=0.1):
         super(LinThompSamp, self).__init__(storage, actions)
 
         self.last_history_id = -1
@@ -42,36 +42,24 @@ class LinThompSamp (BaseBandit):
             self.epsilon = epsilon
 
         # model initialization
+        self.t = 0
+        v = 0
         B = np.identity(self.d)
         muhat = np.zeros(self.d)
         f = np.zeros(self.d)
         self._ModelStorage.save_model({'B': B, 'muhat': muhat, 'f': f})
 
-    def linthompsamp(self, x):
-        self.dim_context = x.shape[1] # dimension of context vector
-        self.v2 = (R ** 2) * 24 * self.dim_context *\
-                math.log(1. / param_delta) * (1. / param.epsilon)
-        mtx_covariance = np.eye(self.dim_context)
-        vector_mean = np.zeros(self.dim_context)
-        vector_f = np.zeros(self.dim_context)
+    def linthompsamp(self):
 
         while True:
-            vector_estimean = np.random.multivariate_normal(vector_mean, self.v2 * mtx_covariance,1).T
-            expected_reward = np.dot(x, vector_estimean)
-
-            # next context and last reward
-            at = np.random.chioce(np.where(expected_reward == np.max(expected_reward))[0])
-            x_new, reward = yield at
-
-            #update
-            temp = np.dot(mtx_covariance, x[:, at])
-            deno = 1 + np.dot(x[:, at].T, temp)
-            if abs(deno) < 1e-10:
-                deno = 1
-            mtx_covariance = mtx_covariance - (np.dot(temp, temp.T) * (1. / deno))
-            vector_f += reward * x[:, at]
-            vector_mean = np.dot(mtx_covariance, vector_f)
-
+            context = yield
+            self.t += 1
+            B = self._ModelStorage.get_model()['B']
+            muhat = self._ModelStorage.get_model()['muhat']
+            v = self.R * np.sqrt(24 / self.epsilon * self.d * np.log(self.t / self.delta))
+            mu = np.random.multivariate_normal(muhat, v**2 * np.linalg.inv(B), self.d)
+            action_max = self._actions[np.argmax(np.dot(np.array(context), np.array(mu)))]
+            yield action_max
         raise StopIteration
 
 
@@ -89,20 +77,14 @@ class LinThompSamp (BaseBandit):
             The action to perform.
         """
         if self.linthompsamp_ is None:
-            self.linthompsamp_ = self.linthompsamp(context)
-        if self.last_reward is None:
-            raise ValueError("The last reward have not been passed in.")
-        action = self.linthompsamp_.send(context, self.last_reward)
+            self.linthompsamp_ = self.linthompsamp()
+            action_max = self.linthompsamp_.next()
+        else:
+            action_max = self.linthompsamp_.send(context)
 
-        self.last_reward = None
-
-        history_id = self.storage.add_history(None,action, reward=None)
-
-        self.last_history_id = history_id
-
-
-        return history_id, action
-
+        self.last_history_id = self.last_history_id + 1
+        self._HistoryStorage.add_history(np.transpose(np.array([context])), action_max, reward=None)
+        return self.last_history_id, action_max
 
     def reward(self, history_id, reward):
         """Reward the preivous action with reward.
@@ -124,5 +106,17 @@ class LinThompSamp (BaseBandit):
             LOGGER.warning("reward passing in should be between 0 and 1"
                            "to maintain theoratical guarantee.")
 
-        self.last_reward = reward
-        self.storage.reward(history_id, reward)
+        context = self._HistoryStorage.unrewarded_histories[history_id].context
+        reward_action = self._HistoryStorage.unrewarded_histories[history_id].action
+
+        # Update the model
+        B = self._ModelStorage.get_model()['B']
+        muhat = self._ModelStorage.get_model()['muhat']
+        f = self._ModelStorage.get_model()['f']
+        B += np.dot(context, context)
+        f += reward * context
+        muhat = np.linalg.inv(B) * f
+        self._ModelStorage.save_model({'B': B, 'muhat': muhat, 'f': f})
+
+        # Update the history
+        self._HistoryStorage.add_reward(history_id, reward)

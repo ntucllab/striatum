@@ -15,6 +15,7 @@ class Exp3(BaseBandit):
 
         self.last_history_id = -1
         self.n_actions = len(self.actions)          # number of actions (i.e. K in the paper)
+        self.exp3_ = None
 
         # gamma in (0,1]
         if not isinstance(gamma, float):
@@ -31,41 +32,18 @@ class Exp3(BaseBandit):
         w = np.ones(self.n_actions)                 # weight vector
         self._ModelStorage.save_model({'query_vector': query_vector, 'w': w})
 
-    def exp4p(self):
+    def exp3(self):
 
         """The generator which implements the main part of Exp3.
         """
 
         while True:
-            context = yield
-
-            advice = np.zeros((self.n_experts, self.n_actions))
-            # get the expert advice (probability)
-            for i, model in enumerate(self.models):
-                if len(model.classes_) != len(self.actions):
-                    proba = model.predict_proba([context])
-                    k = 0
-                    for action in self.actions:
-                        if action in model.classes_:
-                            action_idx = self.actions.index(action)
-                            advice[i,action_idx] = proba[0][k]
-                            k = k + 1
-                        else:
-                            action_idx = self.actions.index(action)
-                            advice[i, action_idx] = self.pmin
-                else:
-                    advice[i, :] = model.predict_proba([context])
-
-            # choice vector, shape = (self.K, )
             w = self._ModelStorage.get_model()['w']
             w_sum = np.sum(w)
-            p_temp = (1 - self.n_actions * self.pmin) * w / w_sum + self.pmin
+            query_vector = (1 - self.gamma) * w / w_sum + self.gamma / self.n_actions
 
-            # query vector, shape= = (self.n_unlabeled, )
-            query_vector = np.dot(p_temp, advice)
-            self._ModelStorage.save_model({'query_vector': query_vector, 'w': w, 'advice': advice})
+            self._ModelStorage.save_model({'query_vector': query_vector, 'w': w})
 
-            # give back the
             action_idx = np.random.choice(np.arange(len(self.actions)), size=1, p = query_vector/sum(query_vector))[0]
             action_max = self.actions[action_idx]
             yield action_max
@@ -88,10 +66,12 @@ class Exp3(BaseBandit):
         action : Actions object
             The action to perform.
         """
-        learn = self.exp4p()
-        learn.next()
-        action_max = learn.send(context)
-        self.n_total = self.n_total + 1
+        if self.exp4_ is None:
+            self.exp3_ = self.exp3()
+            action_max = self.exp3_.next()
+        else:
+            action_max = self.exp3_.send(context)
+
         self.last_history_id = self.last_history_id + 1
         self._HistoryStorage.add_history(np.transpose(np.array([context])), action_max, reward=None)
         return self.last_history_id, action_max
@@ -113,26 +93,13 @@ class Exp3(BaseBandit):
         reward_action_idx = self.actions.index(reward_action)
         w_old = self._ModelStorage.get_model()['w']
         query_vector = self._ModelStorage.get_model()['query_vector']
-        advice = self._ModelStorage.get_model()['advice']
 
         # Update the model
         rhat = np.zeros(self.n_actions)
         rhat[reward_action_idx] = reward/query_vector[reward_action_idx]
-        yhat = np.dot(advice, rhat)
-        vhat = np.zeros(self.n_experts)
-        for i in range(self.n_experts):
-            for j in range(self.n_actions):
-                vhat[i] = vhat[i] + advice[i,j]/query_vector[j]
+        w_new = w_old * np.exp(self.gamma * rhat / self.n_actions)
 
-        w_new = w_old * np.exp(
-                           self.pmin / 2 * (
-                                yhat + vhat * np.sqrt(
-                                    np.log(self.n_experts / self.delta) / self.n_actions / self.n_total
-                                )
-                            )
-                        )
-
-        self._ModelStorage.save_model({'query_vector': query_vector, 'w': w_new, 'advice': advice})
+        self._ModelStorage.save_model({'query_vector': query_vector, 'w': w_new})
 
         # Update the history
         self._HistoryStorage.add_reward(history_id, reward)

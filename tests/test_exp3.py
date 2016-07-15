@@ -6,7 +6,7 @@ from striatum.bandit import exp3
 import numpy as np
 import unittest
 
-class Exp3(unittest.TestCase):
+class TestExp3(unittest.TestCase):
     def setUp(self):
         self.ModelStorage = model.MemoryModelStorage()
         self.HistoryStorage = history.MemoryHistoryStorage()

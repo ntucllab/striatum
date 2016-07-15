@@ -10,8 +10,8 @@ LOGGER = logging.getLogger(__name__)
 
 class LinThompSamp (BaseBandit):
 
-    def __init__(self, actions, storage, d=6, delta=0.5, R=0.5, epsilon=0.1):
-        super(LinThompSamp, self).__init__(storage, actions)
+    def __init__(self, actions, HistoryStorage, ModelStorage, d=6, delta=0.5, R=0.5, epsilon=0.1):
+        super(LinThompSamp, self).__init__(HistoryStorage, ModelStorage, actions)
 
         self.last_history_id = -1
         self.linthompsamp_ = None
@@ -58,7 +58,7 @@ class LinThompSamp (BaseBandit):
             muhat = self._ModelStorage.get_model()['muhat']
             v = self.R * np.sqrt(24 / self.epsilon * self.d * np.log(self.t / self.delta))
             mu = np.random.multivariate_normal(muhat, v**2 * np.linalg.inv(B), self.d)
-            action_max = self._actions[np.argmax(np.dot(np.array(context), np.array(mu)))]
+            action_max = self.actions[np.argmax(np.dot(np.array(context), np.array(mu)))]
             yield action_max
         raise StopIteration
 
@@ -78,12 +78,13 @@ class LinThompSamp (BaseBandit):
         """
         if self.linthompsamp_ is None:
             self.linthompsamp_ = self.linthompsamp()
-            action_max = self.linthompsamp_.next()
+            self.linthompsamp_.next()
+            action_max = self.linthompsamp_.send(context)
         else:
             action_max = self.linthompsamp_.send(context)
 
         self.last_history_id = self.last_history_id + 1
-        self._HistoryStorage.add_history(np.transpose(np.array([context])), action_max, reward=None)
+        self._HistoryStorage.add_history(context, action_max, reward=None)
         return self.last_history_id, action_max
 
     def reward(self, history_id, reward):
@@ -96,15 +97,6 @@ class LinThompSamp (BaseBandit):
             A float representing the feedback given to the action, the higher
             the better.
         """
-        if history_id != self.last_history_id:
-            raise ValueError("The history_id should be the same as last one.")
-
-        if not isinstance(reward, float):
-            raise ValueError("reward should be a float.")
-
-        if reward > 1. or reward < 0.:
-            LOGGER.warning("reward passing in should be between 0 and 1"
-                           "to maintain theoratical guarantee.")
 
         context = self._HistoryStorage.unrewarded_histories[history_id].context
         reward_action = self._HistoryStorage.unrewarded_histories[history_id].action
@@ -113,8 +105,8 @@ class LinThompSamp (BaseBandit):
         B = self._ModelStorage.get_model()['B']
         muhat = self._ModelStorage.get_model()['muhat']
         f = self._ModelStorage.get_model()['f']
-        B += np.dot(context, context)
-        f += reward * context
+        B += np.array([context]).T * np.array([context])
+        f += reward * np.array(context)
         muhat = np.linalg.inv(B) * f
         self._ModelStorage.save_model({'B': B, 'muhat': muhat, 'f': f})
 

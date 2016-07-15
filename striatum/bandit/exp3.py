@@ -66,7 +66,7 @@ class Exp3(BaseBandit):
         action : Actions object
             The action to perform.
         """
-        if self.exp4_ is None:
+        if self.exp3_ is None:
             self.exp3_ = self.exp3()
             action_max = self.exp3_.next()
         else:

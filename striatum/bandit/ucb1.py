@@ -1,8 +1,10 @@
+"""Upper Confidence Bound 1
+
+
+"""
 
 import logging
-
 import numpy as np
-
 from striatum.bandit.bandit import BaseBandit
 
 LOGGER = logging.getLogger(__name__)
@@ -10,8 +12,30 @@ LOGGER = logging.getLogger(__name__)
 
 class UCB1(BaseBandit):
 
-    def __init__(self, actions, HistoryStorage, ModelStorage):
-        super(UCB1, self).__init__(HistoryStorage, ModelStorage, actions)
+    """Upper Confidence Bound 1
+
+    Parameters
+    ----------
+    actions : {array-like, None}
+        Actions (arms) for recommendation
+    historystorage: a HistoryStorage object
+        The place where we store the histories of contexts and rewards.
+    modelstorage: a ModelStorage object
+        The place where we store the model parameters.
+
+    Attributes
+    ----------
+    ucb1\_ : 'exp4p' object instance
+        The contextual bandit algorithm instances
+
+    References
+    ----------
+    .. [1]  Peter Auer, et al. "Finite-time Analysis of the Multiarmed Bandit Problem."
+            Machine Learning, 47. 2002.
+    """
+
+    def __init__(self, actions, historystorage, modelstorage):
+        super(UCB1, self).__init__(historystorage, modelstorage, actions)
         self.last_history_id = -1
         empirical_reward = {}
         n_actions = {}
@@ -19,15 +43,15 @@ class UCB1(BaseBandit):
             empirical_reward[key] = 1.0
             n_actions[key] = 1.0
         n_total = float(len(self._actions))
-        self._ModelStorage.save_model({'empirical_reward': empirical_reward,
+        self._modelstorage.save_model({'empirical_reward': empirical_reward,
                                       'n_actions': n_actions, 'n_total': n_total})
-
 
     def ucb1(self):
         while True:
-            empirical_reward = np.array([self._ModelStorage.get_model()['empirical_reward'][action] for action in self._actions])
-            n_actions = np.array([self._ModelStorage.get_model()['n_actions'][action] for action in self._actions])
-            n_total = self._ModelStorage.get_model()['n_total']
+            empirical_reward = np.array(
+                [self._modelstorage.get_model()['empirical_reward'][action] for action in self._actions])
+            n_actions = np.array([self._modelstorage.get_model()['n_actions'][action] for action in self._actions])
+            n_total = self._modelstorage.get_model()['n_total']
             action_max = self._actions[np.argmax(empirical_reward/n_actions + np.sqrt(2*np.log(n_total)/n_actions))]
             yield action_max
         raise StopIteration
@@ -37,7 +61,7 @@ class UCB1(BaseBandit):
         Parameters
         ----------
         context : {array-like, None}
-            The context of current state, None if no context avaliable.
+            The context of current state, None if no context available.
         Returns
         -------
         history_id : int
@@ -54,8 +78,8 @@ class UCB1(BaseBandit):
         action_max = learn.send(context)
 
         # update the history
-        self.last_history_id = self.last_history_id + 1
-        self._HistoryStorage.add_history(None, action_max, reward = None)
+        self.last_history_id += 1
+        self._historystorage.add_history(None, action_max, reward=None)
         return self.last_history_id, action_max
 
     def reward(self, history_id, reward):
@@ -68,16 +92,16 @@ class UCB1(BaseBandit):
             A float representing the feedback given to the action, the higher
             the better.
         """
-        reward_action = self._HistoryStorage.unrewarded_histories[history_id].action
+        reward_action = self._historystorage.unrewarded_histories[history_id].action
 
         # Update the model
-        empirical_reward = self._ModelStorage.get_model()['empirical_reward']
-        n_actions = self._ModelStorage.get_model()['n_actions']
-        n_total = self._ModelStorage.get_model()['n_total']
+        empirical_reward = self._modelstorage.get_model()['empirical_reward']
+        n_actions = self._modelstorage.get_model()['n_actions']
+        n_total = self._modelstorage.get_model()['n_total']
         empirical_reward[reward_action] += 1.0
         n_actions[reward_action] += 1.0
         n_total += 1.0
-        self._ModelStorage.save_model({'empirical_reward': empirical_reward,
+        self._modelstorage.save_model({'empirical_reward': empirical_reward,
                                        'n_actions': n_actions, 'n_total': n_total})
         # Update the history
-        self._HistoryStorage.add_reward(history_id, reward)
+        self._historystorage.add_reward(history_id, reward)

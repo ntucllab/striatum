@@ -38,22 +38,6 @@ class LinUCB(BaseBandit):
     """
 
     def __init__(self, actions, historystorage, modelstorage, alpha, d=1):
-        """ Initialize the LinUCB model.
-
-            Parameters
-            ----------
-            actions : {array-like, None}
-                Actions (arms) for recommendation.
-            historystorage: HistoryStorage object
-                The object where we store both unrewarded and rewarded histories.
-            modelstorage: ModelsSorage object
-                The object where we store model parameters.
-            alpha: float
-                The tunning parameter determining the
-            d: int
-                The dimension of a context.
-        """
-
         super(LinUCB, self).__init__(historystorage, modelstorage, actions)
         self.last_reward = None
         self.last_history_id = -1

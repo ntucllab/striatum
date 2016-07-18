@@ -98,8 +98,10 @@ class LinThompSamp (BaseBandit):
         """Return the action to perform
         Parameters
         ----------
-        context : {array-like, None}
-            The context of current state, None if no context avaliable.
+        context : {matrix-like, None}
+            The context of all actions at the current state.
+            Row: action, Column: Context
+
         Returns
         -------
         history_id : int
@@ -107,6 +109,9 @@ class LinThompSamp (BaseBandit):
         action : Actions object
             The action to perform.
         """
+        if context is None:
+            raise ValueError("LinThompSamp requires contexts for all actions!")
+
         if self.linthompsamp_ is None:
             self.linthompsamp_ = self.linthompsamp()
             self.linthompsamp_.next()
@@ -120,7 +125,7 @@ class LinThompSamp (BaseBandit):
         return self.last_history_id, action_max
 
     def reward(self, history_id, reward):
-        """Reward the preivous action with reward.
+        """Reward the previous action with reward.
         Parameters
         ----------
         history_id : int
@@ -129,7 +134,6 @@ class LinThompSamp (BaseBandit):
             A float representing the feedback given to the action, the higher
             the better.
         """
-
         context = self._historystorage.unrewarded_histories[history_id].context
         reward_action = self._historystorage.unrewarded_histories[history_id].action
         reward_action_idx = self.actions.index(reward_action)

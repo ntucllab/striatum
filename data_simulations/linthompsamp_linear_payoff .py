@@ -6,17 +6,9 @@ from striatum.storage import model as model
 from striatum.bandit import linthompsamp
 import numpy as np
 import matplotlib.pyplot as plt
-ModelStorage = model.MemoryModelStorage()
-HistoryStorage = history.MemoryHistoryStorage()
-actions = [1,2,3,4,5]
-d = 2
-delta = 0.5
-R = 0.5
-epsilon = 0.1
-LINTHOMPSAMP = linthompsamp.LinThompSamp(actions, HistoryStorage, ModelStorage, d, delta, R, epsilon)
-history_id, action = LINTHOMPSAMP.get_action([[1,1],[2,2]])
 
-'''class LinearPayoffSimulation:
+
+class LinearPayoffSimulation:
     Linear payoff 
     def __init__(self, T, d, actions):
         self.T = T

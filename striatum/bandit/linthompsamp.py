@@ -45,8 +45,8 @@ class LinThompSamp (BaseBandit):
         self.t = 0
         v = 0
         B = np.identity(self.d)
-        muhat = np.zeros(self.d)
-        f = np.zeros(self.d)
+        muhat = np.matrix(np.zeros(self.d)).T
+        f = np.matrix(np.zeros(self.d)).T
         self._ModelStorage.save_model({'B': B, 'muhat': muhat, 'f': f})
 
     def linthompsamp(self):
@@ -57,7 +57,7 @@ class LinThompSamp (BaseBandit):
             B = self._ModelStorage.get_model()['B']
             muhat = self._ModelStorage.get_model()['muhat']
             v = self.R * np.sqrt(24 / self.epsilon * self.d * np.log(self.t / self.delta))
-            mu = np.random.multivariate_normal(muhat, v**2 * np.linalg.inv(B), 1)[0]
+            mu = np.random.multivariate_normal(np.array(muhat.T)[0], v**2 * np.linalg.inv(B), 1)[0]
             action_max = self.actions[np.argmax(np.dot(np.array(context), np.array(mu)))]
             yield action_max
         raise StopIteration
@@ -81,6 +81,7 @@ class LinThompSamp (BaseBandit):
             self.linthompsamp_.next()
             action_max = self.linthompsamp_.send(context)
         else:
+            self.linthompsamp_.next()
             action_max = self.linthompsamp_.send(context)
 
         self.last_history_id = self.last_history_id + 1
@@ -100,12 +101,13 @@ class LinThompSamp (BaseBandit):
 
         context = self._HistoryStorage.unrewarded_histories[history_id].context
         reward_action = self._HistoryStorage.unrewarded_histories[history_id].action
+        reward_action_idx = self.actions.index(reward_action)
 
         # Update the model
         B = self._ModelStorage.get_model()['B']
         f = self._ModelStorage.get_model()['f']
-        B += np.array([context]).T * np.array([context])
-        f += reward * np.array(context)
+        B += np.dot(np.matrix(context)[reward_action_idx].T, np.matrix(context)[reward_action_idx])
+        f += reward * np.matrix(context)[reward_action_idx].T
         muhat = np.dot(np.linalg.inv(B),f)
         self._ModelStorage.save_model({'B': B, 'muhat': muhat, 'f': f})
 

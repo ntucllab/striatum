@@ -49,7 +49,7 @@ class LinearPayoffSimulation:
         for alpha in np.arange(0, 3, 0.1):
             CTR[i] = self.policy_evaluation('LinUCB', context, desired_action, alpha)
             i = i + 1
-        CTR = CTR/ self.T
+        CTR = CTR / self.T
         plt.plot(np.arange(0, 3, 0.1),CTR)
 
 if __name__ == '__main__':

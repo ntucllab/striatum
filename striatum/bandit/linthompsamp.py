@@ -57,7 +57,7 @@ class LinThompSamp (BaseBandit):
             B = self._ModelStorage.get_model()['B']
             muhat = self._ModelStorage.get_model()['muhat']
             v = self.R * np.sqrt(24 / self.epsilon * self.d * np.log(self.t / self.delta))
-            mu = np.random.multivariate_normal(muhat, v**2 * np.linalg.inv(B), self.d)
+            mu = np.random.multivariate_normal(muhat, v**2 * np.linalg.inv(B), 1)[0]
             action_max = self.actions[np.argmax(np.dot(np.array(context), np.array(mu)))]
             yield action_max
         raise StopIteration
@@ -103,11 +103,10 @@ class LinThompSamp (BaseBandit):
 
         # Update the model
         B = self._ModelStorage.get_model()['B']
-        muhat = self._ModelStorage.get_model()['muhat']
         f = self._ModelStorage.get_model()['f']
         B += np.array([context]).T * np.array([context])
         f += reward * np.array(context)
-        muhat = np.linalg.inv(B) * f
+        muhat = np.dot(np.linalg.inv(B),f)
         self._ModelStorage.save_model({'B': B, 'muhat': muhat, 'f': f})
 
         # Update the history

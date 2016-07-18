@@ -6,10 +6,10 @@ from striatum.storage import model as model
 from striatum.bandit import linthompsamp
 import numpy as np
 import matplotlib.pyplot as plt
-
+import matplotlib.lines as mlines
 
 class LinearPayoffSimulation:
-    Linear payoff 
+    '''Linear payoff '''
     def __init__(self, T, d, actions):
         self.T = T
         self.d = d
@@ -20,7 +20,7 @@ class LinearPayoffSimulation:
         desired_action = np.zeros(shape = (self.T, 1))
         n_actions = len(self.actions)
         for t in range(self.T):
-            context[t] = np.random.uniform(0, 1, (len(n_actions),self.d))
+            context[t] = np.random.uniform(0, 1, (n_actions, self.d))
             desired_action[t] = self.actions[np.argmax(np.sum(context[t], axis=1))]
         return context, desired_action
 
@@ -49,21 +49,33 @@ class LinearPayoffSimulation:
         CTR_epsilon = np.zeros(shape=(len(tunning_region), 1))
         context, desired_action = self.data_simulation()
         i = 0
-        for delta in np.arange(0.01, 0.99, 0.1):
-            CTR_delta[i] = self.policy_evaluation('LinThompSamp', context, desired_action, delta=delta, R=0.5, epsilon=0.5)
+        for para in np.arange(0.01, 0.99, 0.1):
+            CTR_delta[i] = self.policy_evaluation('LinThompSamp', context, desired_action, delta=para, R=0.01, epsilon=0.5)
+            CTR_R[i] = self.policy_evaluation('LinThompSamp', context, desired_action, delta=0.5, R=para,epsilon=0.5)
+            CTR_epsilon[i] = self.policy_evaluation('LinThompSamp', context, desired_action, delta=0.5, R=0.01,epsilon=para)
             i = i + 1
 
 
         CTR_delta = CTR_delta / self.T
-        plt.plot(np.arange(0.01, 0.99, 0.1), CTR_delta, label="delta change, R = 0.5, epsilon = 0.05")
         CTR_R = CTR_R / self.T
-        CTR_epslion = epsilon / self.T
-
-        plt.plot(tunning_region, CTR_R, label="delta = 0.5, R change, epsilon = 0.05")
-        plt.plot(tunning_region, CTR_epslion, label="delta = 0.5, R = 0.5, epsilon change")
-        plt.legend()
-
-
+        CTR_epsilon = CTR_epsilon / self.T
+        
+        plt.plot(np.arange(0.01, 0.99, 0.1), CTR_delta, 'ro-', 
+                 np.arange(0.01, 0.99, 0.1), CTR_R, 'gs-', 
+                 np.arange(0.01, 0.99, 0.1), CTR_epsilon, 'b^-')
+        line1 = mlines.Line2D([], [], color='r', marker='o',
+                              label = "delta changes, R = 0.01, eps = 0.5")
+        line2 = mlines.Line2D([], [], color='g', marker='s',
+                              label = "delta = 0.5, R = changes, eps = 0.5")
+        line3 = mlines.Line2D([], [], color='b', marker='^',
+                              label = "delta = 0.5, R = 0.01, eps = changes")
+        plt.xlabel('parameter value')
+        plt.ylabel('CTR')
+        plt.legend(handles = [line1,line2,line3])
+        axes = plt.gca()
+        axes.set_ylim([0,1])
+        plt.title("Paramete Tunning Curve")
+        
 if __name__ == '__main__':
     simulation = LinearPayoffSimulation(1000, 10, [1, 2, 3, 4, 5])
-    simulation.parameter_tuning()'''
+    simulation.parameter_tuning()

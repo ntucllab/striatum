@@ -2,9 +2,9 @@
 In This module contains a class that implements Thompson Sampling with Linear Payoff, a contextual bandit algorithm.
 """
 
+import numpy as np
 import logging
 from striatum.bandit.bandit import BaseBandit
-import numpy as np
 
 LOGGER = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class LinThompSamp (BaseBandit):
         The place where we store the histories of contexts and rewards.
     modelstorage: a ModelStorage object
         The place where we store the model parameters.
-    delta: float, 0 < delta <= 1
+    delta: float, 0 < delta < 1
         With probability 1 - delta, LinThompSamp satisfies the theoretical regret bound.
     r: float, r >= 0
         Assume that the residual ri(t) - bi(t)^T * muhat is r-sub-gaussian. In this case, r^2 represents the variance
@@ -50,10 +50,10 @@ class LinThompSamp (BaseBandit):
         self.linthompsamp_ = None
         self.d = d
 
-        # 0 < delta <= 1
+        # 0 < delta < 1
         if not isinstance(delta, float):
             raise ValueError("delta should be float")
-        elif (delta < 0) or (delta > 1):
+        elif (delta < 0) or (delta >= 1):
             raise ValueError("delta should be in (0, 1]")
         else:
             self.delta = delta

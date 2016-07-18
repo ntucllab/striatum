@@ -28,7 +28,7 @@ class Exp4P(BaseBandit):
 
     Attributes
     ----------
-    exp4p\_ : 'linthomp' object instance
+    exp4p\_ : 'exp4p' object instance
         The contextual bandit algorithm instances
 
     References

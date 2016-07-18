@@ -18,6 +18,8 @@ class Exp3(BaseBandit):
 
         Parameters
         ----------
+        actions : array-like
+            Actions (arms) for recommendation.
         historystorage: a HistoryStorage object
             The place where we store the histories of contexts and rewards.
         modelstorage: a ModelStorage object
@@ -40,7 +42,7 @@ class Exp3(BaseBandit):
         super(Exp3, self).__init__(historystorage, modelstorage, actions)
 
         self.last_history_id = -1
-        self.n_actions = len(self.actions)  # number of actions (i.e. K in the paper)
+        self.n_actions = len(self._actions)  # number of actions (i.e. K in the paper)
         self.exp3_ = None
 
         # gamma in (0,1]
@@ -70,13 +72,14 @@ class Exp3(BaseBandit):
 
             self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
 
-            action_idx = np.random.choice(np.arange(len(self.actions)), size=1, p=query_vector / sum(query_vector))[0]
-            action_max = self.actions[action_idx]
+            action_idx = np.random.choice(np.arange(len(self._actions)), size=1, p=query_vector / sum(query_vector))[0]
+            action_max = self._actions[action_idx]
             yield action_max
 
         raise StopIteration
 
     def get_action(self, context):
+
         """Return the action to perform
 
         Parameters
@@ -92,6 +95,7 @@ class Exp3(BaseBandit):
         action : Actions object
             The action to perform.
         """
+
         if self.exp3_ is None:
             self.exp3_ = self.exp3()
             action_max = self.exp3_.next()
@@ -116,7 +120,7 @@ class Exp3(BaseBandit):
         """
 
         reward_action = self._historystorage.unrewarded_histories[history_id].action
-        reward_action_idx = self.actions.index(reward_action)
+        reward_action_idx = self._actions.index(reward_action)
         w_old = self._modelstorage.get_model()['w']
         query_vector = self._modelstorage.get_model()['query_vector']
 

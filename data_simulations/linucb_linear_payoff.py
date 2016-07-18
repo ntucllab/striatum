@@ -9,8 +9,8 @@ from striatum.bandit import linucb
 
 class LinearPayoffSimulation:
 
-    def __init__(self, T, d, actions):
-        self.T = T
+    def __init__(self, t, d, actions):
+        self.T = t
         self.d = d
         self.actions = actions
 
@@ -42,15 +42,22 @@ class LinearPayoffSimulation:
             return self.T - sum_error
 
     def parameter_tuning(self):
-        CTR = np.zeros(shape=(len(np.arange(0, 3, 0.1)), 1))
+        tunning_region = np.arange(0, 3, 0.05)
+        ctr = np.zeros(shape=(len(tunning_region), 1))
         context, desired_action = self.data_simulation()
         i = 0
-        for alpha in np.arange(0, 3, 0.1):
-            CTR[i] = self.policy_evaluation('LinUCB', context, desired_action, alpha)
-            i = i + 1
-        CTR = CTR / self.T
-        plt.plot(np.arange(0, 3, 0.1),CTR)
+        for alpha in tunning_region:
+            ctr[i] = self.policy_evaluation('LinUCB', context, desired_action, alpha)
+            i += 1
+        ctr = ctr / self.T
+        plt.plot(tunning_region, ctr)
+        plt.xlabel('parameter value')
+        plt.ylabel('CTR')
+        plt.legend()
+        axes = plt.gca()
+        axes.set_ylim([0, 1])
+        plt.title("Parameter Tunning Curve")
 
 if __name__ == '__main__':
-    simulation = LinearPayoffSimulation(1000, 3, [1, 2, 3, 4, 5])
+    simulation = LinearPayoffSimulation(1000, 5, [1, 2, 3, 4, 5])
     simulation.parameter_tuning()

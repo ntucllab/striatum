@@ -30,7 +30,7 @@ class Exp4P(unittest.TestCase):
     def test_initialization(self):
         policy = exp4p.Exp4P(self.actions, self.historystorage, self.modelstorage,
                              [self.LogReg, self.MNB], delta=0.1, pmin=None)
-        self.assertEqual(self.actions, policy.actions)
+        self.assertEqual(self.actions, policy._actions)
         self.assertEqual(0.1, policy.delta)
 
     def test_get_first_action(self):

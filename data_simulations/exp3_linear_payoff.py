@@ -50,6 +50,12 @@ class LinearPayoffSimulation:
             i += 1
         ctr = ctr / self.T
         plt.plot(np.arange(0.001, 1, 0.03), ctr)
+        plt.xlabel('parameter value')
+        plt.ylabel('CTR')
+        plt.legend()
+        axes = plt.gca()
+        axes.set_ylim([0, 1])
+        plt.title("Parameter Tunning Curve")
 
 if __name__ == '__main__':
     simulation = LinearPayoffSimulation(1000, 4, [1, 2, 3, 4, 5])

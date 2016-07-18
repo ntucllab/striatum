@@ -19,7 +19,7 @@ class TestLinThompSamp(unittest.TestCase):
     def test_initialization(self):
         policy = linthompsamp.LinThompSamp(self.actions, self.historystorage,
                                            self.modelstorage, self.d, self.delta, self.R, self.epsilon)
-        self.assertEqual(self.actions, policy.actions)
+        self.assertEqual(self.actions, policy._actions)
         self.assertEqual(self.d, policy.d)
         self.assertEqual(self.R, policy.R)
         self.assertEqual(self.epsilon, policy.epsilon)

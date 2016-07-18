@@ -19,10 +19,12 @@ class LinThompSamp (BaseBandit):
 
     Parameters
     ----------
+    actions : array-like
+        Actions (arms) for recommendation.
     historystorage: a HistoryStorage object
-        The place where we store the histories of contexts and rewards.
+        The object where we store the histories of contexts and rewards.
     modelstorage: a ModelStorage object
-        The place where we store the model parameters.
+        The object where we store the model parameters.
     delta: float, 0 < delta < 1
         With probability 1 - delta, LinThompSamp satisfies the theoretical regret bound.
     r: float, r >= 0
@@ -90,7 +92,7 @@ class LinThompSamp (BaseBandit):
             muhat = self._modelstorage.get_model()['muhat']
             v = self.R * np.sqrt(24 / self.epsilon * self.d * np.log(self.t / self.delta))
             mu = np.random.multivariate_normal(np.array(muhat.T)[0], v**2 * np.linalg.inv(b), 1)[0]
-            action_max = self.actions[np.argmax(np.dot(np.array(context), np.array(mu)))]
+            action_max = self._actions[np.argmax(np.dot(np.array(context), np.array(mu)))]
             yield action_max
         raise StopIteration
 
@@ -136,7 +138,7 @@ class LinThompSamp (BaseBandit):
         """
         context = self._historystorage.unrewarded_histories[history_id].context
         reward_action = self._historystorage.unrewarded_histories[history_id].action
-        reward_action_idx = self.actions.index(reward_action)
+        reward_action_idx = self._actions.index(reward_action)
 
         # Update the model
         b = self._modelstorage.get_model()['B']

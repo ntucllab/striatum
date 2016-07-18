@@ -14,6 +14,8 @@ class Exp4P(BaseBandit):
 
     Parameters
     ----------
+    actions : {array-like, None}
+        Actions (arms) for recommendation
     historystorage: a HistoryStorage object
         The place where we store the histories of contexts and rewards.
     modelstorage: a ModelStorage object
@@ -43,7 +45,7 @@ class Exp4P(BaseBandit):
         self.models = models
         self.n_total = 0
         self.n_experts = len(self.models)           # number of experts (i.e. N in the paper)
-        self.n_actions = len(self.actions)          # number of actions (i.e. K in the paper)
+        self.n_actions = len(self._actions)          # number of actions (i.e. K in the paper)
         self.exp4p_ = None
 
         # delta > 0
@@ -81,16 +83,16 @@ class Exp4P(BaseBandit):
             advice = np.zeros((self.n_experts, self.n_actions))
             # get the expert advice (probability)
             for i, model in enumerate(self.models):
-                if len(model.classes_) != len(self.actions):
+                if len(model.classes_) != len(self._actions):
                     proba = model.predict_proba([context])
                     k = 0
-                    for action in self.actions:
+                    for action in self._actions:
                         if action in model.classes_:
-                            action_idx = self.actions.index(action)
+                            action_idx = self._actions.index(action)
                             advice[i, action_idx] = proba[0][k]
                             k += 1
                         else:
-                            action_idx = self.actions.index(action)
+                            action_idx = self._actions.index(action)
                             advice[i, action_idx] = self.pmin
                 else:
                     advice[i, :] = model.predict_proba([context])
@@ -105,8 +107,8 @@ class Exp4P(BaseBandit):
             self._modelstorage.save_model({'query_vector': query_vector, 'w': w, 'advice': advice})
 
             # give back the
-            action_idx = np.random.choice(np.arange(len(self.actions)), size=1, p=query_vector/sum(query_vector))[0]
-            action_max = self.actions[action_idx]
+            action_idx = np.random.choice(np.arange(len(self._actions)), size=1, p=query_vector/sum(query_vector))[0]
+            action_max = self._actions[action_idx]
             yield action_max
 
         raise StopIteration
@@ -154,7 +156,7 @@ class Exp4P(BaseBandit):
         """
 
         reward_action = self._historystorage.unrewarded_histories[history_id].action
-        reward_action_idx = self.actions.index(reward_action)
+        reward_action_idx = self._actions.index(reward_action)
         w_old = self._modelstorage.get_model()['w']
         query_vector = self._modelstorage.get_model()['query_vector']
         advice = self._modelstorage.get_model()['advice']

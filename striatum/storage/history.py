@@ -79,7 +79,7 @@ class HistoryStorage(object):
         """Add reward to a history record.
 
         Parameters
-        ----------
+z        ----------
         history_id : int
             The history id of the history record to retrieve.
 

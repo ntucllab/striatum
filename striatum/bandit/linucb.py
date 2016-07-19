@@ -83,8 +83,9 @@ class LinUCB(BaseBandit):
 
             Parameters
             ----------
-            context : {array-like, None}
-                The context of current state, None if no context avaliable.
+            context : {matrix-like, None}
+            The context of all actions at the current state.
+            Row: action, Column: Context
 
             Returns
             -------

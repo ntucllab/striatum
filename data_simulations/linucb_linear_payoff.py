@@ -15,13 +15,12 @@ class LinearPayoffSimulation:
         self.actions = actions
 
     def data_simulation(self):
-        context = np.random.uniform(0, 1, (self.T, self.d))
+        context = {}
         desired_action = np.zeros(shape=(self.T, 1))
         n_actions = len(self.actions)
         for t in range(self.T):
-            for i in range(n_actions):
-                if i * self.d / n_actions < sum(context[t, :]) <= (i+1) * self.d / n_actions:
-                    desired_action[t] = self.actions[i]
+            context[t] = np.random.uniform(0, 1, (n_actions, self.d))
+            desired_action[t] = self.actions[np.argmax(np.sum(context[t], axis=1))]
         return context, desired_action
 
     def policy_evaluation(self, policy, context, desired_action, alpha):
@@ -33,7 +32,7 @@ class LinearPayoffSimulation:
             sum_error = 0
             policy = linucb.LinUCB(self.actions, historystorage, modelstorage, alpha, self.d)
             for t in range(self.T):
-                history_id, action = policy.get_action(context[t, :].tolist())
+                history_id, action = policy.get_action(context[t])
                 if desired_action[t][0] != action:
                     policy.reward(history_id, 0)
                     sum_error += 1
@@ -59,5 +58,5 @@ class LinearPayoffSimulation:
         plt.title("Parameter Tunning Curve")
 
 if __name__ == '__main__':
-    simulation = LinearPayoffSimulation(1000, 5, [1, 2, 3, 4, 5])
+    simulation = LinearPayoffSimulation(10000, 10, [1, 2, 3, 4, 5])
     simulation.parameter_tuning()

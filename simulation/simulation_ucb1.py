@@ -1,12 +1,12 @@
 import numpy as np
 import sys
 sys.path.append("..")
-from striatum.storage import history as history
-from striatum.storage import model as model
+from striatum.storage import history
+from striatum.storage import model
 from striatum.bandit import ucb1
 
 
-class LinearPayoffSimulation:
+class Ucb1LinearPayoff:
     def __init__(self, t, d, actions):
         self.T = t
         self.d = d
@@ -41,5 +41,5 @@ class LinearPayoffSimulation:
 
 
 if __name__ == '__main__':
-    simulation = LinearPayoffSimulation(1000, 10, [1, 2, 3, 4, 5])
+    simulation = Ucb1LinearPayoff(1000, 5, [1, 2, 3, 4, 5]) 
     print(simulation.policy_evaluation('UCB1', simulation.data_simulation()[1])/1000.0)

@@ -1,16 +1,16 @@
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 import sys
 sys.path.append("..")
-from striatum.storage import history as history
-from striatum.storage import model as model
+from striatum.storage import history
+from striatum.storage import model
 from striatum.bandit import exp4p
 
 
-class LinearPayoffSimulation:
+class Exp4PLinearPayoff:
 
     def __init__(self, t, d, actions):
         self.T = t
@@ -68,8 +68,8 @@ class LinearPayoffSimulation:
         plt.legend()
         axes = plt.gca()
         axes.set_ylim([0, 1])
-        plt.title("Parameter Tunning Curve")
+        plt.title("Parameter Tunning Curve - EXP4.P")
 
 if __name__ == '__main__':
-    simulation = LinearPayoffSimulation(1000, 5, [1, 2, 3, 4, 5])
+    simulation = Exp4PLinearPayoff(1000, 5, [1, 2, 3, 4, 5])
     simulation.parameter_tuning()

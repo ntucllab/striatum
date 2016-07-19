@@ -2,12 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 sys.path.append("..")
-from striatum.storage import history as history
-from striatum.storage import model as model
+from striatum.storage import history
+from striatum.storage import model
 from striatum.bandit import linucb
 
 
-class LinearPayoffSimulation:
+class LinUCBLinearPayoff:
 
     def __init__(self, t, d, actions):
         self.T = t
@@ -49,14 +49,14 @@ class LinearPayoffSimulation:
             ctr[i] = self.policy_evaluation('LinUCB', context, desired_action, alpha)
             i += 1
         ctr = ctr / self.T
-        plt.plot(tunning_region, ctr)
+        plt.plot(tunning_region, ctr, 'ro-', label="alpha changes")
         plt.xlabel('parameter value')
         plt.ylabel('CTR')
         plt.legend()
         axes = plt.gca()
         axes.set_ylim([0, 1])
-        plt.title("Parameter Tunning Curve")
+        plt.title("Parameter Tunning Curve - LinUCB")
 
 if __name__ == '__main__':
-    simulation = LinearPayoffSimulation(10000, 10, [1, 2, 3, 4, 5])
+    simulation = LinUCBLinearPayoff(1000, 5, [1, 2, 3, 4, 5])
     simulation.parameter_tuning()

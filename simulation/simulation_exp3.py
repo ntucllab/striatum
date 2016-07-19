@@ -1,13 +1,13 @@
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 import sys
 sys.path.append("..")
-from striatum.storage import history as history
-from striatum.storage import model as model
+from striatum.storage import history
+from striatum.storage import model
 from striatum.bandit import exp3
 
 
-class LinearPayoffSimulation:
+class Exp3LinearPayoff:
 
     def __init__(self, t, d, actions):
         self.T = t
@@ -42,21 +42,22 @@ class LinearPayoffSimulation:
             return self.T - sum_error
 
     def parameter_tuning(self):
-        ctr = np.zeros(shape=(len(np.arange(0.001, 1, 0.03)), 1))
+        tunning_region = np.arange(0.001, 1, 0.03)
+        ctr = np.zeros(shape=(len(tunning_region), 1))
         context, desired_action = self.data_simulation()
         i = 0
-        for gamma in np.arange(0.001, 1, 0.03):
+        for gamma in tunning_region:
             ctr[i] = self.policy_evaluation('EXP3', context, desired_action, gamma)
             i += 1
         ctr = ctr / self.T
-        plt.plot(np.arange(0.001, 1, 0.03), ctr)
+        plt.plot(tunning_region, ctr, 'ro-', label="gamma changes")
         plt.xlabel('parameter value')
         plt.ylabel('CTR')
         plt.legend()
         axes = plt.gca()
         axes.set_ylim([0, 1])
-        plt.title("Parameter Tunning Curve")
+        plt.title("Parameter Tunning Curve - EXP3")
 
 if __name__ == '__main__':
-    simulation = LinearPayoffSimulation(1000, 4, [1, 2, 3, 4, 5])
+    simulation = Exp3LinearPayoff(1000, 5, [1, 2, 3, 4, 5])
     simulation.parameter_tuning()

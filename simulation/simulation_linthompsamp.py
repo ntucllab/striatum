@@ -2,14 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import sys
-
 sys.path.append("..")
-from striatum.storage import history as history
-from striatum.storage import model as model
+from striatum.storage import history
+from striatum.storage import model
 from striatum.bandit import linthompsamp
 
 
-class LinearPayoffSimulation:
+class LinThompSampLinearPayoff:
     def __init__(self, t, d, actions):
         self.T = t
         self.d = d
@@ -76,9 +75,9 @@ class LinearPayoffSimulation:
         plt.legend(handles=[line1, line2, line3], loc='upper center', bbox_to_anchor=(0.5, -0.15))
         axes = plt.gca()
         axes.set_ylim([0, 1])
-        plt.title("Parameter Tunning Curve")
+        plt.title("Parameter Tunning Curve - LinThompSamp")
 
 
 if __name__ == '__main__':
-    simulation = LinearPayoffSimulation(1000, 5, [1, 2, 3, 4, 5])
+    simulation = LinThompSampLinearPayoff(1000, 5, [1, 2, 3, 4, 5])
     simulation.parameter_tuning()

@@ -4,7 +4,6 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
 import sys
-
 sys.path.append("..")
 from striatum.storage import history as history
 from striatum.storage import model as model

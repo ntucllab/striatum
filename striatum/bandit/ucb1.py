@@ -1,6 +1,5 @@
 """Upper Confidence Bound 1
-
-
+This module contains a class that implements UCB1 algorithm, a famous multi-armed bandit algorithm without context.
 """
 
 import logging
@@ -18,15 +17,15 @@ class UCB1(BaseBandit):
     ----------
     actions : {array-like, None}
         Actions (arms) for recommendation
-    historystorage: a HistoryStorage object
-        The place where we store the histories of contexts and rewards.
-    modelstorage: a ModelStorage object
-        The place where we store the model parameters.
+    historystorage: a :py:mod:'striatum.storage.HistoryStorage' object
+        The object where we store the histories of contexts and rewards.
+    modelstorage: a :py:mod:'straitum.storage.ModelStorage' object
+        The object where we store the model parameters.
 
     Attributes
     ----------
-    ucb1\_ : 'exp4p' object instance
-        The contextual bandit algorithm instances
+    ucb1\_ : 'ucb1' object instance
+        The multi-armed bandit algorithm instances.
 
     References
     ----------
@@ -37,6 +36,7 @@ class UCB1(BaseBandit):
     def __init__(self, actions, historystorage, modelstorage):
         super(UCB1, self).__init__(historystorage, modelstorage, actions)
         self.last_history_id = -1
+        self.ucb1_ = None
         empirical_reward = {}
         n_actions = {}
         for key in self._actions:
@@ -69,21 +69,19 @@ class UCB1(BaseBandit):
         action : Actions object
             The action to perform.
         """
-        if context is not None:
-            LOGGER.warning("UCB1 does not support context.")
-
-        # learn the model
-        learn = self.ucb1()
-        learn.next()
-        action_max = learn.send(context)
+        if self.ucb1_ is None:
+            self.ucb1_ = self.ucb1()
+            action_max = self.ucb1_.next()
+        else:
+            action_max = self.ucb1_.next()
 
         # update the history
         self.last_history_id += 1
-        self._historystorage.add_history(None, action_max, reward=None)
+        self._historystorage.add_history(context, action_max, reward=None)
         return self.last_history_id, action_max
 
     def reward(self, history_id, reward):
-        """Reward the preivous action with reward.
+        """Reward the previous action with reward.
         Parameters
         ----------
         history_id : int

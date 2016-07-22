@@ -71,7 +71,7 @@ class LinUCBLinearPayoff:
     def regret_bound(self):
         context, desired_action = self.data_simulation()
         seq_error = self.policy_evaluation('LinUCB', context, desired_action, alpha=0.42)
-        seq_error = [x/y for x, y in zip(seq_error, range(1,self.T + 1))]
+        seq_error = [x/y for x, y in zip(seq_error, range(1, self.T + 1))]
         plt.figure(1)
         plt.subplot(211)
         plt.plot(range(self.T), seq_error, 'r-', label="alpha =0.5")

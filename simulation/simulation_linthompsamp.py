@@ -29,17 +29,23 @@ class LinThompSampLinearPayoff:
         else:
             historystorage = history.MemoryHistoryStorage()
             modelstorage = model.MemoryModelStorage()
-            sum_error = 0
             policy = linthompsamp.LinThompSamp(self.actions, historystorage, modelstorage,
                                                self.d, delta, r, epsilon)
+            seq_error = np.zeros(shape=(self.T, 1))
             for t in range(self.T):
                 history_id, action = policy.get_action(context[t])
                 if desired_action[t][0] != action:
                     policy.reward(history_id, 0)
-                    sum_error += 1
+                    # sum_error += 1
+                    if t == 0:
+                        seq_error[t] = 1.0
+                    else:
+                        seq_error[t] = seq_error[t - 1] + 1.0
                 else:
                     policy.reward(history_id, 1)
-            return self.T - sum_error
+                    if t > 0:
+                        seq_error[t] = seq_error[t - 1]
+            return seq_error
 
     def parameter_tuning(self):
         tunning_region = np.arange(0.01, 0.99, 0.1)
@@ -49,18 +55,23 @@ class LinThompSampLinearPayoff:
         context, desired_action = self.data_simulation()
         i = 0
         for para in tunning_region:
-            ctr_delta[i] = self.policy_evaluation('LinThompSamp', context, desired_action,
-                                                  delta=para, r=0.01, epsilon=0.5)
-            ctr_r[i] = self.policy_evaluation('LinThompSamp', context, desired_action,
-                                              delta=0.5, r=para, epsilon=0.5)
-            ctr_epsilon[i] = self.policy_evaluation('LinThompSamp', context, desired_action,
-                                                    delta=0.5, r=0.01, epsilon=para)
+            seq_error = self.policy_evaluation('LinThompSamp', context, desired_action,
+                                               delta=para, r=0.01, epsilon=0.5)
+            ctr_delta[i] = self.T - seq_error[-1]
+            seq_error = self.policy_evaluation('LinThompSamp', context, desired_action,
+                                               delta=0.5, r=para, epsilon=0.5)
+            ctr_r[i] = self.T - seq_error[-1]
+            seq_error = self.policy_evaluation('LinThompSamp', context, desired_action,
+                                               delta=0.5, r=0.01, epsilon=para)
+            ctr_epsilon[i] = self.T - seq_error[-1]
             i += 1
 
         ctr_delta = ctr_delta / self.T
         ctr_r = ctr_r / self.T
         ctr_epsilon = ctr_epsilon / self.T
 
+        plt.figure(1)
+        plt.subplot(211)
         plt.plot(np.arange(0.01, 0.99, 0.1), ctr_delta, 'ro-',
                  np.arange(0.01, 0.99, 0.1), ctr_r, 'gs-',
                  np.arange(0.01, 0.99, 0.1), ctr_epsilon, 'b^-')
@@ -76,8 +87,26 @@ class LinThompSampLinearPayoff:
         axes = plt.gca()
         axes.set_ylim([0, 1])
         plt.title("Parameter Tunning Curve - LinThompSamp")
+        plt.show()
 
+    def regret_bound(self):
+        context, desired_action = self.data_simulation()
+        seq_error = self.policy_evaluation('LinThompSamp', context, desired_action,
+                                           delta=0.9, r=0.01, epsilon=0.5)
+        seq_error = [x/y for x, y in zip(seq_error, range(1, self.T + 1))]
+        plt.figure(1)
+        plt.subplot(211)
+        plt.plot(range(self.T), seq_error, 'r-', label="delta=0.9, r=0.01, epsilon=0.5")
+        plt.xlabel('time')
+        plt.ylabel('regret')
+        plt.legend()
+        axes = plt.gca()
+        axes.set_ylim([0, 1])
+        plt.title("Regret Bound with respect to T - LinThompSamp")
+        plt.show()
 
 if __name__ == '__main__':
     simulation = LinThompSampLinearPayoff(1000, 5, [1, 2, 3, 4, 5])
     simulation.parameter_tuning()
+    simulation2 = LinThompSampLinearPayoff(10000, 5, [1, 2, 3, 4, 5])
+    simulation2.regret_bound()

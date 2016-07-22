@@ -29,16 +29,23 @@ class LinUCBLinearPayoff:
         else:
             historystorage = history.MemoryHistoryStorage()
             modelstorage = model.MemoryModelStorage()
-            sum_error = 0
+            # sum_error = 0
             policy = linucb.LinUCB(self.actions, historystorage, modelstorage, alpha, self.d)
+            seq_error = np.zeros(shape=(self.T, 1))
             for t in range(self.T):
                 history_id, action = policy.get_action(context[t])
                 if desired_action[t][0] != action:
                     policy.reward(history_id, 0)
-                    sum_error += 1
+                    # sum_error += 1
+                    if t == 0:
+                        seq_error[t] = 1.0
+                    else:
+                        seq_error[t] = seq_error[t-1] + 1.0
                 else:
                     policy.reward(history_id, 1)
-            return self.T - sum_error
+                    if t > 0:
+                        seq_error[t] = seq_error[t-1]
+            return seq_error
 
     def parameter_tuning(self):
         tunning_region = np.arange(0, 3, 0.05)
@@ -46,9 +53,12 @@ class LinUCBLinearPayoff:
         context, desired_action = self.data_simulation()
         i = 0
         for alpha in tunning_region:
-            ctr[i] = self.policy_evaluation('LinUCB', context, desired_action, alpha)
+            seq_error = self.policy_evaluation('LinUCB', context, desired_action, alpha)
+            ctr[i] = self.T - seq_error[-1]
             i += 1
         ctr = ctr / self.T
+        plt.figure(1)
+        plt.subplot(211)
         plt.plot(tunning_region, ctr, 'ro-', label="alpha changes")
         plt.xlabel('parameter value')
         plt.ylabel('CTR')
@@ -56,7 +66,25 @@ class LinUCBLinearPayoff:
         axes = plt.gca()
         axes.set_ylim([0, 1])
         plt.title("Parameter Tunning Curve - LinUCB")
+        plt.show()
+
+    def regret_bound(self):
+        context, desired_action = self.data_simulation()
+        seq_error = self.policy_evaluation('LinUCB', context, desired_action, alpha=0.42)
+        seq_error = [x/y for x, y in zip(seq_error, range(1,self.T + 1))]
+        plt.figure(1)
+        plt.subplot(211)
+        plt.plot(range(self.T), seq_error, 'r-', label="alpha =0.5")
+        plt.xlabel('time')
+        plt.ylabel('regret')
+        plt.legend()
+        axes = plt.gca()
+        axes.set_ylim([0, 1])
+        plt.title("Regret Bound with respect to T - LinUCB")
+        plt.show()
 
 if __name__ == '__main__':
     simulation = LinUCBLinearPayoff(1000, 5, [1, 2, 3, 4, 5])
+    simulation2 = LinUCBLinearPayoff(10000, 5, [1, 2, 3, 4, 5])
     simulation.parameter_tuning()
+    simulation2.regret_bound()

@@ -71,5 +71,5 @@ class Exp4PLinearPayoff:
         plt.title("Parameter Tunning Curve - EXP4.P")
 
 if __name__ == '__main__':
-    simulation = Exp4PLinearPayoff(1000, 5, [1, 2, 3, 4, 5])
+    simulation = Exp4PLinearPayoff(10000, 5, [1, 2, 3, 4, 5])
     simulation.parameter_tuning()

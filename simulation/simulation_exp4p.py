@@ -79,7 +79,7 @@ class Exp4PLinearPayoff:
         axes.set_ylim([0, 1])
         plt.title("Parameter Tunning Curve - EXP4.P")
         plt.show()
-        
+
     def regret_bound(self):
         context, desired_action = self.data_simulation()
         models = self.expert_training()

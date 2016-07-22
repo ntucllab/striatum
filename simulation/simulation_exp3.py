@@ -30,16 +30,22 @@ class Exp3LinearPayoff:
         else:
             historystorage = history.MemoryHistoryStorage()
             modelstorage = model.MemoryModelStorage()
-            sum_error = 0
+            seq_error = np.zeros(shape=(self.T, 1))
             policy = exp3.Exp3(self.actions, historystorage, modelstorage, gamma)
             for t in range(self.T):
-                history_id, action = policy.get_action(context[t, :].tolist())
+                history_id, action = policy.get_action(context[t])
                 if desired_action[t][0] != action:
                     policy.reward(history_id, 0)
-                    sum_error += 1
+                    # sum_error += 1
+                    if t == 0:
+                        seq_error[t] = 1.0
+                    else:
+                        seq_error[t] = seq_error[t - 1] + 1.0
                 else:
                     policy.reward(history_id, 1)
-            return self.T - sum_error
+                    if t > 0:
+                        seq_error[t] = seq_error[t - 1]
+            return seq_error
 
     def parameter_tuning(self):
         tunning_region = np.arange(0.001, 1, 0.03)
@@ -47,9 +53,12 @@ class Exp3LinearPayoff:
         context, desired_action = self.data_simulation()
         i = 0
         for gamma in tunning_region:
-            ctr[i] = self.policy_evaluation('EXP3', context, desired_action, gamma)
+            seq_error = self.policy_evaluation('EXP3', context, desired_action, gamma)
+            ctr[i] = self.T - seq_error[-1]
             i += 1
         ctr = ctr / self.T
+        plt.figure(1)
+        plt.subplot(211)
         plt.plot(tunning_region, ctr, 'ro-', label="gamma changes")
         plt.xlabel('parameter value')
         plt.ylabel('CTR')
@@ -57,7 +66,25 @@ class Exp3LinearPayoff:
         axes = plt.gca()
         axes.set_ylim([0, 1])
         plt.title("Parameter Tunning Curve - EXP3")
+        plt.show()
+
+    def regret_bound(self):
+        context, desired_action = self.data_simulation()
+        seq_error = self.policy_evaluation('EXP3', context, desired_action, gamma=0.18)
+        seq_error = [x/y for x, y in zip(seq_error, range(1, self.T + 1))]
+        plt.figure(1)
+        plt.subplot(211)
+        plt.plot(range(self.T), seq_error, 'r-', label="gamma=0.18")
+        plt.xlabel('time')
+        plt.ylabel('regret')
+        plt.legend()
+        axes = plt.gca()
+        axes.set_ylim([0, 1])
+        plt.title("Regret Bound with respect to T - EXP3")
+        plt.show()
 
 if __name__ == '__main__':
     simulation = Exp3LinearPayoff(1000, 5, [1, 2, 3, 4, 5])
     simulation.parameter_tuning()
+    simulation2 = Exp3LinearPayoff(10000, 5, [1, 2, 3, 4, 5])
+    simulation2.regret_bound()

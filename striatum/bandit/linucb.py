@@ -84,13 +84,12 @@ class LinUCB(BaseBandit):
             Parameters
             ----------
             context : {matrix-like, None}
-            The context of all actions at the current state.
-            Row: action, Column: Context
+            The context of all actions at the current state. Row: action, Column: Context
 
             Returns
             -------
             history_id : int
-                The history id of the action.
+                The history id of the actiself._actions_new = actionson.
             action : Actions object
                 The action to perform.
         """
@@ -101,13 +100,12 @@ class LinUCB(BaseBandit):
         else:
             self.linucb_.next()
             action_max = self.linucb_.send(context)
-
         self.last_history_id += 1
         self._historystorage.add_history(context, action_max, reward=None)
         return self.last_history_id, action_max
 
     def reward(self, history_id, reward):
-        """Reward the preivous action with reward.
+        """Reward the previous action with reward.
 
             Parameters
             ----------
@@ -134,3 +132,26 @@ class LinUCB(BaseBandit):
 
         # Update the history
         self._historystorage.add_reward(history_id, reward)
+
+    def add_action(self, actions):
+        """ Add new actions (if needed).
+
+            Parameters
+            ----------
+            actions : {array-like, None}
+                Actions (arms) for recommendation
+        """
+        matrix_a = self._modelstorage.get_model()['matrix_a']
+        matrix_ainv = self._modelstorage.get_model()['matrix_ainv']
+        b = self._modelstorage.get_model()['b']
+        theta = self._modelstorage.get_model()['theta']
+
+        for key in actions:
+            if key not in self._actions:
+                matrix_a[key] = np.identity(self.d)
+                matrix_ainv[key] = np.identity(self.d)
+                b[key] = np.zeros((self.d, 1))
+                theta[key] = np.zeros((self.d, 1))
+
+        self._actions = actions
+        self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})

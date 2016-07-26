@@ -10,15 +10,15 @@ from striatum.bandit import exp3
 class Exp3LinearPayoff:
 
     def __init__(self, t, d, actions):
-        self.T = t
+        self.t = t
         self.d = d
         self.actions = actions
 
     def data_simulation(self):
-        context = np.random.uniform(0, 1, (self.T, self.d))
-        desired_action = np.zeros(shape=(self.T, 1))
+        context = np.random.uniform(0, 1, (self.t, self.d))
+        desired_action = np.zeros(shape=(self.t, 1))
         n_actions = len(self.actions)
-        for t in range(self.T):
+        for t in range(self.t):
             for i in range(n_actions):
                 if i * self.d/n_actions < sum(context[t, :]) <= (i+1) * self.d/n_actions:
                     desired_action[t] = self.actions[i]
@@ -30,9 +30,9 @@ class Exp3LinearPayoff:
         else:
             historystorage = history.MemoryHistoryStorage()
             modelstorage = model.MemoryModelStorage()
-            seq_error = np.zeros(shape=(self.T, 1))
+            seq_error = np.zeros(shape=(self.t, 1))
             policy = exp3.Exp3(self.actions, historystorage, modelstorage, gamma)
-            for t in range(self.T):
+            for t in range(self.t):
                 history_id, action = policy.get_action(context[t])
                 if desired_action[t][0] != action:
                     policy.reward(history_id, 0)
@@ -54,9 +54,9 @@ class Exp3LinearPayoff:
         i = 0
         for gamma in tunning_region:
             seq_error = self.policy_evaluation('EXP3', context, desired_action, gamma)
-            ctr[i] = self.T - seq_error[-1]
+            ctr[i] = self.t - seq_error[-1]
             i += 1
-        ctr = ctr / self.T
+        ctr = ctr / self.t
         plt.figure(1)
         plt.subplot(211)
         plt.plot(tunning_region, ctr, 'ro-', label="gamma changes")
@@ -71,10 +71,10 @@ class Exp3LinearPayoff:
     def regret_bound(self):
         context, desired_action = self.data_simulation()
         seq_error = self.policy_evaluation('EXP3', context, desired_action, gamma=0.18)
-        seq_error = [x/y for x, y in zip(seq_error, range(1, self.T + 1))]
+        seq_error = [x/y for x, y in zip(seq_error, range(1, self.t + 1))]
         plt.figure(1)
         plt.subplot(211)
-        plt.plot(range(self.T), seq_error, 'r-', label="gamma=0.18")
+        plt.plot(range(self.t), seq_error, 'r-', label="gamma=0.18")
         plt.xlabel('time')
         plt.ylabel('regret')
         plt.legend()

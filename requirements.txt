@@ -1,0 +1,8 @@
+setuptools
+logging
+sys
+unittest
+numpy
+scipy
+scikit-learn
+matplotlib

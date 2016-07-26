@@ -3,6 +3,7 @@ This module contains a class that implements EXP4.P, a contextual bandit algorit
 """
 
 import logging
+import six
 from striatum.bandit.bandit import BaseBandit
 import numpy as np
 LOGGER = logging.getLogger(__name__)
@@ -131,10 +132,10 @@ class Exp4P(BaseBandit):
         """
         if self.exp4p_ is None:
             self.exp4p_ = self.exp4p()
-            self.exp4p_.next()
+            six.next(self.exp4p_)
             action_max = self.exp4p_.send(context)
         else:
-            self.exp4p_.next()
+            six.next(self.exp4p_)
             action_max = self.exp4p_.send(context)
 
         self.n_total += 1

@@ -3,6 +3,7 @@ This module contains a class that implements LinUCB with disjoint linear model, 
 assuming the reward function is a linear function of the context.
 """
 
+import six
 import logging
 from striatum.bandit.bandit import BaseBandit
 import numpy as np
@@ -95,10 +96,10 @@ class LinUCB(BaseBandit):
         """
         if self.linucb_ is None:
             self.linucb_ = self.linucb
-            self.linucb_.next()
+            six.next(self.linucb_)
             action_max = self.linucb_.send(context)
         else:
-            self.linucb_.next()
+            six.next(self.linucb_)
             action_max = self.linucb_.send(context)
         self.last_history_id += 1
         self._historystorage.add_history(context, action_max, reward=None)

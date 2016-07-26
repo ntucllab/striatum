@@ -4,6 +4,7 @@ In This module contains a class that implements Thompson Sampling with Linear Pa
 
 import numpy as np
 import logging
+import six
 from striatum.bandit.bandit import BaseBandit
 
 LOGGER = logging.getLogger(__name__)
@@ -116,10 +117,10 @@ class LinThompSamp (BaseBandit):
 
         if self.linthompsamp_ is None:
             self.linthompsamp_ = self.linthompsamp()
-            self.linthompsamp_.next()
+            six.next(self.linthompsamp_)
             action_max = self.linthompsamp_.send(context)
         else:
-            self.linthompsamp_.next()
+            six.next(self.linthompsamp_)
             action_max = self.linthompsamp_.send(context)
 
         self.last_history_id += 1

@@ -4,6 +4,7 @@ This module contains a class that implements UCB1 algorithm, a famous multi-arme
 
 import logging
 import numpy as np
+import six
 from striatum.bandit.bandit import BaseBandit
 
 LOGGER = logging.getLogger(__name__)
@@ -71,9 +72,9 @@ class UCB1(BaseBandit):
         """
         if self.ucb1_ is None:
             self.ucb1_ = self.ucb1()
-            action_max = self.ucb1_.next()
+            action_max = six.next(self.ucb1_)
         else:
-            action_max = self.ucb1_.next()
+            action_max = six.next(self.ucb1_)
 
         # update the history
         self.last_history_id += 1

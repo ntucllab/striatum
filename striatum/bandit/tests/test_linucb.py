@@ -71,11 +71,11 @@ class TestLinUcb(unittest.TestCase):
         policy = linucb.LinUCB(self.actions, self.historystorage,
                                self.modelstorage, 1.00, 2)
         history_id, action = policy.get_action([[1, 1], [2, 2], [3, 3]])
-        policy.add_action([1, 2, 3, 4])
+        policy.add_action([4, 5])
         policy.reward(history_id, 1)
-        self.assertEqual(policy._actions, [1, 2, 3, 4])
+        self.assertEqual(policy._actions, [1, 2, 3, 4, 5])
         self.assertTrue((policy._modelstorage.get_model()['matrix_a'][4] == np.identity(2)).all())
-        history_id2, action2 = policy.get_action([[1, 1], [2, 2], [3, 3], [4, 4]])
+        history_id2, action2 = policy.get_action([[1, 1], [2, 2], [3, 3], [4, 4], [5, 5]])
         policy.reward(history_id2, 1)
         self.assertFalse((policy._modelstorage.get_model()['matrix_a'][action2] == np.identity(2)).all())
 

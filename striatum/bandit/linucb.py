@@ -153,5 +153,5 @@ class LinUCB(BaseBandit):
                 b[key] = np.zeros((self.d, 1))
                 theta[key] = np.zeros((self.d, 1))
 
-        self._actions = actions
+        self._actions.extend(actions)
         self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})

@@ -9,9 +9,11 @@ machine:
         - pyenv global 2.7.10 3.5.0
 
 dependencies:
-    pre:
+    override:
         - pip install -U pip wheel && pip install -U Cython && pip install -Ur requirements.txt
 
 test:
     override:
         - python setup.py nosetests
+    post:
+        - cp -R coverage $CIRCLE_ARTIFACTS

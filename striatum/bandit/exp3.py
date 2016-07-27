@@ -4,7 +4,7 @@ according to a learned probability distribution.
 """
 
 import logging
-
+import six
 from striatum.bandit.bandit import BaseBandit
 
 import numpy as np
@@ -98,9 +98,9 @@ class Exp3(BaseBandit):
 
         if self.exp3_ is None:
             self.exp3_ = self.exp3()
-            action_max = self.exp3_.next()
+            action_max = six.next(self.exp3_)
         else:
-            action_max = self.exp3_.send(context)
+            action_max = six.next(self.exp3_)
 
         self.last_history_id += 1
         self._historystorage.add_history(np.transpose(np.array([context])), action_max, reward=None)

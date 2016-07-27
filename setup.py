@@ -10,13 +10,14 @@ setup(
     url='https://github.com/ntucllab/straitum',
     setup_requires=[
         'nose>=1.0',
+        'coverage',
     ],
     classifiers=[
         'Topic :: Scientific/Engineering',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
     ],
-    test_suite='striatum',
+    test_suite='nose.collector',
     packages=[
         'striatum',
         'striatum.bandit',

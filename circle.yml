@@ -5,8 +5,8 @@ machine:
     environment:
         CIRCLE_ENV: test
 
-    post:
-        - pyenv global 2.7.10 3.5.0
+    python:
+        version: 2.7.10
 
 dependencies:
     override:

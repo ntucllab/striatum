@@ -104,3 +104,41 @@ class UCB1(BaseBandit):
                                        'n_actions': n_actions, 'n_total': n_total})
         # Update the history
         self._historystorage.add_reward(history_id, reward)
+
+
+def get_action(model_storage, history_storage, actions, context):
+    """
+    parameters:
+    """
+    empirical_reward = np.array(
+        [model_storage.get_model()['empirical_reward'][action] for action in actions])
+    n_actions = np.array([model_storage.get_model()['n_actions'][action] for action in actions])
+    n_total = model_storage.get_model()['n_total']
+    actions_score = empirical_reward/n_actions + np.sqrt(2*np.log(n_total)/n_actions)
+    action_max = actions[np.argmax(actions_score)]
+    # update the history
+    last_history_id = history_storage.add_history(context, action_max, reward=None)
+    return last_history_id, action_max
+
+
+def reward(model_storage, history_storage, history_id, reward):
+    """
+    Parameters
+    """
+    reward_action = history_storage.unrewarded_histories[history_id].action
+
+    # Update the model
+    empirical_reward = model_storage.get_model()['empirical_reward']
+    n_actions = model_storage.get_model()['n_actions']
+    n_total = model_storage.get_model()['n_total']
+    empirical_reward[reward_action] += 1.0
+    n_actions[reward_action] += 1.0
+    n_total += 1.0
+    model_storage.save_model({
+        'empirical_reward': empirical_reward,
+        'n_actions': n_actions,
+        'n_total': n_total
+    })
+    # Update the history
+    history_storage.add_reward(history_id, reward)
+

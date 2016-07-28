@@ -36,7 +36,6 @@ class UCB1(BaseBandit):
 
     def __init__(self, actions, historystorage, modelstorage):
         super(UCB1, self).__init__(historystorage, modelstorage, actions)
-        self.last_history_id = -1
         self.ucb1_ = None
         empirical_reward = {}
         n_actions = {}
@@ -77,9 +76,8 @@ class UCB1(BaseBandit):
             action_max = six.next(self.ucb1_)
 
         # update the history
-        self.last_history_id += 1
-        self._historystorage.add_history(context, action_max, reward=None)
-        return self.last_history_id, action_max
+        last_history_id = self._historystorage.add_history(context, action_max, reward=None)
+        return last_history_id, action_max
 
     def reward(self, history_id, reward):
         """Reward the previous action with reward.

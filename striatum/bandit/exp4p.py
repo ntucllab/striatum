@@ -42,7 +42,6 @@ class Exp4P(BaseBandit):
 
     def __init__(self, actions, historystorage, modelstorage, models, delta=0.1, pmin=None):
         super(Exp4P, self).__init__(historystorage, modelstorage, actions)
-        self.last_history_id = -1
         self.models = models
         self.n_total = 0
         self.n_experts = len(self.models)           # number of experts (i.e. N in the paper)
@@ -139,9 +138,8 @@ class Exp4P(BaseBandit):
             action_max = self.exp4p_.send(context)
 
         self.n_total += 1
-        self.last_history_id += 1
-        self._historystorage.add_history(np.transpose(np.array([context])), action_max, reward=None)
-        return self.last_history_id, action_max
+        last_history_id = self._historystorage.add_history(np.transpose(np.array([context])), action_max, reward=None)
+        return last_history_id, action_max
 
     def reward(self, history_id, reward):
         """Reward the preivous action with reward.

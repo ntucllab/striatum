@@ -41,7 +41,6 @@ class Exp3(BaseBandit):
     def __init__(self, actions, historystorage, modelstorage, gamma):
         super(Exp3, self).__init__(historystorage, modelstorage, actions)
 
-        self.last_history_id = -1
         self.n_actions = len(self._actions)  # number of actions (i.e. K in the paper)
         self.exp3_ = None
 
@@ -102,9 +101,8 @@ class Exp3(BaseBandit):
         else:
             action_max = six.next(self.exp3_)
 
-        self.last_history_id += 1
-        self._historystorage.add_history(np.transpose(np.array([context])), action_max, reward=None)
-        return self.last_history_id, action_max
+        last_history_id = self._historystorage.add_history(np.transpose(np.array([context])), action_max, reward=None)
+        return last_history_id, action_max
 
     def reward(self, history_id, reward):
         """Reward the preivous action with reward.

@@ -97,6 +97,7 @@ class MemoryHistoryStorage(HistoryStorage):
         self.histories = {}
         self.unrewarded_histories = {}
         self.n_histories = 0
+        self.last_history_id = -1
 
     def get_history(self, history_id):
         """Get the preivous context, action and reward with history_id.
@@ -141,6 +142,8 @@ class MemoryHistoryStorage(HistoryStorage):
                               reward_time, reward)
             self.histories[history.history_id] = history
         self.n_histories += 1
+        self.last_history_id += 1
+        return self.last_history_id
 
     def add_reward(self, history_id, reward):
         """Add reward to a history record.

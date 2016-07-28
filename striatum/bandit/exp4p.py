@@ -138,8 +138,8 @@ class Exp4P(BaseBandit):
             action_max = self.exp4p_.send(context)
 
         self.n_total += 1
-        last_history_id = self._historystorage.add_history(np.transpose(np.array([context])), action_max, reward=None)
-        return last_history_id, action_max
+        history_id = self._historystorage.add_history(np.transpose(np.array([context])), action_max, reward=None)
+        return history_id, action_max
 
     def reward(self, history_id, reward):
         """Reward the preivous action with reward.

@@ -121,8 +121,8 @@ class LinThompSamp (BaseBandit):
             six.next(self.linthompsamp_)
             action_max = self.linthompsamp_.send(context)
 
-        last_history_id = self._historystorage.add_history(context, action_max, reward=None)
-        return last_history_id, action_max
+        history_id = self._historystorage.add_history(context, action_max, reward=None)
+        return history_id, action_max
 
     def reward(self, history_id, reward):
         """Reward the previous action with reward.

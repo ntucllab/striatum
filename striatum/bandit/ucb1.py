@@ -76,8 +76,8 @@ class UCB1(BaseBandit):
             action_max = six.next(self.ucb1_)
 
         # update the history
-        last_history_id = self._historystorage.add_history(context, action_max, reward=None)
-        return last_history_id, action_max
+        history_id = self._historystorage.add_history(context, action_max, reward=None)
+        return history_id, action_max
 
     def reward(self, history_id, reward):
         """Reward the previous action with reward.

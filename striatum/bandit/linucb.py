@@ -100,8 +100,8 @@ class LinUCB(BaseBandit):
         else:
             six.next(self.linucb_)
             action_max = self.linucb_.send(context)
-        last_history_id = self._historystorage.add_history(context, action_max, reward=None)
-        return last_history_id, action_max
+        history_id = self._historystorage.add_history(context, action_max, reward=None)
+        return history_id, action_max
 
     def reward(self, history_id, reward):
         """Reward the previous action with reward.

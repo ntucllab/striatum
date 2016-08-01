@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from striatum.storage import history
 from striatum.storage import model
+from striatum.bandit import ucb1
 from striatum.bandit import linucb
 from striatum.bandit import linthompsamp
 from striatum.bandit import exp4p
@@ -29,8 +30,8 @@ def get_data():
 def expert_training(action_context):
     logreg = OneVsRestClassifier(LogisticRegression())
     mnb = OneVsRestClassifier(MultinomialNB(), )
-    logreg.fit(action_context.iloc[:, 3:], action_context.iloc[:, 1])
-    mnb.fit(action_context.iloc[:, 3:], action_context.iloc[:, 1])
+    logreg.fit(action_context.iloc[:, 2:], action_context.iloc[:, 1])
+    mnb.fit(action_context.iloc[:, 2:], action_context.iloc[:, 1])
     return [logreg, mnb]
 
 
@@ -48,32 +49,53 @@ def policy_generation(bandit, action_context, actions):
     if bandit == 'LinThompSamp':
         policy = linthompsamp.LinThompSamp(actions, historystorage, modelstorage,
                                            d=20, delta=0.9, r=0.01, epsilon=0.5)
+
+    if bandit == 'UCB1':
+        policy = ucb1.UCB1(actions, historystorage, modelstorage)
+
     return policy
 
 
 def policy_evaluation(policy, streaming_batch, user_feature, reward_list):
-
     times = len(streaming_batch)
     seq_error = np.zeros(shape=(times, 1))
+    if bandit in ['LinUCB', 'LinThompSamp', 'UCB1']:
 
-    for t in range(times):
-        feature = user_feature[user_feature.index == streaming_batch.iloc[t, 0]]
-        full_context = pd.DataFrame(np.repeat(np.array(feature), 50, axis=0)).as_matrix()
-        history_id, action = policy.get_action(full_context)
-        watched_list = reward_list[reward_list['user_id'] == streaming_batch.iloc[t, 0]]
+        for t in range(times):
+            feature = user_feature[user_feature.index == streaming_batch.iloc[t, 0]]
+            full_context = pd.DataFrame(np.repeat(np.array(feature), 50, axis=0)).as_matrix()
+            history_id, action = policy.get_action(full_context)
+            watched_list = reward_list[reward_list['user_id'] == streaming_batch.iloc[t, 0]]
 
-        if action not in list(watched_list['movie_id']):
-            policy.reward(history_id, 0)
-            if t == 0:
-                seq_error[t] = 1.0
+            if action not in list(watched_list['movie_id']):
+                policy.reward(history_id, 0)
+                if t == 0:
+                    seq_error[t] = 1.0
+                else:
+                    seq_error[t] = seq_error[t - 1] + 1.0
+
             else:
-                seq_error[t] = seq_error[t - 1] + 1.0
+                policy.reward(history_id, 1)
+                if t > 0:
+                    seq_error[t] = seq_error[t - 1]
 
-        else:
-            policy.reward(history_id, 1)
-            if t > 0:
-                seq_error[t] = seq_error[t - 1]
+    elif bandit == 'Exp4P':
+        for t in range(times):
+            feature = user_feature[user_feature.index == streaming_batch.iloc[t, 0]]
+            history_id, action = policy.get_action(list(feature.iloc[0]))
+            watched_list = reward_list[reward_list['user_id'] == streaming_batch.iloc[t, 0]]
 
+            if action not in list(watched_list['movie_id']):
+                policy.reward(history_id, 0)
+                if t == 0:
+                    seq_error[t] = 1.0
+                else:
+                    seq_error[t] = seq_error[t - 1] + 1.0
+
+            else:
+                policy.reward(history_id, 1)
+                if t > 0:
+                    seq_error[t] = seq_error[t - 1]
     return seq_error
 
 
@@ -86,23 +108,23 @@ def regret_calculation(seq_error):
 if __name__ == '__main__':
 
     streaming_batch, user_feature, actions, reward_list, action_context = get_data()
-    streaming_batch_small = streaming_batch.iloc[30000:50000]
+    streaming_batch_small = streaming_batch.iloc[0:1000]
 
     # conduct regret analyses for LinUCB and LinThompSamp
-    experiment_bandit = ['LinUCB', 'LinThompSamp']
-
+    experiment_bandit = ['LinUCB', 'LinThompSamp', 'Exp4P', 'UCB1']
+    regret = {}
+    col = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+    i = 0
     for bandit in experiment_bandit:
         policy = policy_generation(bandit, action_context, actions)
         seq_error = policy_evaluation(policy, streaming_batch_small, user_feature, reward_list)
-        regret = regret_calculation(seq_error)
-        plt.plot(range(len(regret)), regret, 'r-', label=bandit)
+        regret[bandit] = regret_calculation(seq_error)
+        plt.plot(range(1000), regret[bandit], c= col[i], ls='-', marker='.', label=bandit)
         plt.xlabel('time')
         plt.ylabel('regret')
         plt.legend()
         axes = plt.gca()
         axes.set_ylim([0, 1])
         plt.title("Regret Bound with respect to T")
-        plt.show()
-
-
-
+        i += 1
+    plt.show()

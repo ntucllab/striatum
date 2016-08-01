@@ -86,23 +86,23 @@ def regret_calculation(seq_error):
 if __name__ == '__main__':
 
     streaming_batch, user_feature, actions, reward_list, action_context = get_data()
-    streaming_batch_small = streaming_batch.iloc[30000:31000]
+    streaming_batch_small = streaming_batch.iloc[30000:50000]
 
     # conduct regret analyses for LinUCB and LinThompSamp
     experiment_bandit = ['LinUCB', 'LinThompSamp']
-    regret = {}
-    col = ['b', 'g', 'f', 'c', 'm','y', 'k', 'w']
-    i = 0
+
     for bandit in experiment_bandit:
         policy = policy_generation(bandit, action_context, actions)
         seq_error = policy_evaluation(policy, streaming_batch_small, user_feature, reward_list)
-        regret[bandit] = regret_calculation(seq_error)
-        plt.plot(range(1000), regret[bandit], c= col[i], ls='-', marker='.', label=bandit)
+        regret = regret_calculation(seq_error)
+        plt.plot(range(len(regret)), regret, 'r-', label=bandit)
         plt.xlabel('time')
         plt.ylabel('regret')
         plt.legend()
         axes = plt.gca()
         axes.set_ylim([0, 1])
         plt.title("Regret Bound with respect to T")
-        i +=1
-    plt.show()
+        plt.show()
+
+
+

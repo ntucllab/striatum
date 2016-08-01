@@ -28,7 +28,7 @@ def movie_preprocessing(movie):
 
     # combine the tag_dummy one-hot encoding table to original movie files
     movie = pd.concat([movie, pd.DataFrame(tag_dummy)], 1)
-    movie_col.extend(['tag' + str(i) for i in range(len(tag_table))]) 
+    movie_col.extend(['tag' + str(i) for i in range(len(tag_table))])
     movie.columns = movie_col
     movie = movie.drop('tag', 1)
     return movie
@@ -73,7 +73,7 @@ def main():
     user_feature.to_csv("user_feature.csv", sep='\t')
     pd.DataFrame(actions, columns=['movie_id']).to_csv("actions.csv", sep='\t', index=False)
     reward_list.to_csv("reward_list.csv", sep='\t', index=False)
-    
+
     action_context = movie[movie['movie_id'].isin(actions)]
     action_context.to_csv("action_context.csv", sep='\t', index = False)
 

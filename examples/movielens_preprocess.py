@@ -1,8 +1,7 @@
 """
-The script uses real-world data to conduct contextual bandit experiments. Here we use
-MovieLens 10M Dataset, which is released by GroupLens at 1/2009. Please fist download
-the dataset from http://grouplens.org/datasets/movielens/, then unzipped the file
-'ml-1m.zip' to the examples folder.
+In this script, we pre-process the MovieLens 10M Dataset to get the right format of contextual bandit
+algorithms. This data set is released by GroupLens at 1/2009. Please fist download the dataset from
+http://grouplens.org/datasets/movielens/, then unzipped the file 'ml-1m.zip' to the examples folder.
 """
 
 import pandas as pd

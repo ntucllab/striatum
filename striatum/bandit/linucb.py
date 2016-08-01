@@ -41,7 +41,6 @@ class LinUCB(BaseBandit):
     def __init__(self, actions, historystorage, modelstorage, alpha, d=1):
         super(LinUCB, self).__init__(historystorage, modelstorage, actions)
         self.last_reward = None
-        self.last_history_id = -1
         self.alpha = alpha
         self.d = d
         self.linucb_ = None
@@ -101,9 +100,8 @@ class LinUCB(BaseBandit):
         else:
             six.next(self.linucb_)
             action_max = self.linucb_.send(context)
-        self.last_history_id += 1
-        self._historystorage.add_history(context, action_max, reward=None)
-        return self.last_history_id, action_max
+        history_id = self._historystorage.add_history(context, action_max, reward=None)
+        return history_id, action_max
 
     def reward(self, history_id, reward):
         """Reward the previous action with reward.

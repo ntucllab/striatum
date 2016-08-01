@@ -141,8 +141,7 @@ def main():
         policy = policy_generation(bandit, action_context, actions)
         seq_error = policy_evaluation(policy, bandit, streaming_batch_small, user_feature, reward_list, actions)
         regret[bandit] = regret_calculation(seq_error)
-        plt.plot(range(len(streaming_batch_small)), regret[bandit], c=col[i], ls='-',
-                 marker='.', label=bandit)
+        plt.plot(range(len(streaming_batch_small)), regret[bandit], c=col[i], ls='-', label=bandit)
         plt.xlabel('time')
         plt.ylabel('regret')
         plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)

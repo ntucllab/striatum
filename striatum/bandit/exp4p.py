@@ -12,7 +12,6 @@ LOGGER = logging.getLogger(__name__)
 class Exp4P(BaseBandit):
 
     """Exp4.P with pre-trained supervised learning algorithm.
-
     Parameters
     ----------
     actions : {array-like, None}
@@ -28,12 +27,10 @@ class Exp4P(BaseBandit):
         With probability 1 - delta, LinThompSamp satisfies the theoretical regret bound.
     pmin: float, 0 < pmin < 1/n_actions
         The minimum probability to choose each action.
-
     Attributes
     ----------
     exp4p\_ : 'exp4p' object instance
         The contextual bandit algorithm instances
-
     References
     ----------
     .. [1]  Beygelzimer, Alina, et al. "Contextual bandit algorithms with supervised learning guarantees."
@@ -115,17 +112,14 @@ class Exp4P(BaseBandit):
 
     def get_action(self, context):
         """Return the action to perform
-
         Parameters
         ----------
         context : {array-like, None}
             The context of current state, None if no context available.
-
         Returns
         -------
         history_id : int
             The history id of the action.
-
         action : Actions object
             The action to perform.
         """
@@ -143,12 +137,10 @@ class Exp4P(BaseBandit):
 
     def reward(self, history_id, reward):
         """Reward the preivous action with reward.
-
         Parameters
         ----------
         history_id : int
             The history id of the action to reward.
-
         reward : float
             A float representing the feedback given to the action, the higher
             the better.

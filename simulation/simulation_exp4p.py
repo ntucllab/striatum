@@ -3,7 +3,6 @@ from striatum.storage import model
 from striatum.bandit import exp4p
 import simulation as sm
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 def main():
@@ -27,16 +26,7 @@ def main():
         i += 1
     ctr_tunning /= times
     delta_opt = tunning_region[np.argmax(ctr_tunning)]
-
-    # Plot the parameter tunning result
-    plt.plot(tunning_region, ctr_tunning, 'ro-', label="delta changes")
-    plt.xlabel('parameter value')
-    plt.ylabel('CTR')
-    plt.legend()
-    axes = plt.gca()
-    axes.set_ylim([0, 1])
-    plt.title("Parameter Tunning Curve - EXP4P")
-    plt.show()
+    sm.tuning_plot(tunning_region, ctr_tunning, label="delta changes")
 
     # Regret Analysis
     times = 10000
@@ -44,19 +34,8 @@ def main():
     historystorage = history.MemoryHistoryStorage()
     modelstorage = model.MemoryModelStorage()
     policy = exp4p.Exp4P(actions, historystorage, modelstorage, models, delta=delta_opt, pmin=None)
-
-    seq_error = sm.policy_evaluation(policy, context2, desired_action2)
-    seq_error = [x / y for x, y in zip(seq_error, range(1, times + 1))]
-
-    # Plot the regret analysis
-    plt.plot(range(times), seq_error, 'r-', label='delta = ' + str(delta_opt))
-    plt.xlabel('time')
-    plt.ylabel('regret')
-    plt.legend()
-    axes = plt.gca()
-    axes.set_ylim([0, 1])
-    plt.title("Regret Bound with respect to T - EXP4P")
-    plt.show()
+    regret = sm.regret_calculation(sm.policy_evaluation(policy, context2, desired_action2))
+    sm.regret_plot(times, regret, label='delta = ' + str(delta_opt))
 
 
 if __name__ == '__main__':

@@ -1,4 +1,8 @@
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import LogisticRegression
+from sklearn.multiclass import OneVsRestClassifier
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def data_simulation(times, d, actions):
@@ -46,8 +50,31 @@ def regret_calculation(seq_error):
     return regret
 
 
-def main():
-    return 0
+def expert_training(history_context, history_action):
+    logreg = OneVsRestClassifier(LogisticRegression())
+    mnb = OneVsRestClassifier(MultinomialNB(), )
+    logreg.fit(history_context, history_action)
+    mnb.fit(history_context, history_action)
+    return [logreg, mnb]
 
-if __name__ == '__main__':
-    main()
+
+def tuning_plot(tunning_region, ctr_tunning, label):
+    plt.plot(tunning_region, ctr_tunning, 'ro-', label=label)
+    plt.xlabel('parameter value')
+    plt.ylabel('CTR')
+    plt.legend()
+    axes = plt.gca()
+    axes.set_ylim([0, 1])
+    plt.title("Parameter Tunning Curve")
+    plt.show()
+
+
+def regret_plot(times, regret, label):
+    plt.plot(range(times), regret, 'r-', label=label)
+    plt.xlabel('time')
+    plt.ylabel('regret')
+    plt.legend()
+    axes = plt.gca()
+    axes.set_ylim([0, 1])
+    plt.title("Regret Bound with respect to T")
+    plt.show()

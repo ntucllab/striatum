@@ -32,7 +32,7 @@ def main():
         historystorage = history.MemoryHistoryStorage()
         modelstorage = model.MemoryModelStorage()
         policy = linthompsamp.LinThompSamp(actions, historystorage, modelstorage,
-                                            d=d, delta=0.5, r=para, epsilon=0.5)
+                                           d=d, delta=0.5, r=para, epsilon=0.5)
 
         seq_error = sm.policy_evaluation(policy, context1, desired_action1)
         ctr_r[i] = times - seq_error[-1]
@@ -78,20 +78,9 @@ def main():
     modelstorage = model.MemoryModelStorage()
     policy = linthompsamp.LinThompSamp(actions, historystorage, modelstorage,
                                        d=d, delta=delta_opt, r=r_opt, epsilon=epsilon_opt)
-
-    seq_error = sm.policy_evaluation(policy, context2, desired_action2)
-    seq_error = [x / y for x, y in zip(seq_error, range(1, times + 1))]
-
-    # Plot the regret analysis
-    plt.plot(range(times), seq_error, 'r-',
-             label='delta = ' + str(delta_opt) + ', r = ' + str(r_opt) + ', epsilon = ' + str(epsilon_opt))
-    plt.xlabel('time')
-    plt.ylabel('regret')
-    plt.legend()
-    axes = plt.gca()
-    axes.set_ylim([0, 1])
-    plt.title("Regret Bound with respect to T - LinThompSamp")
-    plt.show()
+    regret = sm.regret_calculation(sm.policy_evaluation(policy, context2, desired_action2))
+    sm.regret_plot(times, regret,
+                   label='delta = ' + str(delta_opt) + ', r = ' + str(r_opt) + ', epsilon = ' + str(epsilon_opt))
 
 
 if __name__ == '__main__':

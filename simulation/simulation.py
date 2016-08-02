@@ -2,6 +2,16 @@ import numpy as np
 
 
 def data_simulation(times, d, actions):
+    context = {}
+    desired_action = np.zeros(shape=(times, 1))
+    n_actions = len(actions)
+    for t in range(times):
+        context[t] = np.random.uniform(0, 1, (n_actions, d))
+        desired_action[t] = actions[np.argmax(np.sum(context[t], axis=1))]
+    return context, desired_action
+
+
+def data_simulation2(times, d, actions):
     context = np.random.uniform(0, 1, (times, d))
     desired_action = np.zeros(shape=(times, 1))
     n_actions = len(actions)

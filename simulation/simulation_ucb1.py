@@ -1,8 +1,7 @@
 from striatum.storage import history
 from striatum.storage import model
 from striatum.bandit import ucb1
-from striatum import simulation as sm
-import numpy as np
+from striatum import simulation
 import matplotlib.pyplot as plt
 
 
@@ -13,12 +12,12 @@ def main():
 
     # Regret Analysis
     times = 20000
-    context, desired_action = sm.data_simulation(times, d, actions)
+    context, desired_action = simulation.data_simulation(times, d, actions)
     historystorage = history.MemoryHistoryStorage()
     modelstorage = model.MemoryModelStorage()
     policy = ucb1.UCB1(actions, historystorage, modelstorage)
 
-    seq_error = sm.policy_evaluation(policy, context, desired_action)
+    seq_error = simulation.policy_evaluation(policy, context, desired_action)
     seq_error = [x / y for x, y in zip(seq_error, range(1, times + 1))]
 
     # Plot the regret analysis

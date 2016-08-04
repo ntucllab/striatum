@@ -1,7 +1,7 @@
 from striatum.storage import history
 from striatum.storage import model
 from striatum.bandit import linthompsamp
-from striatum import simulation as sm
+from striatum import simulation
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
@@ -18,7 +18,7 @@ def main():
     ctr_r = np.zeros(shape=(len(tunning_region), 1))
     ctr_epsilon = np.zeros(shape=(len(tunning_region), 1))
 
-    context1, desired_action1 = sm.data_simulation(times, d, actions)
+    context1, desired_action1 = simulation.data_simulation(times, d, actions)
     i = 0
 
     for para in tunning_region:
@@ -26,7 +26,7 @@ def main():
         modelstorage = model.MemoryModelStorage()
         policy = linthompsamp.LinThompSamp(actions, historystorage, modelstorage,
                                            d=d, delta=para, r=0.01, epsilon=0.5)
-        seq_error = sm.policy_evaluation(policy, context1, desired_action1)
+        seq_error = simulation.policy_evaluation(policy, context1, desired_action1)
         ctr_delta[i] = times - seq_error[-1]
 
         historystorage = history.MemoryHistoryStorage()
@@ -34,14 +34,14 @@ def main():
         policy = linthompsamp.LinThompSamp(actions, historystorage, modelstorage,
                                            d=d, delta=0.5, r=para, epsilon=0.5)
 
-        seq_error = sm.policy_evaluation(policy, context1, desired_action1)
+        seq_error = simulation.policy_evaluation(policy, context1, desired_action1)
         ctr_r[i] = times - seq_error[-1]
 
         historystorage = history.MemoryHistoryStorage()
         modelstorage = model.MemoryModelStorage()
         policy = linthompsamp.LinThompSamp(actions, historystorage, modelstorage,
                                            d=d,  delta=0.5, r=0.01, epsilon=para)
-        seq_error = sm.policy_evaluation(policy, context1, desired_action1)
+        seq_error = simulation.policy_evaluation(policy, context1, desired_action1)
         ctr_epsilon[i] = times - seq_error[-1]
         i += 1
 
@@ -73,13 +73,13 @@ def main():
 
     # Regret Analysis
     times = 10000
-    context2, desired_action2 = sm.data_simulation(times, d, actions)
+    context2, desired_action2 = simulation.data_simulation(times, d, actions)
     historystorage = history.MemoryHistoryStorage()
     modelstorage = model.MemoryModelStorage()
     policy = linthompsamp.LinThompSamp(actions, historystorage, modelstorage,
                                        d=d, delta=delta_opt, r=r_opt, epsilon=epsilon_opt)
-    regret = sm.regret_calculation(sm.policy_evaluation(policy, context2, desired_action2))
-    sm.regret_plot(times, regret,
+    regret = simulation.regret_calculation(simulation.policy_evaluation(policy, context2, desired_action2))
+    simulation.regret_plot(times, regret,
                    label='delta = ' + str(delta_opt) + ', r = ' + str(r_opt) + ', epsilon = ' + str(epsilon_opt))
 
 

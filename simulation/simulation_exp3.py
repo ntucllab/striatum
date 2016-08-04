@@ -1,7 +1,7 @@
 from striatum.storage import history
 from striatum.storage import model
 from striatum.bandit import exp3
-import simulation as sm
+from striatum import simulation as sm
 import numpy as np
 import matplotlib.pyplot as plt
 

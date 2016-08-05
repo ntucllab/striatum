@@ -95,20 +95,25 @@ class LinUCB(BaseCbma):
             action : Actions object
                 The action to perform.
         """
+
         if self.linucb_ is None:
-            self.linucb_ = self.linucb
+            self.linucb_ = self.linucb()
             six.next(self.linucb_)
             score = self.linucb_.send(context)
         else:
             six.next(self.linucb_)
             score = self.linucb_.send(context)
 
+        for key in score.keys():
+            score[key] = float(score[key])
+
         score = np.array(score.values())
-        actions = [self._action[i] for i in score.argsort()[-n_recommend:][::-1]]
+        # print(score.argsort()[-n_recommend:][::-1])
+        actions = [self._actions[i] for i in score.argsort()[-n_recommend:][::-1]]
         history_id = self._historystorage.add_history(context, actions, reward=None)
         return history_id, actions, score
 
-    def reward(self, history_id, reward):
+    def reward(self, history_id, rewards):
         """Reward the previous action with reward.
 
             Parameters
@@ -118,10 +123,9 @@ class LinUCB(BaseCbma):
             reward : int (or float)
                 A int (or float) representing the feedbck given to the action, the higher the better.
         """
-        reward_action = self._historystorage.unrewarded_histories[history_id].action
 
         # Update the model
-        for action in reward_action:
+        for action, reward in rewards.items():
             reward_action_idx = self._actions.index(action)
             context = self._historystorage.unrewarded_histories[history_id].context[reward_action_idx]
             context = np.matrix(context)
@@ -129,14 +133,14 @@ class LinUCB(BaseCbma):
             matrix_ainv = self._modelstorage.get_model()['matrix_ainv']
             b = self._modelstorage.get_model()['b']
             theta = self._modelstorage.get_model()['theta']
-            matrix_a[reward_action] += np.dot(context.T, context)
-            matrix_ainv[reward_action] = np.linalg.solve(matrix_a[reward_action], np.identity(self.d))
-            b[reward_action] += reward * context.T
-            theta[reward_action] = np.dot(matrix_ainv[reward_action], b[reward_action])
+            matrix_a[action] += np.dot(context.T, context)
+            matrix_ainv[action] = np.linalg.solve(matrix_a[action], np.identity(self.d))
+            b[action] += reward * context.T
+            theta[action] = np.dot(matrix_ainv[action], b[action])
         self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})
 
         # Update the history
-        self._historystorage.add_reward(history_id, reward)
+        self._historystorage.add_reward(history_id, rewards)
 
     def add_action(self, actions):
         """ Add new actions (if needed).
@@ -160,3 +164,4 @@ class LinUCB(BaseCbma):
 
         self._actions.extend(actions)
         self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})
+

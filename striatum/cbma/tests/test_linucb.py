@@ -77,11 +77,7 @@ class TestLinUcb(unittest.TestCase):
         self.assertTrue((policy._modelstorage.get_model()['matrix_a'][4] == np.identity(2)).all())
         history_id_2, action_2, score_2 = policy.get_action(2, [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5]])
         policy.reward(history_id_2, {5: 1, 4: 1})
-        history_id_3, action_3, score_3 = policy.get_action(2, [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5]])
-        print(score_3)
-        print(action_3)
-        #policy.reward(history_id2, 1)
-        #self.assertFalse((policy._modelstorage.get_model()['matrix_a'][action_2] == np.identity(2)).all())
+        self.assertFalse((policy._modelstorage.get_model()['matrix_a'][action_2[0]] == np.identity(2)).all())
 
 
 if __name__ == '__main__':

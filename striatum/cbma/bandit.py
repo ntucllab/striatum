@@ -58,35 +58,40 @@ class BaseBandit(object):
         return self._actions
 
     @abstractmethod
-    def get_action(self, context):
+    def get_action(self, n_recommend, context):
         """Return the action to perform
 
         Parameters
         ----------
+        n_recommend: int
+            Number of actions wanted to recommend users.
+
         context : {array-like, None}
             The context of current state, None if no context avaliable.
 
         Returns
         -------
-        history_id : int
-            The history id of the action.
 
-        action : Actions object
-            The action to perform.
+        actions : Actions object
+            The actions to perform.
+
+        score : dictionary
+            The dictionary with actions as key and scores as value.
+
         """
         pass
 
     @abstractmethod
-    def reward(self, history_id, reward):
-        """Reward the preivous action with reward.
+    def reward(self, history_id, rewards):
+        """Reward the previous action with reward.
 
         Parameters
         ----------
         history_id : int
             The history id of the action to reward.
 
-        reward : float
-            A float representing the feedback given to the action, the higher
+        rewards : list
+            A list of float numbers representing the feedback given to actions, the higher
             the better.
         """
         pass

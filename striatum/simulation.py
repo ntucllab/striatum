@@ -145,7 +145,7 @@ def tuning_plot(tunning_region, ctr_tunning, label):
 
         label: string
             The name of label want to show.
-            
+
     """
 
     plt.plot(tunning_region, ctr_tunning, 'ro-', label=label)

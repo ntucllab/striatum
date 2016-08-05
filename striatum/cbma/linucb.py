@@ -127,14 +127,15 @@ class LinUCB(BaseCbma):
         """
 
         # Update the model
+        matrix_a = self._modelstorage.get_model()['matrix_a']
+        matrix_ainv = self._modelstorage.get_model()['matrix_ainv']
+        b = self._modelstorage.get_model()['b']
+        theta = self._modelstorage.get_model()['theta']
+        
         for action, reward in rewards.items():
             reward_action_idx = self._actions.index(action)
             context = self._historystorage.unrewarded_histories[history_id].context[reward_action_idx]
             context = np.matrix(context)
-            matrix_a = self._modelstorage.get_model()['matrix_a']
-            matrix_ainv = self._modelstorage.get_model()['matrix_ainv']
-            b = self._modelstorage.get_model()['b']
-            theta = self._modelstorage.get_model()['theta']
             matrix_a[action] += np.dot(context.T, context)
             matrix_ainv[action] = np.linalg.solve(matrix_a[action], np.identity(self.d))
             b[action] += reward * context.T
@@ -167,4 +168,3 @@ class LinUCB(BaseCbma):
 
         self._actions.extend(actions)
         self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})
-

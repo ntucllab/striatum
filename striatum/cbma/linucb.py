@@ -33,8 +33,9 @@ class LinUCB(BaseCbma):
 
     References
     ----------
-    .. [1]  Lihong Li, et al. "A Contextual-Bandit Approach to Personalized News Article Recommendation."
-            Proceedings of the 19th International Conference on World Wide Web (WWW), 2010.
+    .. [1]  Y-H Chang, and H-T Lin. "Pairwise Regression with Upper Confidence Boun for Contextual Bandit with
+    Multiple Actions."  In Proceedings of the Conference on Technologies and Applications for Artificial Intelligence
+    (TAAI), pages 19--24, December 2013.
     """
 
     def __init__(self, actions, historystorage, modelstorage, alpha, d=1):
@@ -131,7 +132,7 @@ class LinUCB(BaseCbma):
         matrix_ainv = self._modelstorage.get_model()['matrix_ainv']
         b = self._modelstorage.get_model()['b']
         theta = self._modelstorage.get_model()['theta']
-        
+
         for action, reward in rewards.items():
             reward_action_idx = self._actions.index(action)
             context = self._historystorage.unrewarded_histories[history_id].context[reward_action_idx]

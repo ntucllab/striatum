@@ -12,7 +12,7 @@ class Action(object):
         pass
 
 
-class BaseBandit(object):
+class BaseCbma(object):
     """Bandit algorithm
 
     Parameters

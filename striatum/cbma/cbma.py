@@ -73,7 +73,7 @@ class BaseCbma(object):
         -------
 
         actions : Actions object
-            The actions to perform.
+            The actions to perform. (Number of actions = n_recommend.)
 
         score : dictionary
             The dictionary with actions as key and scores as value.
@@ -90,8 +90,7 @@ class BaseCbma(object):
         history_id : int
             The history id of the action to reward.
 
-        rewards : list
-            A list of float numbers representing the feedback given to actions, the higher
-            the better.
+        rewards : dictionary
+            The dictionary with actions as keys and rewards as values.
         """
         pass

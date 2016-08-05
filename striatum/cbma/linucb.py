@@ -1,6 +1,5 @@
 """LinUCB with Disjoint Linear Models
-This module contains a class that implements LinUCB with disjoint linear model, a contextual bandit algorithm
-assuming the reward function is a linear function of the context.
+This module contains a class that implements LinUCB with disjoint linear model under CBMA setting.
 """
 
 import six
@@ -57,7 +56,6 @@ class LinUCB(BaseCbma):
             theta[key] = np.zeros((self.d, 1))
         self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})
 
-
     def linucb(self):
         """The generator implementing the disjoint LINUCB algorithm.
         """
@@ -71,7 +69,8 @@ class LinUCB(BaseCbma):
             # The recommended action should maximize the Linear UCB.
             score = {}
             for action_idx in range(len(self._actions)):
-                score[action_idx] = np.dot(context[action_idx], theta_tmp[action_idx]) + self.alpha * np.sqrt(
+                action = self._actions[action_idx]
+                score[action] = np.dot(context[action_idx], theta_tmp[action_idx]) + self.alpha * np.sqrt(
                     np.dot(np.dot(context[action_idx], matrix_ainv_tmp[action_idx]), context[action_idx].T))
             yield score
 
@@ -80,20 +79,23 @@ class LinUCB(BaseCbma):
     def get_action(self, n_recommend, context):
         """Return the action to perform
 
-            Parameters
-            ----------
-            n_recommend: int
-                Number of actions wanted to recommend users.
+        Parameters
+        ----------
+        n_recommend: int
+            Number of actions wanted to recommend users.
 
-            context : {matrix-like, None}
-                The context of all actions at the current state. Row: action, Column: Context
+        context : {array-like, None}
+            The context of current state, None if no context avaliable.
 
-            Returns
-            -------
-            history_id : int
-                The history id of the actiself._actions_new = actionson.
-            action : Actions object
-                The action to perform.
+        Returns
+        -------
+
+        actions : Actions object
+            The actions to perform. (Number of actions = n_recommend.)
+
+        score : dictionary
+            The dictionary with actions as key and scores as value.
+
         """
 
         if self.linucb_ is None:
@@ -107,21 +109,21 @@ class LinUCB(BaseCbma):
         for key in score.keys():
             score[key] = float(score[key])
 
-        score = np.array(score.values())
         # print(score.argsort()[-n_recommend:][::-1])
-        actions = [self._actions[i] for i in score.argsort()[-n_recommend:][::-1]]
+        actions = [self._actions[i] for i in np.array(score.values()).argsort()[-n_recommend:][::-1]]
         history_id = self._historystorage.add_history(context, actions, reward=None)
         return history_id, actions, score
 
     def reward(self, history_id, rewards):
         """Reward the previous action with reward.
 
-            Parameters
-            ----------
-            history_id : int
-                The history id of the action to reward.
-            reward : int (or float)
-                A int (or float) representing the feedbck given to the action, the higher the better.
+        Parameters
+        ----------
+        history_id : int
+            The history id of the action to reward.
+
+        rewards : dictionary
+            The dictionary with actions as keys and rewards as values.
         """
 
         # Update the model
@@ -145,11 +147,12 @@ class LinUCB(BaseCbma):
     def add_action(self, actions):
         """ Add new actions (if needed).
 
-            Parameters
-            ----------
-            actions : {array-like, None}
-                Actions (arms) for recommendation
+        Parameters
+        ----------
+        actions : {array-like, None}
+            Actions (arms) for recommendation
         """
+
         matrix_a = self._modelstorage.get_model()['matrix_a']
         matrix_ainv = self._modelstorage.get_model()['matrix_ainv']
         b = self._modelstorage.get_model()['b']

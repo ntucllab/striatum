@@ -4,12 +4,20 @@ Bandit interfaces
 from abc import abstractmethod
 
 
-# TODO: think about how to use this
 class Action(object):
-    """The action object"""
-    @abstractmethod
-    def __init__(self):
-        pass
+    """The action object
+
+    Parameters
+    ----------
+        action_id: int
+            The idx of this action.
+        title:
+        content:
+    """
+    def __init__(self, action_id, title, content):
+        self.action_id = action_id
+        self.title = title
+        self.content = content
 
 
 class BaseBandit(object):
@@ -36,11 +44,15 @@ class BaseBandit(object):
 
     actions : list of Action objects
         List of actions to be chosen from.
+
+    actions_id: list of integers
+        List of all action_id's.
     """
     def __init__(self, historystorage, modelstorage, actions):
         self._historystorage = historystorage
         self._modelstorage = modelstorage
         self._actions = actions
+        self._actions_id = [actions[i].action_id for i in range(len(actions))]
 
     @property
     def historystorage(self):
@@ -58,13 +70,16 @@ class BaseBandit(object):
         return self._actions
 
     @abstractmethod
-    def get_action(self, context):
+    def get_action(self, context, n_action=1):
         """Return the action to perform
 
         Parameters
         ----------
         context : {array-like, None}
-            The context of current state, None if no context avaliable.
+            The context of current state, None if no context available.
+
+        n_action: int
+                Number of actions wanted to recommend users.
 
         Returns
         -------
@@ -78,15 +93,15 @@ class BaseBandit(object):
 
     @abstractmethod
     def reward(self, history_id, reward):
-        """Reward the preivous action with reward.
+        """Reward the previous action with reward.
 
         Parameters
         ----------
         history_id : int
             The history id of the action to reward.
 
-        reward : float
-            A float representing the feedback given to the action, the higher
-            the better.
+        reward : dictionary
+            The dictionary {action_id, reward}, where reward is a float.
         """
         pass
+

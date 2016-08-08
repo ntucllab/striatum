@@ -39,7 +39,7 @@ class EpsilonGreedy(BaseCbma):
     """
 
     def __init__(self, actions, historystorage, modelstorage, epsilon=0.01, d=1):
-        super(EpsiloGreedy, self).__init__(historystorage, modelstorage, actions)
+        super(EpsilonGreedy, self).__init__(historystorage, modelstorage, actions)
         self.last_reward = None
         self.epsilon = epsilon
         self.d = d

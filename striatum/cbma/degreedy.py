@@ -43,7 +43,7 @@ class DecreasingEpsilonGreedy(BaseCbma):
     def __init__(self, actions, historystorage, modelstorage, epsilon=0.1, rho=0.001, d=1):
         super(DecreasingEpsilonGreedy, self).__init__(historystorage, modelstorage, actions)
         self.last_reward = None
-        self.explr_prob = epsilon * (1 + self.rho)
+        self.explr_prob = epsilon * (1 + rho)
         self.rho = rho
         self.d = d
         self.greedy_ = None

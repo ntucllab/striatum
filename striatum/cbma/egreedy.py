@@ -126,10 +126,10 @@ class EpsiloGreedy(BaseCbma):
             reward_action_idx = self._actions.index(action)
             context = self._historystorage.unrewarded_histories[history_id].context[reward_action_idx]
             context = np.matrix(context)
-            matrix_a[action] += np.dot(context.T, context)
-            matrix_ainv[action] = np.linalg.solve(matrix_a[action], np.identity(self.d))
-            b[action] += reward * context.T
-            theta[action] = np.dot(matrix_ainv[action], b[action])
+            matrix_a += np.dot(context.T, context)
+            matrix_ainv = np.linalg.solve(matrix_a, np.identity(self.d))
+            b += reward * context.T
+            theta = np.dot(matrix_ainv[action], b[action])
         self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})
 
         # Update the history

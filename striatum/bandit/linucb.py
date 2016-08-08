@@ -50,11 +50,13 @@ class LinUCB(BaseBandit):
         matrix_ainv = {}  # dictionary - The inverse of each matrix_a[a] for any action a in actions.
         b = {}  # dictionary - The cumulative return of action a, given the context xt.
         theta = {}  # dictionary - The coefficient vector of actiona with linear model b = dot(xt, theta)
-        for key in self._actions:
-            matrix_a[key] = np.identity(self.d)
-            matrix_ainv[key] = np.identity(self.d)
-            b[key] = np.zeros((self.d, 1))
-            theta[key] = np.zeros((self.d, 1))
+
+        for actions_id in self._actions_id:
+            matrix_a[actions_id] = np.identity(self.d)
+            matrix_ainv[actions_id] = np.identity(self.d)
+            b[actions_id] = np.zeros((self.d, 1))
+            theta[actions_id] = np.zeros((self.d, 1))
+
         self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})
 
     @property
@@ -65,33 +67,40 @@ class LinUCB(BaseBandit):
             context = yield
             context = np.matrix(context)
             matrix_ainv_tmp = np.array(
-                [self._modelstorage.get_model()['matrix_ainv'][action] for action in self._actions])
-            theta_tmp = np.array([self._modelstorage.get_model()['theta'][action] for action in self._actions])
+                [self._modelstorage.get_model()['matrix_ainv'][action_id] for action_id in self._actions_id])
+            theta_tmp = np.array([self._modelstorage.get_model()['theta'][action_id] for action_id in self._actions_id])
 
             # The recommended action should maximize the Linear UCB.
+            estimated_reward = {}
+            uncertainty = {}
             score = {}
-            for action_idx in range(len(self._actions)):
-                score[action_idx] = np.dot(context[action_idx], theta_tmp[action_idx]) + self.alpha * np.sqrt(
-                    np.dot(np.dot(context[action_idx], matrix_ainv_tmp[action_idx]), context[action_idx].T))
-            action_max = self._actions[np.argmax(score.values())]
-            yield action_max
+            for actions_id in self._actions_id:
+                estimated_reward[actions_id] = np.dot(context[action_id], theta_tmp[action_id])
+                uncertainty[actions_id] = self.alpha * np.sqrt(
+                    np.dot(np.dot(context[action_id], matrix_ainv_tmp[action_id]), context[action_id].T))
+                score[actions_id] = estimated_reward[actions_id] + uncertainty[actions_id]
+            yield estimated_reward, uncertainty, score
 
         raise StopIteration
 
-    def get_action(self, context):
+    def get_action(self, context, n_action=1):
         """Return the action to perform
 
-            Parameters
-            ----------
-            context : {matrix-like, None}
-            The context of all actions at the current state. Row: action, Column: Context
+        Parameters
+        ----------
+        context : {array-like, None}
+            The context of current state, None if no context available.
 
-            Returns
-            -------
-            history_id : int
-                The history id of the actiself._actions_new = actionson.
-            action : Actions object
-                The action to perform.
+        n_action: int
+                Number of actions wanted to recommend users.
+
+        Returns
+        -------
+        history_id : int
+            The history id of the action.
+
+        action : list of dictionaries
+            In each dictionary, it will contains {rank: Action object, estimated_reward, uncertainty}
         """
         if self.linucb_ is None:
             self.linucb_ = self.linucb

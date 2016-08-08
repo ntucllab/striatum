@@ -105,3 +105,13 @@ class BaseBandit(object):
         """
         pass
 
+    @abstractmethod
+    def add_action(self, actions):
+        """ Add new actions (if needed).
+
+        Parameters
+        ----------
+        actions : {array-like, None}
+            Actions (arms) for recommendation
+        """
+    pass

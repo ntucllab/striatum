@@ -106,7 +106,10 @@ class DecreasingEpsilonGreedy(BaseCbma):
             actions = [self._actions[i] for i in np.array(score).argsort()[-n_recommend:][::-1]]
 
         history_id = self._historystorage.add_history(context, actions, reward=None)
-        return history_id, actions, score
+        final_score = {}
+        for i in range(len(self._actions)):
+            final_score[self._actions[i]] = score[i]
+        return history_id, actions, final_score
 
     def reward(self, history_id, rewards):
         """Reward the previous action with reward.

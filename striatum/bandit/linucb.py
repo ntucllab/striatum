@@ -105,12 +105,23 @@ class LinUCB(BaseBandit):
         if self.linucb_ is None:
             self.linucb_ = self.linucb
             six.next(self.linucb_)
-            action_max = self.linucb_.send(context)
+            estimated_reward, uncertainty, score = self.linucb_.send(context)
         else:
             six.next(self.linucb_)
-            action_max = self.linucb_.send(context)
-        history_id = self._historystorage.add_history(context, action_max, reward=None)
-        return history_id, action_max
+            estimated_reward, uncertainty, score = self.linucb_.send(context)
+
+        action_recommend = []
+        actions_recommend_id = [self._actions_id[i] for i in np.array(score.values()).argsort()[-n_action:][::-1]]
+
+        for action_id in actions_recommend_id:
+            action = [action for action in self._actions if action.action_id == 1][0]
+            estimated_reward = estimated_reward[action_id]
+            uncertainty = uncertainty[action_id]
+            score = score[action_id]
+            action_recommend.append({action, estimated_reward, uncertainty, score})
+
+        history_id = self._historystorage.add_history(context, action_recommend, reward=None)
+        return history_id, action_recommend
 
     def reward(self, history_id, reward):
         """Reward the previous action with reward.

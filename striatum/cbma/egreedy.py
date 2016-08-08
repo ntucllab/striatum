@@ -10,7 +10,7 @@ import numpy as np
 LOGGER = logging.getLogger(__name__)
 
 
-class egreedy(BaseCbma):
+class EpsiloGreedy(BaseCbma):
     """Epsilon-greedy algorithm under cbma setting.
 
     Parameters
@@ -21,8 +21,8 @@ class egreedy(BaseCbma):
         The object where we store the histories of contexts and rewards.
     modelstorage: a :py:mod:'straitum.storage.ModelStorage' object
         The object where we store the model parameters.
-    alpha: float
-        The constant determines the width of the upper confidence bound.
+    epsilon: float
+        The probability of random exploration.
     d: int
         The dimension of the context.
 
@@ -38,9 +38,10 @@ class egreedy(BaseCbma):
     (TAAI), pages 19--24, December 2013.
     """
 
-    def __init__(self, actions, historystorage, modelstorage, d=1):
-        super(egreedy, self).__init__(historystorage, modelstorage, actions)
+    def __init__(self, actions, historystorage, modelstorage, epsilon=0.01, d=1):
+        super(EpsiloGreedy, self).__init__(historystorage, modelstorage, actions)
         self.last_reward = None
+        self.epsilon = epsilon
         self.d = d
         self.greedy_ = None
 
@@ -92,11 +93,14 @@ class egreedy(BaseCbma):
             six.next(self.greedy_)
             score = self.greedy_.send(context)
 
-        for key in score.keys():
-            score[key] = float(score[key])
+        # implement the epsilon part
+        indicator = int(np.random.choice([1, 2], size=1, p=[self.epsilon, 1-self.epsilon]))
+        if indicator == 1:
+            index = np.random.random_integers(0, len(self._actions) - 1, size=n_recommend)
+            actions = [self._actions[i] for i in index]
+        else:
+            actions = [self._actions[i] for i in np.array(score).argsort()[-n_recommend:][::-1]]
 
-        # print(score.argsort()[-n_recommend:][::-1])
-        actions = [self._actions[i] for i in np.array(score.values()).argsort()[-n_recommend:][::-1]]
         history_id = self._historystorage.add_history(context, actions, reward=None)
         return history_id, actions, score
 

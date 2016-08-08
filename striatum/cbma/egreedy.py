@@ -58,7 +58,7 @@ class EpsiloGreedy(BaseCbma):
         while True:
             context = yield
             context = np.matrix(context)
-            theta_tmp = self._modelstorage.get_model()
+            theta_tmp = self._modelstorage.get_model()['theta']
             score = np.dot(context, theta_tmp)
             yield score
         raise StopIteration
@@ -129,7 +129,7 @@ class EpsiloGreedy(BaseCbma):
             matrix_a += np.dot(context.T, context)
             matrix_ainv = np.linalg.solve(matrix_a, np.identity(self.d))
             b += reward * context.T
-            theta = np.dot(matrix_ainv[action], b[action])
+            theta = np.dot(matrix_ainv, b)
         self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})
 
         # Update the history
@@ -144,17 +144,4 @@ class EpsiloGreedy(BaseCbma):
             Actions (arms) for recommendation
         """
 
-        matrix_a = self._modelstorage.get_model()['matrix_a']
-        matrix_ainv = self._modelstorage.get_model()['matrix_ainv']
-        b = self._modelstorage.get_model()['b']
-        theta = self._modelstorage.get_model()['theta']
-
-        for key in actions:
-            if key not in self._actions:
-                matrix_a[key] = np.identity(self.d)
-                matrix_ainv[key] = np.identity(self.d)
-                b[key] = np.zeros((self.d, 1))
-                theta[key] = np.zeros((self.d, 1))
-
         self._actions.extend(actions)
-        self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})

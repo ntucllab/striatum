@@ -126,27 +126,28 @@ class LinUCB(BaseBandit):
     def reward(self, history_id, reward):
         """Reward the previous action with reward.
 
-            Parameters
-            ----------
-            history_id : int
-                The history id of the action to reward.
-            reward : int (or float)
-                A int (or float) representing the feedbck given to the action, the higher the better.
+        Parameters
+        ----------
+        history_id : int
+            The history id of the action to reward.
+
+        reward : dictionary
+            The dictionary {action_id, reward}, where reward is a float.
         """
-        reward_action = self._historystorage.unrewarded_histories[history_id].action
-        reward_action_idx = self._actions.index(reward_action)
-        context = self._historystorage.unrewarded_histories[history_id].context[reward_action_idx]
-        context = np.matrix(context)
 
         # Update the model
         matrix_a = self._modelstorage.get_model()['matrix_a']
         matrix_ainv = self._modelstorage.get_model()['matrix_ainv']
         b = self._modelstorage.get_model()['b']
         theta = self._modelstorage.get_model()['theta']
-        matrix_a[reward_action] += np.dot(context.T, context)
-        matrix_ainv[reward_action] = np.linalg.solve(matrix_a[reward_action], np.identity(self.d))
-        b[reward_action] += reward * context.T
-        theta[reward_action] = np.dot(matrix_ainv[reward_action], b[reward_action])
+
+        for action_id, reward in reward.items():
+            context = self._historystorage.unrewarded_histories[history_id].context[action_id]
+            context = np.matrix(context)
+            matrix_a[action_id] += np.dot(context.T, context)
+            matrix_ainv[action_id] = np.linalg.solve(matrix_a[action_id], np.identity(self.d))
+            b[action_id] += reward * context.T
+            theta[action_id] = np.dot(matrix_ainv[action_id], b[action_id])
         self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})
 
         # Update the history

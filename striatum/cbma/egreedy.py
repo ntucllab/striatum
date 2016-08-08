@@ -1,5 +1,5 @@
-"""LinUCB with Disjoint Linear Models
-This module contains a class that implements LinUCB with disjoint linear model under CBMA setting.
+"""Epsilon Greedy under CBMA Setting
+This module contains a class that implements epsilon-greedy algorithm under CBMA setting.
 """
 
 import six
@@ -10,7 +10,7 @@ import numpy as np
 LOGGER = logging.getLogger(__name__)
 
 
-class EpsiloGreedy(BaseCbma):
+class EpsilonGreedy(BaseCbma):
     """Epsilon-greedy algorithm under cbma setting.
 
     Parameters
@@ -28,8 +28,8 @@ class EpsiloGreedy(BaseCbma):
 
     Attributes
     ----------
-    linucb\_ : 'linucb' object instance
-        The contextual bandit algorithm instances,
+    greedy\_ : 'greedy' object instance
+        The contextual bandit algorithm instances.
 
     References
     ----------
@@ -141,7 +141,6 @@ class EpsiloGreedy(BaseCbma):
         Parameters
         ----------
         actions : {array-like, None}
-            Actions (arms) for recommendation
+            New actions (arms) for recommendation
         """
-
         self._actions.extend(actions)

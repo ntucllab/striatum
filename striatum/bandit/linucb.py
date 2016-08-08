@@ -161,17 +161,20 @@ class LinUCB(BaseBandit):
             actions : {array-like, None}
                 Actions (arms) for recommendation
         """
+        actions_id = [actions[i].action_id for i in range(len(actions))]
+        self._actions.append(actions)
+        self._actions_id.extend(actions_id)
+
         matrix_a = self._modelstorage.get_model()['matrix_a']
         matrix_ainv = self._modelstorage.get_model()['matrix_ainv']
         b = self._modelstorage.get_model()['b']
         theta = self._modelstorage.get_model()['theta']
 
-        for key in actions:
-            if key not in self._actions:
-                matrix_a[key] = np.identity(self.d)
-                matrix_ainv[key] = np.identity(self.d)
-                b[key] = np.zeros((self.d, 1))
-                theta[key] = np.zeros((self.d, 1))
+        for action_id in actions_id:
+            if action_id not in self._actions_id:
+                matrix_a[action_id] = np.identity(self.d)
+                matrix_ainv[action_id] = np.identity(self.d)
+                b[action_id] = np.zeros((self.d, 1))
+                theta[action_id] = np.zeros((self.d, 1))
 
-        self._actions.extend(actions)
         self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})

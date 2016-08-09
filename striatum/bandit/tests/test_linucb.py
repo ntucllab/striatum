@@ -1,17 +1,22 @@
 import numpy as np
 import unittest
 import sys
+
 sys.path.append("..")
 from striatum.storage import history as history
 from striatum.storage import model as model
 from striatum.bandit import linucb
+from striatum.bandit.bandit import Action
 
 
 class TestLinUcb(unittest.TestCase):
     def setUp(self):
         self.modelstorage = model.MemoryModelStorage()
         self.historystorage = history.MemoryHistoryStorage()
-        self.actions = [1, 2, 3]
+        a1 = Action(1, 'a1', 'i love u')
+        a2 = Action(2, 'a2', 'i hate u')
+        a3 = Action(3, 'a3', 'i do not understand')
+        self.actions = [a1, a2, a3]
         self.alpha = 1.00
 
     def test_initialization(self):
@@ -19,27 +24,31 @@ class TestLinUcb(unittest.TestCase):
         self.assertEqual(self.actions, policy._actions)
         self.assertEqual(1.00, policy.alpha)
         self.assertEqual(2, policy.d)
+        self.assertEqual([1, 2, 3], policy._actions_id)
 
     def test_get_first_action(self):
         policy = linucb.LinUCB(self.actions, self.historystorage,
                                self.modelstorage, 1.00, 2)
-        history_id, action = policy.get_action([[1, 1], [2, 2], [3, 3]])
+        context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
+        history_id, action = policy.get_action(context, 1)
         self.assertEqual(history_id, 0)
-        self.assertIn(action, self.actions)
-        self.assertEqual(policy._historystorage.get_history(history_id).context, [[1, 1], [2, 2], [3, 3]])
+        self.assertIn(action[0]['action'], self.actions)
+        self.assertEqual(policy._historystorage.get_history(history_id).context, context)
 
     def test_update_reward(self):
         policy = linucb.LinUCB(self.actions, self.historystorage,
                                self.modelstorage, 1.00, 2)
-        history_id, action = policy.get_action([[1, 1], [2, 2], [3, 3]])
-        policy.reward(history_id, 1)
-        self.assertEqual(policy._historystorage.get_history(history_id).reward, 1)
+        context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
+        history_id, action = policy.get_action(context, 1)
+        policy.reward(history_id, {3: 1})
+        self.assertEqual(policy._historystorage.get_history(history_id).reward, {3: 1})
 
     def test_model_storage(self):
         policy = linucb.LinUCB(self.actions, self.historystorage,
                                self.modelstorage, 1.00, 2)
-        history_id, action = policy.get_action([[1, 1], [2, 2], [3, 3]])
-        policy.reward(history_id, 1)
+        context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
+        history_id, action = policy.get_action(context, 2)
+        policy.reward(history_id, {2: 1, 3: 1})
         self.assertEqual(len(policy._modelstorage.get_model()['b']), 3)
         self.assertEqual(len(policy._modelstorage.get_model()['b'][1]), 2)
         self.assertEqual(len(policy._modelstorage.get_model()['matrix_a']), 3)
@@ -48,36 +57,44 @@ class TestLinUcb(unittest.TestCase):
     def test_delay_reward(self):
         policy = linucb.LinUCB(self.actions, self.historystorage,
                                self.modelstorage, 1.00, 2)
-        history_id, action = policy.get_action([[1, 1], [2, 2], [3, 3]])
-        history_id_2, action_2 = policy.get_action([[0, 0], [3, 3], [6, 6]])
-        policy.reward(history_id, 1)
-        self.assertEqual(policy._historystorage.get_history(history_id).context, [[1, 1], [2, 2], [3, 3]])
-        self.assertEqual(policy._historystorage.get_history(history_id_2).context, [[0, 0], [3, 3], [6, 6]])
-        self.assertEqual(policy._historystorage.get_history(history_id).reward, 1)
-        self.assertEqual(policy._historystorage.get_history(history_id_2).reward, None)
+        context1 = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
+        context2 = {1: [0, 0], 2: [3, 3], 3: [6, 6]}
+        history_id1, action1 = policy.get_action(context1, 2)
+        history_id2, action2 = policy.get_action(context2, 1)
+        policy.reward(history_id1, {2: 1, 3: 1})
+        self.assertEqual(policy._historystorage.get_history(history_id1).context, context1)
+        self.assertEqual(policy._historystorage.get_history(history_id2).context, context2)
+        self.assertEqual(policy._historystorage.get_history(history_id1).reward, {2: 1, 3: 1})
+        self.assertEqual(policy._historystorage.get_history(history_id2).reward, None)
 
     def test_reward_order_descending(self):
         policy = linucb.LinUCB(self.actions, self.historystorage,
                                self.modelstorage, 1.00, 2)
-        history_id, action = policy.get_action([[1, 1], [2, 2], [3, 3]])
-        history_id_2, action_2 = policy.get_action([[0, 0], [3, 3], [6, 6]])
-        policy.reward(history_id_2, 1)
-        self.assertEqual(policy._historystorage.get_history(history_id).context, [[1, 1], [2, 2], [3, 3]])
-        self.assertEqual(policy._historystorage.get_history(history_id_2).context, [[0, 0], [3, 3], [6, 6]])
-        self.assertEqual(policy._historystorage.get_history(history_id).reward, None)
-        self.assertEqual(policy._historystorage.get_history(history_id_2).reward, 1)
+        context1 = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
+        context2 = {1: [0, 0], 2: [3, 3], 3: [6, 6]}
+        history_id1, action1 = policy.get_action(context1, 2)
+        history_id2, action2 = policy.get_action(context2, 1)
+        policy.reward(history_id2, {3: 1})
+        self.assertEqual(policy._historystorage.get_history(history_id1).context, context1)
+        self.assertEqual(policy._historystorage.get_history(history_id2).context, context2)
+        self.assertEqual(policy._historystorage.get_history(history_id1).reward, None)
+        self.assertEqual(policy._historystorage.get_history(history_id2).reward, {3: 1})
 
     def test_add_action(self):
         policy = linucb.LinUCB(self.actions, self.historystorage,
                                self.modelstorage, 1.00, 2)
-        history_id, action = policy.get_action([[1, 1], [2, 2], [3, 3]])
-        policy.add_action([4, 5])
-        policy.reward(history_id, 1)
-        self.assertEqual(policy._actions, [1, 2, 3, 4, 5])
+        context1 = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
+        history_id, action = policy.get_action(context1, 2)
+        a4 = Action(4, 'a4', 'how are you?')
+        a5 = Action(5, 'a5', 'i am fine')
+        policy.add_action([a4, a5])
+        policy.reward(history_id, {3: 1})
         self.assertTrue((policy._modelstorage.get_model()['matrix_a'][4] == np.identity(2)).all())
-        history_id2, action2 = policy.get_action([[1, 1], [2, 2], [3, 3], [4, 4], [5, 5]])
-        policy.reward(history_id2, 1)
-        self.assertFalse((policy._modelstorage.get_model()['matrix_a'][action2] == np.identity(2)).all())
+
+        context2 = {1: [1, 1], 2: [2, 2], 3: [3, 3], 4: [4, 4], 5: [5, 5]}
+        history_id2, action2 = policy.get_action(context2, 1)
+        policy.reward(history_id2, {4: 4, 5: 5})
+        self.assertFalse((policy._modelstorage.get_model()['matrix_a'][4] == np.identity(2)).all())
 
 
 if __name__ == '__main__':

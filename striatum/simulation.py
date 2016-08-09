@@ -20,18 +20,19 @@ def data_simulation(times, d, actions):
         Return
         ---------
         context: dictionary
-            The dictionary stores contexts (n_actions-by-d matrix) at each iteration.
+            The dictionary stores contexts (dictionary with n_actions d-by-1 action) at each iteration.
 
         desired_action:
             The action which will receive reward 1.
     """
-
+    actions_id = [actions[i].action_id for i in range(len(actions))]
     context = {}
-    desired_action = np.zeros(shape=(times, 1))
-    n_actions = len(actions)
+    desired_action = np.zeros((times, 1))
     for t in range(times):
-        context[t] = np.random.uniform(0, 1, (n_actions, d))
-        desired_action[t] = actions[np.argmax(np.sum(context[t], axis=1))]
+        context[t] = {}
+        for i in actions_id:
+            context[t][i] = np.random.uniform(0, 1, (d, 1))
+        desired_action[t] = actions_id[np.argmax([np.sum(context[t][i]) for i in actions_id])]
     return context, desired_action
 
 
@@ -95,15 +96,15 @@ def policy_evaluation(policy, context, desired_action):
     times = len(desired_action)
     seq_error = np.zeros(shape=(times, 1))
     for t in range(times):
-        history_id, action = policy.get_action(context[t])
-        if desired_action[t][0] != action:
-            policy.reward(history_id, 0)
+        history_id, action = policy.get_action(context[t], 1)
+        if desired_action[t][0] != action[0]['action'].action_id:
+            policy.reward(history_id, {action[0]['action'].action_id: 0})
             if t == 0:
                 seq_error[t] = 1.0
             else:
                 seq_error[t] = seq_error[t - 1] + 1.0
         else:
-            policy.reward(history_id, 1)
+            policy.reward(history_id, {action[0]['action'].action_id: 1})
             if t > 0:
                 seq_error[t] = seq_error[t - 1]
     return seq_error

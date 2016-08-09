@@ -101,6 +101,9 @@ class LinUCB(BaseBandit):
         action : list of dictionaries
             In each dictionary, it will contains {rank: Action object, estimated_reward, uncertainty}
         """
+        if context is None:
+            raise ValueError("LinUCB requires contexts for all actions!")
+
         if self.linucb_ is None:
             self.linucb_ = self.linucb
             six.next(self.linucb_)
@@ -131,6 +134,7 @@ class LinUCB(BaseBandit):
         reward : dictionary
             The dictionary {action_id, reward}, where reward is a float.
         """
+        context = self._historystorage.unrewarded_histories[history_id].context
 
         # Update the model
         matrix_a = self._modelstorage.get_model()['matrix_a']
@@ -139,11 +143,10 @@ class LinUCB(BaseBandit):
         theta = self._modelstorage.get_model()['theta']
 
         for action_id, reward_tmp in reward.items():
-            context = self._historystorage.unrewarded_histories[history_id].context[action_id]
-            context = np.matrix(context)
-            matrix_a[action_id] += np.dot(context.T, context)
+            context_tmp = np.matrix(context[action_id])
+            matrix_a[action_id] += np.dot(context_tmp.T, context_tmp)
             matrix_ainv[action_id] = np.linalg.solve(matrix_a[action_id], np.identity(self.d))
-            b[action_id] += reward_tmp * context.T
+            b[action_id] += reward_tmp * context_tmp.T
             theta[action_id] = np.dot(matrix_ainv[action_id], b[action_id])
         self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})
 

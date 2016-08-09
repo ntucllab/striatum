@@ -22,15 +22,20 @@ class LinThompSamp (BaseBandit):
     ----------
     actions : array-like
         Actions (arms) for recommendation.
+
     historystorage: a HistoryStorage object
         The object where we store the histories of contexts and rewards.
+
     modelstorage: a ModelStorage object
         The object where we store the model parameters.
+
     delta: float, 0 < delta < 1
         With probability 1 - delta, LinThompSamp satisfies the theoretical regret bound.
+
     r: float, r >= 0
         Assume that the residual ri(t) - bi(t)^T * muhat is r-sub-gaussian. In this case, r^2 represents the variance
         for residuals of the linear model bi(t)^T.
+
     epsilon: float, 0 < epsilon < 1
         A  parameter  used  by  the  Thompson Sampling algorithm. If the total trials T is known, we can choose
         epsilon = 1/ln(T)
@@ -82,6 +87,7 @@ class LinThompSamp (BaseBandit):
         f = np.matrix(np.zeros(self.d)).T
         self._modelstorage.save_model({'B': b, 'muhat': muhat, 'f': f})
 
+    @property
     def linthompsamp(self):
 
         while True:
@@ -91,60 +97,95 @@ class LinThompSamp (BaseBandit):
             muhat = self._modelstorage.get_model()['muhat']
             v = self.R * np.sqrt(24 / self.epsilon * self.d * np.log(self.t / self.delta))
             mu = np.random.multivariate_normal(np.array(muhat.T)[0], v**2 * np.linalg.inv(b), 1)[0]
-            action_max = self._actions[np.argmax(np.dot(np.array(context), np.array(mu)))]
-            yield action_max
+
+            estimated_reward = {}
+            uncertainty = {}
+            score = {}
+            for action_id in self._actions_id:
+                context_tmp = np.array(context[action_id])
+                estimated_reward[action_id] = float(np.dot(context_tmp, np.array(muhat)))
+                score[action_id] = float(np.dot(context_tmp, np.array(mu)))
+                uncertainty[action_id] = score[action_id] - estimated_reward[action_id]
+            yield estimated_reward, uncertainty, score
+
         raise StopIteration
 
-    def get_action(self, context):
+    def get_action(self, context, n_action=1):
         """Return the action to perform
+
         Parameters
         ----------
-        context : {matrix-like, None}
-            The context of all actions at the current state.
-            Row: action, Column: Context
+        context : dictionary
+            Contexts {action_id: context} of different actions.
+
+        n_action: int
+            Number of actions wanted to recommend users.
 
         Returns
         -------
         history_id : int
             The history id of the action.
-        action : Actions object
-            The action to perform.
+
+        action : list of dictionaries
+            In each dictionary, it will contains {rank: Action object, estimated_reward, uncertainty}
         """
         if context is None:
             raise ValueError("LinThompSamp requires contexts for all actions!")
 
         if self.linthompsamp_ is None:
-            self.linthompsamp_ = self.linthompsamp()
+            self.linthompsamp_ = self.linthompsamp
             six.next(self.linthompsamp_)
-            action_max = self.linthompsamp_.send(context)
+            estimated_reward, uncertainty, score = self.linthompsamp_.send(context)
         else:
             six.next(self.linthompsamp_)
-            action_max = self.linthompsamp_.send(context)
+            estimated_reward, uncertainty, score = self.linthompsamp_.send(context)
 
-        history_id = self._historystorage.add_history(context, action_max, reward=None)
-        return history_id, action_max
+        action_recommend = []
+        actions_recommend_id = [self._actions_id[i] for i in np.array(score.values()).argsort()[-n_action:][::-1]]
+        for action_id in actions_recommend_id:
+            action_id = int(action_id)
+            action = [action for action in self._actions if action.action_id == action_id][0]
+            action_recommend.append({'action': action, 'estimated_reward': estimated_reward[action_id],
+                                     'uncertainty': uncertainty[action_id], 'score': score[action_id]})
+
+        history_id = self._historystorage.add_history(context, action_recommend, reward=None)
+        return history_id, action_recommend
 
     def reward(self, history_id, reward):
         """Reward the previous action with reward.
+
         Parameters
         ----------
         history_id : int
             The history id of the action to reward.
-        reward : float
-            A float representing the feedback given to the action, the higher
-            the better.
+
+        reward : dictionary
+            The dictionary {action_id, reward}, where reward is a float.
         """
         context = self._historystorage.unrewarded_histories[history_id].context
-        reward_action = self._historystorage.unrewarded_histories[history_id].action
-        reward_action_idx = self._actions.index(reward_action)
 
         # Update the model
         b = self._modelstorage.get_model()['B']
         f = self._modelstorage.get_model()['f']
-        b += np.dot(np.matrix(context)[reward_action_idx].T, np.matrix(context)[reward_action_idx])
-        f += reward * np.matrix(context)[reward_action_idx].T
-        muhat = np.dot(np.linalg.inv(b), f)
+
+        for action_id, reward_tmp in reward.items():
+            context_tmp = np.matrix(context[action_id])
+            b += np.dot(context_tmp.T, context_tmp)
+            f += reward_tmp * context_tmp.T
+            muhat = np.dot(np.linalg.inv(b), f)
         self._modelstorage.save_model({'B': b, 'muhat': muhat, 'f': f})
 
         # Update the history
         self._historystorage.add_reward(history_id, reward)
+
+    def add_action(self, actions):
+        """ Add new actions (if needed).
+
+            Parameters
+            ----------
+            actions : list
+                Actions (arms) for recommendation
+        """
+        actions_id = [actions[i].action_id for i in range(len(actions))]
+        self._actions.extend(actions)
+        self._actions_id.extend(actions_id)

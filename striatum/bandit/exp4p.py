@@ -84,8 +84,8 @@ class Exp4P(BaseBandit):
             w_sum = np.sum(w.values())
 
             query_vector = [(1 - self.k * self.pmin) *
-                     np.sum(np.array([w[i] * advice[i][action_id] for i in advisors_id])/w_sum) +
-                     self.pmin for action_id in self.actions_id]
+                            np.sum(np.array([w[i] * advice[i][action_id] for i in advisors_id])/w_sum) +
+                            self.pmin for action_id in self.actions_id]
             query_vector /= sum(query_vector)
             self._modelstorage.save_model({'query_vector': query_vector, 'w': w, 'advice': advice})
 
@@ -148,15 +148,15 @@ class Exp4P(BaseBandit):
 
     def reward(self, history_id, reward):
         """Reward the preivous action with reward.
+
         Parameters
         ----------
         history_id : int
             The history id of the action to reward.
-        reward : float
-            A float representing the feedback given to the action, the higher
-            the better.
+
+        reward : dictionary
+            The dictionary {action_id, reward}, where reward is a float.
         """
-        context = self._historystorage.unrewarded_histories[history_id].context
 
         w_old = self._modelstorage.get_model()['w']
         query_vector = self._modelstorage.get_model()['query_vector']
@@ -165,9 +165,9 @@ class Exp4P(BaseBandit):
         # Update the model
         w_new = {}
         for action_id, reward_tmp in reward.items():
-            rhat = np.zeros(self.k)
-            rhat[action_id] = reward/query_vector[action_id]
-            yhat = [np.dot(advice[i], rhat) for i in advice.keys()]
+            rhat = [{i: 0} for i in self._actions_id]
+            rhat[action_id] = reward_tmp/query_vector[action_id]
+            yhat = [np.dot(advice[i], rhat.values()) for i in advice.keys()]
             vhat = [sum([advice[i][action_id]/query_vector for action_id in self._actions_id]) for i in advice.keys()]
             for i in advice.keys():
                 w_new[i] = w_old[i] + np.exp(self.pmin / 2 * (

@@ -51,11 +51,11 @@ class LinUCB(BaseBandit):
         b = {}  # dictionary - The cumulative return of action a, given the context xt.
         theta = {}  # dictionary - The coefficient vector of actiona with linear model b = dot(xt, theta)
 
-        for actions_id in self._actions_id:
-            matrix_a[actions_id] = np.identity(self.d)
-            matrix_ainv[actions_id] = np.identity(self.d)
-            b[actions_id] = np.zeros((self.d, 1))
-            theta[actions_id] = np.zeros((self.d, 1))
+        for action_id in self._actions_id:
+            matrix_a[action_id] = np.identity(self.d)
+            matrix_ainv[action_id] = np.identity(self.d)
+            b[action_id] = np.zeros((self.d, 1))
+            theta[action_id] = np.zeros((self.d, 1))
 
         self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})
 
@@ -65,20 +65,19 @@ class LinUCB(BaseBandit):
         """
         while True:
             context = yield
-            context = np.matrix(context)
-            matrix_ainv_tmp = np.array(
-                [self._modelstorage.get_model()['matrix_ainv'][action_id] for action_id in self._actions_id])
-            theta_tmp = np.array([self._modelstorage.get_model()['theta'][action_id] for action_id in self._actions_id])
+            matrix_ainv_tmp = self._modelstorage.get_model()['matrix_ainv']
+            theta_tmp = self._modelstorage.get_model()['theta']
 
             # The recommended action should maximize the Linear UCB.
             estimated_reward = {}
             uncertainty = {}
             score = {}
-            for actions_id in self._actions_id:
-                estimated_reward[actions_id] = np.dot(context[action_id], theta_tmp[action_id])
-                uncertainty[actions_id] = self.alpha * np.sqrt(
-                    np.dot(np.dot(context[action_id], matrix_ainv_tmp[action_id]), context[action_id].T))
-                score[actions_id] = estimated_reward[actions_id] + uncertainty[actions_id]
+            for action_id in self._actions_id:
+                context_tmp = np.array(context[action_id])
+                estimated_reward[action_id] = float(np.dot(context_tmp, theta_tmp[action_id]))
+                uncertainty[action_id] = float(self.alpha * np.sqrt(
+                    np.dot(np.dot(context_tmp, matrix_ainv_tmp[action_id]), context_tmp.T)))
+                score[action_id] = estimated_reward[action_id] + uncertainty[action_id]
             yield estimated_reward, uncertainty, score
 
         raise StopIteration
@@ -88,11 +87,11 @@ class LinUCB(BaseBandit):
 
         Parameters
         ----------
-        context : {array-like, None}
-            The context of current state, None if no context available.
+        context : dictionary
+            Contexts {action_id: context} of different actions.
 
         n_action: int
-                Number of actions wanted to recommend users.
+            Number of actions wanted to recommend users.
 
         Returns
         -------
@@ -112,13 +111,11 @@ class LinUCB(BaseBandit):
 
         action_recommend = []
         actions_recommend_id = [self._actions_id[i] for i in np.array(score.values()).argsort()[-n_action:][::-1]]
-
         for action_id in actions_recommend_id:
-            action = [action for action in self._actions if action.action_id == 1][0]
-            estimated_reward = estimated_reward[action_id]
-            uncertainty = uncertainty[action_id]
-            score = score[action_id]
-            action_recommend.append({action, estimated_reward, uncertainty, score})
+            action_id = int(action_id)
+            action = [action for action in self._actions if action.action_id == action_id][0]
+            action_recommend.append({'action': action, 'estimated_reward': estimated_reward[action_id],
+                                     'uncertainty': uncertainty[action_id], 'score': score[action_id]})
 
         history_id = self._historystorage.add_history(context, action_recommend, reward=None)
         return history_id, action_recommend
@@ -141,12 +138,12 @@ class LinUCB(BaseBandit):
         b = self._modelstorage.get_model()['b']
         theta = self._modelstorage.get_model()['theta']
 
-        for action_id, reward in reward.items():
+        for action_id, reward_tmp in reward.items():
             context = self._historystorage.unrewarded_histories[history_id].context[action_id]
             context = np.matrix(context)
             matrix_a[action_id] += np.dot(context.T, context)
             matrix_ainv[action_id] = np.linalg.solve(matrix_a[action_id], np.identity(self.d))
-            b[action_id] += reward * context.T
+            b[action_id] += reward_tmp * context.T
             theta[action_id] = np.dot(matrix_ainv[action_id], b[action_id])
         self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})
 
@@ -162,7 +159,7 @@ class LinUCB(BaseBandit):
                 Actions (arms) for recommendation
         """
         actions_id = [actions[i].action_id for i in range(len(actions))]
-        self._actions.append(actions)
+        self._actions.extend(actions)
         self._actions_id.extend(actions_id)
 
         matrix_a = self._modelstorage.get_model()['matrix_a']
@@ -171,7 +168,6 @@ class LinUCB(BaseBandit):
         theta = self._modelstorage.get_model()['theta']
 
         for action_id in actions_id:
-            if action_id not in self._actions_id:
                 matrix_a[action_id] = np.identity(self.d)
                 matrix_ainv[action_id] = np.identity(self.d)
                 b[action_id] = np.zeros((self.d, 1))

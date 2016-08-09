@@ -31,42 +31,8 @@ def data_simulation(times, d, actions):
     for t in range(times):
         context[t] = {}
         for i in actions_id:
-            context[t][i] = np.random.uniform(0, 1, (d, 1))
+            context[t][i] = np.random.uniform(0, 1, d)
         desired_action[t] = actions_id[np.argmax([np.sum(context[t][i]) for i in actions_id])]
-    return context, desired_action
-
-
-def data_simulation2(times, d, actions):
-
-    """Simulate dataset for exp4p.
-
-        Parameters
-        ----------
-        times: int
-            Total number of (context, reward) tuples you want to generate.
-
-        d: int
-            Dimension of the context.
-
-        actions : list of Action objects
-            List of actions to be chosen from.
-
-        Return
-        ---------
-        context: array-like
-            Contexts (d-by-1 array) at each iteration.
-
-        desired_action:
-            The action which will receive reward 1.
-    """
-
-    context = np.random.uniform(0, 1, (times, d))
-    desired_action = np.zeros(shape=(times, 1))
-    n_actions = len(actions)
-    for t in range(times):
-        for i in range(n_actions):
-            if i * d / n_actions < sum(context[t, :]) <= (i + 1) * d / n_actions:
-                desired_action[t] = actions[i]
     return context, desired_action
 
 

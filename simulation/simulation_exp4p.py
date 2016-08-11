@@ -6,33 +6,53 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
 import numpy as np
+from striatum.bandit.bandit import Action
 
 
-def expert_training(history_context, history_action):
+def train_expert(history_context, history_action):
+    history_context = np.array([history_context[i] for i in history_context.keys()])
     logreg = OneVsRestClassifier(LogisticRegression())
     mnb = OneVsRestClassifier(MultinomialNB(), )
     logreg.fit(history_context, history_action)
     mnb.fit(history_context, history_action)
     return [logreg, mnb]
 
+def get_advice(context, actions_id, experts):
+    advice = {}
+    for time in context.keys():
+        advice[time] = {}
+        for i in range(len(experts)):
+            prob = experts[i].predict_proba(context[time])[0]
+            advice[time][i] = {}
+            for j in range(len(prob)):
+                advice[time][i][actions_id[j]] = prob[j]
+    return advice
+
 
 def main():
     times = 1000
     d = 5
-    actions = [1, 2, 3, 4, 5]
-    history_context, history_action = simulation.data_simulation2(2000, d, actions)
-    models = expert_training(history_context, history_action)
+    a1 = Action(1, 'a1', 'content 1')
+    a2 = Action(2, 'a2', 'content 2')
+    a3 = Action(3, 'a3', 'content 3')
+    a4 = Action(4, 'a4', 'content 4')
+    a5 = Action(5, 'a5', 'content 5')
+    actions = [a1, a2, a3, a4, a5]
+    actions_id = [1, 2, 3, 4, 5]
+    history_context, history_action = simulation.data_simulation(3000, d, actions, "Exp4P")
+    experts = train_expert(history_context, history_action)
 
     # Parameter tunning
     tunning_region = np.arange(0.01, 1, 0.05)
     ctr_tunning = np.zeros(shape=(len(tunning_region), 1))
-    context1, desired_action1 = simulation.data_simulation2(times, d, actions)
+    context1, desired_action1 = simulation.data_simulation(times, d, actions, "Exp4P")
+    advice1 = get_advice(context1, actions_id, experts)
     i = 0
     for delta in tunning_region:
         historystorage = history.MemoryHistoryStorage()
         modelstorage = model.MemoryModelStorage()
-        policy = exp4p.Exp4P(actions, historystorage, modelstorage, models, delta=delta, pmin=None)
-        seq_error = simulation.policy_evaluation(policy, context1, desired_action1)
+        policy = exp4p.Exp4P(actions, historystorage, modelstorage, delta=delta, pmin=None)
+        seq_error = simulation.policy_evaluation(policy, advice1, desired_action1)
         ctr_tunning[i] = times - seq_error[-1]
         i += 1
     ctr_tunning /= times
@@ -41,11 +61,12 @@ def main():
 
     # Regret Analysis
     times = 10000
-    context2, desired_action2 = simulation.data_simulation2(times, d, actions)
+    context2, desired_action2 = simulation.data_simulation(times, d, actions, "Exp4P")
+    advice2 = get_advice(context2, actions_id, experts)
     historystorage = history.MemoryHistoryStorage()
     modelstorage = model.MemoryModelStorage()
-    policy = exp4p.Exp4P(actions, historystorage, modelstorage, models, delta=delta_opt, pmin=None)
-    regret = simulation.regret_calculation(simulation.policy_evaluation(policy, context2, desired_action2))
+    policy = exp4p.Exp4P(actions, historystorage, modelstorage, delta=delta_opt, pmin=None)
+    regret = simulation.regret_calculation(simulation.policy_evaluation(policy, advice2, desired_action2))
     simulation.regret_plot(times, regret, label='delta = ' + str(delta_opt))
 
 

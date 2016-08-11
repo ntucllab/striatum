@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def data_simulation(times, d, actions, algorithm):
+def data_simulation(times, d, actions, algorithm=None):
 
     """Simulate dataset for linucb and linthompsamp algorithms.
 
@@ -38,7 +38,7 @@ def data_simulation(times, d, actions, algorithm):
             context[t] = np.random.uniform(0, 1, d)
             for i in range(len(actions)):
                 if i * d / len(actions) < sum(context[t]) <= (i + 1) * d / len(actions):
-                    desired_action[t] = actions[i]
+                    desired_action[t] = actions_id[i]
 
     else:
         for t in range(times):

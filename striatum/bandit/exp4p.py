@@ -11,7 +11,6 @@ LOGGER = logging.getLogger(__name__)
 
 class Exp4P(BaseBandit):
     """Exp4.P with pre-trained supervised learning algorithm.
-
     Parameters
     ----------
     actions : {array-like, None}
@@ -126,6 +125,7 @@ class Exp4P(BaseBandit):
             self.exp4p_ = self.exp4p()
             six.next(self.exp4p_)
             estimated_reward, uncertainty, score = self.exp4p_.send(context)
+
         else:
             six.next(self.exp4p_)
             estimated_reward, uncertainty, score = self.exp4p_.send(context)
@@ -193,7 +193,6 @@ class Exp4P(BaseBandit):
             actions : list
                 Actions (arms) for recommendation
         """
-        
         actions_id = [actions[i].action_id for i in range(len(actions))]
 
         self._actions.extend(actions)

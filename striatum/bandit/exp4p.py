@@ -10,27 +10,30 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Exp4P(BaseBandit):
-
     """Exp4.P with pre-trained supervised learning algorithm.
+
     Parameters
     ----------
     actions : {array-like, None}
         Actions (arms) for recommendation
+
     historystorage: a HistoryStorage object
         The place where we store the histories of contexts and rewards.
+
     modelstorage: a ModelStorage object
         The place where we store the model parameters.
-    models: the list of pre-trained supervised learning model objects.
-        Use historical contents and rewards to train several multi-class classification models as experts.
-        We strongly recommend to use scikit-learn package to pre-train the experts.
+
     delta: float, 0 < delta <= 1
         With probability 1 - delta, LinThompSamp satisfies the theoretical regret bound.
+
     pmin: float, 0 < pmin < 1/k
         The minimum probability to choose each action.
+
     Attributes
     ----------
     exp4p\_ : 'exp4p' object instance
         The contextual bandit algorithm instances
+
     References
     ----------
     .. [1]  Beygelzimer, Alina, et al. "Contextual bandit algorithms with supervised learning guarantees."
@@ -67,7 +70,6 @@ class Exp4P(BaseBandit):
         self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
 
     def exp4p(self):
-
         """The generator which implements the main part of Exp4.P.
         """
 
@@ -142,7 +144,7 @@ class Exp4P(BaseBandit):
         return history_id, action_recommend
 
     def reward(self, history_id, reward):
-        """Reward the preivous action with reward.
+        """Reward the previous action with reward.
 
         Parameters
         ----------
@@ -191,6 +193,7 @@ class Exp4P(BaseBandit):
             actions : list
                 Actions (arms) for recommendation
         """
+        
         actions_id = [actions[i].action_id for i in range(len(actions))]
 
         self._actions.extend(actions)

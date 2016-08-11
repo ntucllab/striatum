@@ -17,6 +17,7 @@ def train_expert(history_context, history_action):
     mnb.fit(history_context, history_action)
     return [logreg, mnb]
 
+
 def get_advice(context, actions_id, experts):
     advice = {}
     for time in context.keys():

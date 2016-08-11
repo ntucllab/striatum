@@ -11,6 +11,7 @@ LOGGER = logging.getLogger(__name__)
 
 class Exp4P(BaseBandit):
     """Exp4.P with pre-trained supervised learning algorithm.
+
     Parameters
     ----------
     actions : {array-like, None}
@@ -65,7 +66,7 @@ class Exp4P(BaseBandit):
 
         # Initialize the model storage
         query_vector = np.zeros(self.k)     # probability distribution for action recommendation)
-        w = {}              # weight vector for each expert
+        w = {}                              # weight vector for each expert
         self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
 
     def exp4p(self):
@@ -118,7 +119,6 @@ class Exp4P(BaseBandit):
 
             action : list of dictionaries
                 In each dictionary, it will contains {rank: Action object, estimated_reward, uncertainty}
-
         """
 
         if self.exp4p_ is None:
@@ -146,13 +146,13 @@ class Exp4P(BaseBandit):
     def reward(self, history_id, reward):
         """Reward the previous action with reward.
 
-        Parameters
-        ----------
-        history_id : int
-            The history id of the action to reward.
+            Parameters
+            ----------
+            history_id : int
+                The history id of the action to reward.
 
-        reward : dictionary
-            The dictionary {action_id, reward}, where reward is a float.
+            reward : dictionary
+                The dictionary {action_id, reward}, where reward is a float.
         """
 
         w_old = self._modelstorage.get_model()['w']
@@ -165,7 +165,6 @@ class Exp4P(BaseBandit):
             query_vector[actions_id[k]] = query_vector_tmp[k]
 
         # Update the model
-
         for action_id, reward_tmp in reward.items():
             rhat = {}
             for i in actions_id:
@@ -197,6 +196,7 @@ class Exp4P(BaseBandit):
             actions : list
                 Actions (arms) for recommendation
         """
+
         actions_id = [actions[i].action_id for i in range(len(actions))]
 
         self._actions.extend(actions)

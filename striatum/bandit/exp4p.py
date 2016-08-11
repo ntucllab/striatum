@@ -39,7 +39,6 @@ class Exp4P(BaseBandit):
 
     def __init__(self, actions, historystorage, modelstorage, delta=0.1, pmin=None):
         super(Exp4P, self).__init__(historystorage, modelstorage, actions)
-        self.models = models
         self.n_total = 0
         self.k = len(self._actions)          # number of actions (i.e. K in the paper)
         self.exp4p_ = None
@@ -65,8 +64,7 @@ class Exp4P(BaseBandit):
         # Initialize the model storage
         query_vector = np.zeros(self.k)     # probability distribution for action recommendation)
         w = {}              # weight vector for each expert
-        advice = None
-        self._modelstorage.save_model({'query_vector': query_vector, 'w': w, 'advice': advice})
+        self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
 
     def exp4p(self):
 
@@ -74,8 +72,8 @@ class Exp4P(BaseBandit):
         """
 
         while True:
-            advice = yield
-            advisors_id = advice.keys()
+            context = yield
+            advisors_id = context.keys()
 
             w = self._modelstorage.get_model()['w']
             if w == {}:
@@ -84,10 +82,10 @@ class Exp4P(BaseBandit):
             w_sum = np.sum(w.values())
 
             query_vector = [(1 - self.k * self.pmin) *
-                            np.sum(np.array([w[i] * advice[i][action_id] for i in advisors_id])/w_sum) +
-                            self.pmin for action_id in self.actions_id]
+                            np.sum(np.array([w[i] * context[i][action_id] for i in advisors_id])/w_sum) +
+                            self.pmin for action_id in self._actions_id]
             query_vector /= sum(query_vector)
-            self._modelstorage.save_model({'query_vector': query_vector, 'w': w, 'advice': advice})
+            self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
 
             estimated_reward = {}
             uncertainty = {}
@@ -100,20 +98,17 @@ class Exp4P(BaseBandit):
 
         raise StopIteration
 
-    def get_action(self, context=None, n_action=1, advice=None):
+    def get_action(self, context=None, n_action=1):
         """Return the action to perform
 
             Parameters
             ----------
-            context : {array-like, None}
-                The context of current state, None if no context available.
+            context : dictionary
+                The advice vectors from other experts, {expert_id: advice_vectors}, where advice_vectors is
+                a dictionary {action_id: probability} predicted probability for each action.
 
             n_action: int
                 Number of actions wanted to recommend users.
-
-            advice: dictionary
-                The advice vectors from othe experts, {expert_id: advice_vectors}, where advice_vectors is
-                a dictionary {action_id: probability} predicted probability for each action.
 
             Returns
             -------
@@ -128,13 +123,13 @@ class Exp4P(BaseBandit):
         if self.exp4p_ is None:
             self.exp4p_ = self.exp4p()
             six.next(self.exp4p_)
-            estimated_reward, uncertainty, score = self.exp4p_.send(advice)
+            estimated_reward, uncertainty, score = self.exp4p_.send(context)
         else:
             six.next(self.exp4p_)
-            estimated_reward, uncertainty, score = self.exp4p_.send(advice)
+            estimated_reward, uncertainty, score = self.exp4p_.send(context)
 
         action_recommend = []
-        actions_recommend_id = np.random.choice(self._actions_id, size=n_action, p=score, replace=False)
+        actions_recommend_id = np.random.choice(self._actions_id, size=n_action, p=score.values(), replace=False)
 
         for action_id in actions_recommend_id:
             action_id = int(action_id)
@@ -160,24 +155,30 @@ class Exp4P(BaseBandit):
 
         w_old = self._modelstorage.get_model()['w']
         query_vector = self._modelstorage.get_model()['query_vector']
-        advice = self._modelstorage.get_model()['advice']
+        context = self._historystorage.unrewarded_histories[history_id].context
+        actions_id = context[context.keys()[0]].keys()
 
         # Update the model
-        w_new = {}
+
         for action_id, reward_tmp in reward.items():
-            rhat = [{i: 0} for i in self._actions_id]
+            rhat = {}
+            for i in actions_id:
+                rhat[i] = 0.0
+            w_new = {}
+            yhat = {}
+            vhat = {}
             rhat[action_id] = reward_tmp/query_vector[action_id]
-            yhat = [np.dot(advice[i], rhat.values()) for i in advice.keys()]
-            vhat = [sum([advice[i][action_id]/query_vector for action_id in self._actions_id]) for i in advice.keys()]
-            for i in advice.keys():
+            for i in context.keys():
+                yhat[i] = np.dot(context[i].values(), rhat.values())
+                vhat[i] = sum([context[i][k]/query_vector for k in actions_id])
                 w_new[i] = w_old[i] + np.exp(self.pmin / 2 * (
                     yhat[i] + vhat[i] * np.sqrt(
-                        np.log(len(advice) / self.delta) / self.k / self.n_total
+                        np.log(len(context) / self.delta) / self.k / self.n_total
                         )
                     )
                 )
 
-        self._modelstorage.save_model({'query_vector': query_vector, 'w': w_new, 'advice': advice})
+        self._modelstorage.save_model({'query_vector': query_vector, 'w': w_new})
 
         # Update the history
         self._historystorage.add_reward(history_id, reward)
@@ -191,5 +192,6 @@ class Exp4P(BaseBandit):
                 Actions (arms) for recommendation
         """
         actions_id = [actions[i].action_id for i in range(len(actions))]
+
         self._actions.extend(actions)
         self._actions_id.extend(actions_id)

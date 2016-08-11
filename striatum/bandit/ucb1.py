@@ -39,66 +39,111 @@ class UCB1(BaseBandit):
         self.ucb1_ = None
         empirical_reward = {}
         n_actions = {}
-        for key in self._actions:
-            empirical_reward[key] = 1.0
-            n_actions[key] = 1.0
+        for action_id in self._actions_id:
+            empirical_reward[action_id] = 1.0
+            n_actions[action_id] = 1.0
         n_total = float(len(self._actions))
         self._modelstorage.save_model({'empirical_reward': empirical_reward,
                                       'n_actions': n_actions, 'n_total': n_total})
 
     def ucb1(self):
         while True:
-            empirical_reward = np.array(
-                [self._modelstorage.get_model()['empirical_reward'][action] for action in self._actions])
-            n_actions = np.array([self._modelstorage.get_model()['n_actions'][action] for action in self._actions])
+            empirical_reward = self._modelstorage.get_model()['empirical_reward']
+            n_actions = self._modelstorage.get_model()['n_actions']
             n_total = self._modelstorage.get_model()['n_total']
-            action_max = self._actions[np.argmax(empirical_reward/n_actions + np.sqrt(2*np.log(n_total)/n_actions))]
-            yield action_max
+
+            estimated_reward = {}
+            uncertainty = {}
+            score = {}
+            for action_id in self._actions_id:
+                estimated_reward[action_id] = empirical_reward[action_id]/n_actions[action_id]
+                uncertainty[action_id] = np.sqrt(2*np.log(n_total)/n_actions[action_id])
+                score[action_id] = estimated_reward[action_id] + uncertainty[action_id]
+            yield estimated_reward, uncertainty, score
+
         raise StopIteration
 
-    def get_action(self, context):
+    def get_action(self, context, n_action=1):
         """Return the action to perform
-        Parameters
-        ----------
-        context : {array-like, None}
-            The context of current state, None if no context available.
-        Returns
-        -------
-        history_id : int
-            The history id of the action.
-        action : Actions object
-            The action to perform.
+
+            Parameters
+            ----------
+            context : {array-like, None}
+                The context of current state, None if no context available.
+
+            n_action: int
+                Number of actions wanted to recommend users.
+
+            Returns
+            -------
+            history_id : int
+                The history id of the action.
+
+            action : list of dictionaries
+                In each dictionary, it will contains {rank: Action object, estimated_reward, uncertainty}
         """
+
         if self.ucb1_ is None:
             self.ucb1_ = self.ucb1()
-            action_max = six.next(self.ucb1_)
+            estimated_reward, uncertainty, score = six.next(self.ucb1_)
         else:
-            action_max = six.next(self.ucb1_)
+            estimated_reward, uncertainty, score = six.next(self.ucb1_)
 
-        # update the history
-        history_id = self._historystorage.add_history(context, action_max, reward=None)
-        return history_id, action_max
+        action_recommend = []
+        actions_recommend_id = [self._actions_id[i] for i in np.array(score.values()).argsort()[-n_action:][::-1]]
+        for action_id in actions_recommend_id:
+            action_id = int(action_id)
+            action = [action for action in self._actions if action.action_id == action_id][0]
+            action_recommend.append({'action': action, 'estimated_reward': estimated_reward[action_id],
+                                     'uncertainty': uncertainty[action_id], 'score': score[action_id]})
+
+        history_id = self._historystorage.add_history(context, action_recommend, reward=None)
+        return history_id, action_recommend
 
     def reward(self, history_id, reward):
         """Reward the previous action with reward.
-        Parameters
-        ----------
-        history_id : int
-            The history id of the action to reward.
-        reward : float
-            A float representing the feedback given to the action, the higher
-            the better.
+
+            Parameters
+            ----------
+            history_id : int
+                The history id of the action to reward.
+
+            reward : dictionary
+                The dictionary {action_id, reward}, where reward is a float.
         """
-        reward_action = self._historystorage.unrewarded_histories[history_id].action
 
         # Update the model
         empirical_reward = self._modelstorage.get_model()['empirical_reward']
         n_actions = self._modelstorage.get_model()['n_actions']
         n_total = self._modelstorage.get_model()['n_total']
-        empirical_reward[reward_action] += 1.0
-        n_actions[reward_action] += 1.0
-        n_total += 1.0
-        self._modelstorage.save_model({'empirical_reward': empirical_reward,
-                                       'n_actions': n_actions, 'n_total': n_total})
+        for action_id, reward_tmp in reward.items():
+            empirical_reward[action_id] += reward_tmp
+            n_actions[action_id] += 1.0
+            n_total += 1.0
+            self._modelstorage.save_model({'empirical_reward': empirical_reward,
+                                           'n_actions': n_actions, 'n_total': n_total})
         # Update the history
         self._historystorage.add_reward(history_id, reward)
+
+    def add_action(self, actions):
+        """ Add new actions (if needed).
+
+            Parameters
+            ----------
+            actions : {array-like, None}
+                Actions (arms) for recommendation
+        """
+        actions_id = [actions[i].action_id for i in range(len(actions))]
+        self._actions.extend(actions)
+        self._actions_id.extend(actions_id)
+
+        empirical_reward = self._modelstorage.get_model()['empirical_reward']
+        n_actions = self._modelstorage.get_model()['n_actions']
+        n_total = self._modelstorage.get_model()['n_total']
+
+        for action_id in self._actions_id:
+            empirical_reward[action_id] = 1.0
+            n_actions[action_id] = 1.0
+
+        self._modelstorage.save_model({'empirical_reward': empirical_reward,
+                                       'n_actions': n_actions, 'n_total': n_total})

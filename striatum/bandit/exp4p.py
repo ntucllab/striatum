@@ -156,9 +156,13 @@ class Exp4P(BaseBandit):
         """
 
         w_old = self._modelstorage.get_model()['w']
-        query_vector = self._modelstorage.get_model()['query_vector']
+        query_vector_tmp = self._modelstorage.get_model()['query_vector']
         context = self._historystorage.unrewarded_histories[history_id].context
         actions_id = context[context.keys()[0]].keys()
+
+        query_vector = {}
+        for k in range(len(query_vector_tmp)):
+            query_vector[actions_id[k]] = query_vector_tmp[k]
 
         # Update the model
 
@@ -172,7 +176,7 @@ class Exp4P(BaseBandit):
             rhat[action_id] = reward_tmp/query_vector[action_id]
             for i in context.keys():
                 yhat[i] = np.dot(context[i].values(), rhat.values())
-                vhat[i] = sum([context[i][k]/query_vector for k in actions_id])
+                vhat[i] = sum([context[i][k]/np.array(query_vector.values()) for k in actions_id])
                 w_new[i] = w_old[i] + np.exp(self.pmin / 2 * (
                     yhat[i] + vhat[i] * np.sqrt(
                         np.log(len(context) / self.delta) / self.k / self.n_total

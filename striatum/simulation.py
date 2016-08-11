@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def data_simulation(times, d, actions):
+def data_simulation(times, d, actions, algorithm):
 
     """Simulate dataset for linucb and linthompsamp algorithms.
 
@@ -17,6 +17,9 @@ def data_simulation(times, d, actions):
         actions : list of Action objects
             List of actions to be chosen from.
 
+        algorithm: string
+            The bandit algorithm you want to use.
+
         Return
         ---------
         context: dictionary
@@ -25,14 +28,24 @@ def data_simulation(times, d, actions):
         desired_action:
             The action which will receive reward 1.
     """
+
     actions_id = [actions[i].action_id for i in range(len(actions))]
     context = {}
     desired_action = np.zeros((times, 1))
-    for t in range(times):
-        context[t] = {}
-        for i in actions_id:
-            context[t][i] = np.random.uniform(0, 1, d)
-        desired_action[t] = actions_id[np.argmax([np.sum(context[t][i]) for i in actions_id])]
+
+    if algorithm == 'Exp4P':
+        for t in range(times):
+            context[t] = np.random.uniform(0, 1, d)
+            for i in range(len(actions)):
+                if i * d / len(actions) < sum(context[t]) <= (i + 1) * d / len(actions):
+                    desired_action[t] = actions[i]
+
+    else:
+        for t in range(times):
+            context[t] = {}
+            for i in actions_id:
+                context[t][i] = np.random.uniform(0, 1, d)
+            desired_action[t] = actions_id[np.argmax([np.sum(context[t][i]) for i in actions_id])]
     return context, desired_action
 
 

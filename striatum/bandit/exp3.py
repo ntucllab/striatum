@@ -70,18 +70,20 @@ class Exp3(BaseBandit):
             w = self._modelstorage.get_model()['w']
             w_sum = np.sum(w.values())
 
+            query_vector = {}
             for action_id in self._actions_id:
-                query_vector = (1 - self.gamma) * w[action_id] / w_sum + self.gamma / len(self._actions_id)
+                query_vector[action_id] = (1 - self.gamma) * w[action_id] / w_sum + self.gamma / len(self._actions_id)
 
             self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
 
             estimated_reward = {}
             uncertainty = {}
             score = {}
-            for i in range(self.k):
-                estimated_reward[self._actions_id[i]] = query_vector[i]
-                uncertainty[self._actions_id[i]] = 0
-                score[self._actions_id[i]] = query_vector[i]
+            for action_id in self._actions_id:
+                estimated_reward[action_id] = query_vector[action_id]
+                uncertainty[action_id] = 0
+                score[action_id] = query_vector[action_id]
+
             yield estimated_reward, uncertainty, score
 
         raise StopIteration
@@ -146,7 +148,7 @@ class Exp3(BaseBandit):
             for i in actions_id:
                 rhat[i] = 0.0
             rhat[action_id] = reward_tmp / query_vector[action_id]
-            w[action_id] *= np.exp(self.gamma * rhat / len(self._actions_id))
+            w[action_id] *= np.exp(self.gamma * rhat[action_id] / len(self._actions_id))
 
         self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
 

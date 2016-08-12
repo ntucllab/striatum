@@ -59,6 +59,16 @@ class Ucb1(unittest.TestCase):
         self.assertEqual(policy._historystorage.get_history(history_id).reward, None)
         self.assertEqual(policy._historystorage.get_history(history_id_2).reward, {1: 0, 2: 0})
 
+    def test_add_action(self):
+        policy = ucb1.UCB1(self.actions, self.historystorage, self.modelstorage)
+        history_id, action = policy.get_action(context=None, n_action=1)
+        a6 = Action(6, 'a6', 'how are you?')
+        a7 = Action(7, 'a7', 'i am fine')
+        policy.add_action([a6, a7])
+        policy.reward(history_id, {3: 1})
+        self.assertEqual(len(policy._actions), 7)
+        self.assertEqual(policy._actions_id, [1, 2, 3, 4, 5, 6, 7])
+
 
 if __name__ == '__main__':
     unittest.main()

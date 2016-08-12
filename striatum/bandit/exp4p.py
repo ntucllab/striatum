@@ -12,32 +12,32 @@ LOGGER = logging.getLogger(__name__)
 class Exp4P(BaseBandit):
     """Exp4.P with pre-trained supervised learning algorithm.
 
-    Parameters
-    ----------
-    actions : {array-like, None}
-        Actions (arms) for recommendation
+        Parameters
+        ----------
+        actions : {array-like, None}
+            Actions (arms) for recommendation
 
-    historystorage: a HistoryStorage object
-        The place where we store the histories of contexts and rewards.
+        historystorage: a HistoryStorage object
+            The place where we store the histories of contexts and rewards.
 
-    modelstorage: a ModelStorage object
-        The place where we store the model parameters.
+        modelstorage: a ModelStorage object
+            The place where we store the model parameters.
 
-    delta: float, 0 < delta <= 1
-        With probability 1 - delta, LinThompSamp satisfies the theoretical regret bound.
+        delta: float, 0 < delta <= 1
+            With probability 1 - delta, LinThompSamp satisfies the theoretical regret bound.
 
-    pmin: float, 0 < pmin < 1/k
-        The minimum probability to choose each action.
+        pmin: float, 0 < pmin < 1/k
+            The minimum probability to choose each action.
 
-    Attributes
-    ----------
-    exp4p\_ : 'exp4p' object instance
-        The contextual bandit algorithm instances
+        Attributes
+        ----------
+        exp4p\_ : 'exp4p' object instance
+            The contextual bandit algorithm instances
 
-    References
-    ----------
-    .. [1]  Beygelzimer, Alina, et al. "Contextual bandit algorithms with supervised learning guarantees."
-            International Conference on Artificial Intelligence and Statistics (AISTATS). 2011u.
+        References
+        ----------
+        .. [1]  Beygelzimer, Alina, et al. "Contextual bandit algorithms with supervised learning guarantees."
+                International Conference on Artificial Intelligence and Statistics (AISTATS). 2011u.
     """
 
     def __init__(self, actions, historystorage, modelstorage, delta=0.1, pmin=None):

@@ -113,22 +113,23 @@ class LinThompSamp (BaseBandit):
     def get_action(self, context, n_action=1):
         """Return the action to perform
 
-        Parameters
-        ----------
-        context : dictionary
-            Contexts {action_id: context} of different actions.
+            Parameters
+            ----------
+            context : dictionary
+                Contexts {action_id: context} of different actions.
 
-        n_action: int
-            Number of actions wanted to recommend users.
+            n_action: int
+                Number of actions wanted to recommend users.
 
-        Returns
-        -------
-        history_id : int
-            The history id of the action.
+            Returns
+            -------
+            history_id : int
+                The history id of the action.
 
-        action : list of dictionaries
-            In each dictionary, it will contains {rank: Action object, estimated_reward, uncertainty}
+            action : list of dictionaries
+                In each dictionary, it will contains {rank: Action object, estimated_reward, uncertainty}
         """
+
         if context is None:
             raise ValueError("LinThompSamp requires contexts for all actions!")
 
@@ -154,13 +155,13 @@ class LinThompSamp (BaseBandit):
     def reward(self, history_id, reward):
         """Reward the previous action with reward.
 
-        Parameters
-        ----------
-        history_id : int
-            The history id of the action to reward.
+            Parameters
+            ----------
+            history_id : int
+                The history id of the action to reward.
 
-        reward : dictionary
-            The dictionary {action_id, reward}, where reward is a float.
+            reward : dictionary
+                The dictionary {action_id, reward}, where reward is a float.
         """
         context = self._historystorage.unrewarded_histories[history_id].context
 

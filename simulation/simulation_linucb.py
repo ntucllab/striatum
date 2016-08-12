@@ -5,6 +5,7 @@ from striatum import simulation
 import numpy as np
 from striatum.bandit.bandit import Action
 
+
 def main():
     times = 1000
     d = 5

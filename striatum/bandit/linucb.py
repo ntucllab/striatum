@@ -16,26 +16,30 @@ class LinUCB(BaseBandit):
 
     Parameters
     ----------
-    actions : {array-like, None}
-        Actions (arms) for recommendation
-    historystorage: a :py:mod:'striatum.storage.HistoryStorage' object
-        The object where we store the histories of contexts and rewards.
-    modelstorage: a :py:mod:'straitum.storage.ModelStorage' object
-        The object where we store the model parameters.
-    alpha: float
-        The constant determines the width of the upper confidence bound.
-    d: int
-        The dimension of the context.
+        actions : {array-like, None}
+            Actions (arms) for recommendation
 
-    Attributes
-    ----------
-    linucb\_ : 'linucb' object instance
-        The contextual bandit algorithm instances,
+        historystorage: a :py:mod:'striatum.storage.HistoryStorage' object
+            The object where we store the histories of contexts and rewards.
 
-    References
-    ----------
-    .. [1]  Lihong Li, et al. "A Contextual-Bandit Approach to Personalized News Article Recommendation."
-            Proceedings of the 19th International Conference on World Wide Web (WWW), 2010.
+        modelstorage: a :py:mod:'straitum.storage.ModelStorage' object
+            The object where we store the model parameters.
+
+        alpha: float
+            The constant determines the width of the upper confidence bound.
+
+        d: int
+            The dimension of the context.
+
+        Attributes
+        ----------
+        linucb\_ : 'linucb' object instance
+            The contextual bandit algorithm instances,
+
+        References
+        ----------
+        .. [1]  Lihong Li, et al. "A Contextual-Bandit Approach to Personalized News Article Recommendation."
+                In Proceedings of the 19th International Conference on World Wide Web (WWW), 2010.
     """
 
     def __init__(self, actions, historystorage, modelstorage, alpha, d=1):
@@ -85,22 +89,23 @@ class LinUCB(BaseBandit):
     def get_action(self, context, n_action=1):
         """Return the action to perform
 
-        Parameters
-        ----------
-        context : dictionary
-            Contexts {action_id: context} of different actions.
+            Parameters
+            ----------
+            context : dictionary
+                Contexts {action_id: context} of different actions.
 
-        n_action: int
-            Number of actions wanted to recommend users.
+            n_action: int
+                Number of actions wanted to recommend users.
 
-        Returns
-        -------
-        history_id : int
-            The history id of the action.
+            Returns
+            -------
+            history_id : int
+                The history id of the action.
 
-        action : list of dictionaries
-            In each dictionary, it will contains {rank: Action object, estimated_reward, uncertainty}
+            action_recommend : list of dictionaries
+                In each dictionary, it will contains {rank: Action object, estimated_reward, uncertainty}
         """
+
         if context is None:
             raise ValueError("LinUCB requires contexts for all actions!")
 
@@ -126,14 +131,15 @@ class LinUCB(BaseBandit):
     def reward(self, history_id, reward):
         """Reward the previous action with reward.
 
-        Parameters
-        ----------
-        history_id : int
-            The history id of the action to reward.
+            Parameters
+            ----------
+            history_id : int
+                The history id of the action to reward.
 
-        reward : dictionary
-            The dictionary {action_id, reward}, where reward is a float.
+            reward : dictionary
+                The dictionary {action_id, reward}, where reward is a float.
         """
+
         context = self._historystorage.unrewarded_histories[history_id].context
 
         # Update the model
@@ -161,6 +167,7 @@ class LinUCB(BaseBandit):
             actions : {array-like, None}
                 Actions (arms) for recommendation
         """
+
         actions_id = [actions[i].action_id for i in range(len(actions))]
         self._actions.extend(actions)
         self._actions_id.extend(actions_id)

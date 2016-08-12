@@ -20,10 +20,13 @@ class Exp3(BaseBandit):
         ----------
         actions : array-like
             Actions (arms) for recommendation.
+
         historystorage: a HistoryStorage object
             The place where we store the histories of contexts and rewards.
+
         modelstorage: a ModelStorage object
             The place where we store the model parameters.
+
         gamma: float, 0 < gamma <= 1
             The parameter used to control the minimum chosen probability for each action.
 
@@ -36,7 +39,7 @@ class Exp3(BaseBandit):
         ----------
         .. [1]  Peter Auer, Nicolo Cesa-Bianchi, et al. "The non-stochastic multi-armed bandit problem ."
                 SIAM Journal of Computing. 2002.
-        """
+    """
 
     def __init__(self, actions, historystorage, modelstorage, gamma):
         super(Exp3, self).__init__(historystorage, modelstorage, actions)
@@ -62,7 +65,6 @@ class Exp3(BaseBandit):
         self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
 
     def exp3(self):
-
         """The generator which implements the main part of Exp3.
         """
 

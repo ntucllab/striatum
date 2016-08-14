@@ -131,7 +131,7 @@ class Exp4P(BaseBandit):
             estimated_reward, uncertainty, score = self.exp4p_.send(context)
 
         action_recommend = []
-        actions_recommend_id = np.random.choice(self._actions_id, size=n_action, p=score.values(), replace=False)
+        actions_recommend_id = sorted(score, key=score.get, reverse=True)[:n_action]
 
         for action_id in actions_recommend_id:
             action_id = int(action_id)

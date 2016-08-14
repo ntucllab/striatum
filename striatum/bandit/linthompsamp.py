@@ -142,7 +142,7 @@ class LinThompSamp (BaseBandit):
             estimated_reward, uncertainty, score = self.linthompsamp_.send(context)
 
         action_recommend = []
-        actions_recommend_id = [self._actions_id[i] for i in np.array(score.values()).argsort()[-n_action:][::-1]]
+        actions_recommend_id = sorted(score, key=score.get, reverse=True)[:n_action]
         for action_id in actions_recommend_id:
             action_id = int(action_id)
             action = [action for action in self._actions if action.action_id == action_id][0]

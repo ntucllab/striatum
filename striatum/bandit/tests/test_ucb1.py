@@ -67,7 +67,7 @@ class Ucb1(unittest.TestCase):
         policy.add_action([a6, a7])
         policy.reward(history_id, {3: 1})
         self.assertEqual(len(policy._actions), 7)
-        self.assertEqual(policy._actions_id, [1, 2, 3, 4, 5, 6, 7])
+        self.assertEqual(policy.action_ids, [1, 2, 3, 4, 5, 6, 7])
 
 
 if __name__ == '__main__':

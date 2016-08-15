@@ -85,7 +85,7 @@ class Exp4P(BaseBandit):
 
             query_vector = [(1 - self.k * self.pmin) *
                             np.sum(np.array([w[i] * context[i][action_id] for i in advisors_id])/w_sum) +
-                            self.pmin for action_id in self._actions_id]
+                            self.pmin for action_id in self.action_ids]
             query_vector /= sum(query_vector)
             self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
 
@@ -93,9 +93,9 @@ class Exp4P(BaseBandit):
             uncertainty = {}
             score = {}
             for i in range(self.k):
-                estimated_reward[self._actions_id[i]] = query_vector[i]
-                uncertainty[self._actions_id[i]] = 0
-                score[self._actions_id[i]] = query_vector[i]
+                estimated_reward[self.action_ids[i]] = query_vector[i]
+                uncertainty[self.action_ids[i]] = 0
+                score[self.action_ids[i]] = query_vector[i]
             yield estimated_reward, uncertainty, score
 
         raise StopIteration
@@ -157,16 +157,16 @@ class Exp4P(BaseBandit):
         w_old = self._modelstorage.get_model()['w']
         query_vector_tmp = self._modelstorage.get_model()['query_vector']
         context = self._historystorage.unrewarded_histories[history_id].context
-        actions_id = context[context.keys()[0]].keys()
+        action_ids = context[context.keys()[0]].keys()
 
         query_vector = {}
         for k in range(len(query_vector_tmp)):
-            query_vector[actions_id[k]] = query_vector_tmp[k]
+            query_vector[action_ids[k]] = query_vector_tmp[k]
 
         # Update the model
         for action_id, reward_tmp in rewards.items():
             rhat = {}
-            for i in actions_id:
+            for i in action_ids:
                 rhat[i] = 0.0
             w_new = {}
             yhat = {}
@@ -174,7 +174,7 @@ class Exp4P(BaseBandit):
             rhat[action_id] = reward_tmp/query_vector[action_id]
             for i in context.keys():
                 yhat[i] = np.dot(context[i].values(), rhat.values())
-                vhat[i] = sum([context[i][k]/np.array(query_vector.values()) for k in actions_id])
+                vhat[i] = sum([context[i][k]/np.array(query_vector.values()) for k in action_ids])
                 w_new[i] = w_old[i] + np.exp(self.pmin / 2 * (
                     yhat[i] + vhat[i] * np.sqrt(
                         np.log(len(context) / self.delta) / self.k / self.n_total
@@ -196,7 +196,5 @@ class Exp4P(BaseBandit):
             A list of Action objects for recommendation
         """
 
-        actions_id = [actions[i].action_id for i in range(len(actions))]
-
+        action_ids = [actions[i].action_id for i in range(len(actions))]
         self._actions.extend(actions)
-        self._actions_id.extend(actions_id)

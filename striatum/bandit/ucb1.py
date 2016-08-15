@@ -41,7 +41,7 @@ class UCB1(BaseBandit):
         self.ucb1_ = None
         empirical_reward = {}
         action_times = {}
-        for action_id in self._actions_id:
+        for action_id in self.action_ids:
             empirical_reward[action_id] = 1.0
             action_times[action_id] = 1.0
         total_time = float(len(self._actions))
@@ -57,7 +57,7 @@ class UCB1(BaseBandit):
             estimated_reward = {}
             uncertainty = {}
             score = {}
-            for action_id in self._actions_id:
+            for action_id in self.action_ids:
                 estimated_reward[action_id] = empirical_reward[action_id]/action_times[action_id]
                 uncertainty[action_id] = np.sqrt(2*np.log(total_time)/action_times[action_id])
                 score[action_id] = estimated_reward[action_id] + uncertainty[action_id]
@@ -135,15 +135,14 @@ class UCB1(BaseBandit):
         actions : iterable
             A list of Action objects for recommendation
         """
-        actions_id = [actions[i].action_id for i in range(len(actions))]
+        action_ids = [actions[i].action_id for i in range(len(actions))]
         self._actions.extend(actions)
-        self._actions_id.extend(actions_id)
 
         empirical_reward = self._modelstorage.get_model()['empirical_reward']
         action_times = self._modelstorage.get_model()['action_times']
         total_time = self._modelstorage.get_model()['total_time']
 
-        for action_id in self._actions_id:
+        for action_id in self.action_ids:
             empirical_reward[action_id] = 1.0
             action_times[action_id] = 1.0
 

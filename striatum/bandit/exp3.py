@@ -59,7 +59,7 @@ class Exp3(BaseBandit):
         # Initialize the model storage
         query_vector = {}
         w = {}
-        for action_id in self._actions_id:
+        for action_id in self.action_ids:
             query_vector[action_id] = 0     # probability distribution for action recommendation)
             w[action_id] = 1                # weight vector
         self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
@@ -73,15 +73,15 @@ class Exp3(BaseBandit):
             w_sum = np.sum(w.values())
 
             query_vector = {}
-            for action_id in self._actions_id:
-                query_vector[action_id] = (1 - self.gamma) * w[action_id] / w_sum + self.gamma / len(self._actions_id)
+            for action_id in self.action_ids:
+                query_vector[action_id] = (1 - self.gamma) * w[action_id] / w_sum + self.gamma / len(self.action_ids)
 
             self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
 
             estimated_reward = {}
             uncertainty = {}
             score = {}
-            for action_id in self._actions_id:
+            for action_id in self.action_ids:
                 estimated_reward[action_id] = query_vector[action_id]
                 uncertainty[action_id] = 0
                 score[action_id] = query_vector[action_id]
@@ -117,7 +117,7 @@ class Exp3(BaseBandit):
             estimated_reward, uncertainty, score = six.next(self.exp3_)
 
         action_recommendation = []
-        action_recommendation_ids = np.random.choice(self._actions_id, size=n_actions, p=score.values(), replace=False)
+        action_recommendation_ids = np.random.choice(self.action_ids, size=n_actions, p=score.values(), replace=False)
 
         for action_id in action_recommendation_ids:
             action_id = int(action_id)
@@ -150,7 +150,7 @@ class Exp3(BaseBandit):
             for i in actions_id:
                 rhat[i] = 0.0
             rhat[action_id] = reward_tmp / query_vector[action_id]
-            w[action_id] *= np.exp(self.gamma * rhat[action_id] / len(self._actions_id))
+            w[action_id] *= np.exp(self.gamma * rhat[action_id] / len(self.action_ids))
 
         self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
 
@@ -165,13 +165,12 @@ class Exp3(BaseBandit):
         actions : iterable
             A list of Action objects for recommendation
         """
-        actions_id = [actions[i].action_id for i in range(len(actions))]
+        action_ids = [actions[i].action_id for i in range(len(actions))]
         w = self._modelstorage.get_model()['w']
         query_vector = self._modelstorage.get_model()['query_vector']
 
-        for action_id in actions_id:
+        for action_id in action_ids:
             query_vector[action_id] = 0
-            w[action_id] = 1  # weight vector
+            w[action_id] = 1.0  # weight vector
 
         self._actions.extend(actions)
-        self._actions_id.extend(actions_id)

@@ -21,7 +21,7 @@ class Exp4P(unittest.TestCase):
         a4 = Action(4, 'a4', 'i love u very much')
         a5 = Action(5, 'a5', 'i hate u very nuch')
         self.actions = [a1, a2, a3, a4, a5]
-        self.actions_id = [1, 2, 3, 4, 5]
+        self.action_ids = [1, 2, 3, 4, 5]
 
     def test_initialization(self):
         policy = exp4p.Exp4P(self.actions, self.historystorage, self.modelstorage, delta=0.1, pmin=None)
@@ -98,7 +98,7 @@ class Exp4P(unittest.TestCase):
         policy.add_action([a6, a7])
         policy.reward(history_id, {3: 1})
         self.assertEqual(len(policy._actions), 7)
-        self.assertEqual(policy._actions_id, [1, 2, 3, 4, 5, 6, 7])
+        self.assertEqual(policy.action_ids, [1, 2, 3, 4, 5, 6, 7])
 
 
 if __name__ == '__main__':

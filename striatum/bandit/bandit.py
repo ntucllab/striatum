@@ -40,16 +40,16 @@ class BaseBandit(object):
 
     Attributes
     ----------
-    historystorage : historystorage object
+    \_historystorage : historystorage object
         The historystorage object to store history context, actions and rewards.
 
-    modelstorage : modelstorage object
+    \_modelstorage : modelstorage object
         The modelstorage object to store model parameters.
 
-    actions : list of Action objects
+    \_actions : list of Action objects
         List of actions to be chosen from.
 
-    actions_id: list of integers
+    \_action_ids: list of integers
         List of all action_id's.
     """
 
@@ -57,7 +57,6 @@ class BaseBandit(object):
         self._historystorage = historystorage
         self._modelstorage = modelstorage
         self._actions = actions
-        self._actions_id = [actions[i].action_id for i in range(len(actions))]
 
     @property
     def historystorage(self):
@@ -73,6 +72,10 @@ class BaseBandit(object):
     def actions(self):
         """List of actions"""
         return self._actions
+
+    @property
+    def action_ids(self):
+        return [self._actions[i].action_id for i in range(len(self._actions))]
 
     @abstractmethod
     def get_action(self, context, n_actions=1):

@@ -90,7 +90,7 @@ class TestLinThompSamp(unittest.TestCase):
         policy.add_action([a4, a5])
         policy.reward(history_id, {3: 1})
         self.assertEqual(len(policy._actions), 5)
-        self.assertEqual(policy._actions_id, [1, 2, 3, 4, 5])
+        self.assertEqual(policy.action_ids, [1, 2, 3, 4, 5])
 
 
 if __name__ == '__main__':

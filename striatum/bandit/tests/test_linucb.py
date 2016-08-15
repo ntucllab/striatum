@@ -24,7 +24,7 @@ class TestLinUcb(unittest.TestCase):
         self.assertEqual(self.actions, policy._actions)
         self.assertEqual(1.00, policy.alpha)
         self.assertEqual(2, policy.d)
-        self.assertEqual([1, 2, 3], policy._actions_id)
+        self.assertEqual([1, 2, 3], policy.action_ids)
 
     def test_get_first_action(self):
         policy = linucb.LinUCB(self.actions, self.historystorage,

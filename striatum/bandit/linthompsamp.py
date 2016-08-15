@@ -90,7 +90,7 @@ class LinThompSamp (BaseBandit):
 
         while True:
             context = yield
-            actions_id = context.keys()
+            action_ids = context.keys()
             context_tmp = np.matrix(context.values())
             b = self._modelstorage.get_model()['B']
             muhat = self._modelstorage.get_model()['muhat']
@@ -102,10 +102,10 @@ class LinThompSamp (BaseBandit):
             estimated_reward = {}
             uncertainty = {}
             score = {}
-            for i in range(len(actions_id)):
-                estimated_reward[actions_id[i]] = float(estimated_reward_tmp[i][0])
-                score[actions_id[i]] = float(score_tmp[i])
-                uncertainty[actions_id[i]] = score[actions_id[i]] - estimated_reward[actions_id[i]]
+            for i in range(len(action_ids)):
+                estimated_reward[action_ids[i]] = float(estimated_reward_tmp[i][0])
+                score[action_ids[i]] = float(score_tmp[i])
+                uncertainty[action_ids[i]] = score[action_ids[i]] - estimated_reward[action_ids[i]]
             yield estimated_reward, uncertainty, score
 
         raise StopIteration
@@ -189,6 +189,5 @@ class LinThompSamp (BaseBandit):
             A list of Action objects for recommendation
         """
 
-        actions_id = [actions[i].action_id for i in range(len(actions))]
+        action_ids = [actions[i].action_id for i in range(len(actions))]
         self._actions.extend(actions)
-        self._actions_id.extend(actions_id)

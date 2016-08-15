@@ -55,7 +55,7 @@ class LinUCB(BaseBandit):
         b = {}  # dictionary - The cumulative return of action a, given the context xt.
         theta = {}  # dictionary - The coefficient vector of actiona with linear model b = dot(xt, theta)
 
-        for action_id in self._actions_id:
+        for action_id in self.action_ids:
             matrix_a[action_id] = np.identity(self.d)
             matrix_ainv[action_id] = np.identity(self.d)
             b[action_id] = np.zeros((self.d, 1))
@@ -76,7 +76,7 @@ class LinUCB(BaseBandit):
             estimated_reward = {}
             uncertainty = {}
             score = {}
-            for action_id in self._actions_id:
+            for action_id in self.action_ids:
                 context_tmp = np.array(context[action_id])
                 estimated_reward[action_id] = float(np.dot(context_tmp, theta_tmp[action_id]))
                 uncertainty[action_id] = float(self.alpha * np.sqrt(
@@ -168,16 +168,15 @@ class LinUCB(BaseBandit):
             A list of Action objects for recommendation
         """
 
-        actions_id = [actions[i].action_id for i in range(len(actions))]
+        action_ids = [actions[i].action_id for i in range(len(actions))]
         self._actions.extend(actions)
-        self._actions_id.extend(actions_id)
 
         matrix_a = self._modelstorage.get_model()['matrix_a']
         matrix_ainv = self._modelstorage.get_model()['matrix_ainv']
         b = self._modelstorage.get_model()['b']
         theta = self._modelstorage.get_model()['theta']
 
-        for action_id in actions_id:
+        for action_id in action_ids:
                 matrix_a[action_id] = np.identity(self.d)
                 matrix_ainv[action_id] = np.identity(self.d)
                 b[action_id] = np.zeros((self.d, 1))

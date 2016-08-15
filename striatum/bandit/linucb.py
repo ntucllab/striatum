@@ -103,7 +103,7 @@ class LinUCB(BaseBandit):
                 The history id of the action.
 
             action_recommend : list of dictionaries
-                In each dictionary, it will contains {rank: Action object, estimated_reward, uncertainty}
+                In each dictionary, it will contains {Action object, estimated_reward, uncertainty}
         """
 
         if context is None:

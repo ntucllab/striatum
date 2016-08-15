@@ -81,7 +81,6 @@ class LinThompSamp (BaseBandit):
             self.epsilon = epsilon
 
         # model initialization
-        self.t = 0
         b = np.identity(self.d)
         muhat = np.matrix(np.zeros(self.d)).T
         f = np.matrix(np.zeros(self.d)).T
@@ -92,20 +91,22 @@ class LinThompSamp (BaseBandit):
 
         while True:
             context = yield
-            self.t += 1
+            actions_id = context.keys()
+            context_tmp = np.matrix(context.values())
             b = self._modelstorage.get_model()['B']
             muhat = self._modelstorage.get_model()['muhat']
-            v = self.R * np.sqrt(24 / self.epsilon * self.d * np.log(self.t / self.delta))
+            v = self.R * np.sqrt(24 / self.epsilon * self.d * np.log(1 / self.delta))
             mu = np.random.multivariate_normal(np.array(muhat.T)[0], v**2 * np.linalg.inv(b), 1)[0]
+            estimated_reward_tmp = np.dot(context_tmp, np.array(muhat)).tolist()
+            score_tmp = np.dot(context_tmp, np.array(mu)).tolist()[0]
 
             estimated_reward = {}
             uncertainty = {}
             score = {}
-            for action_id in self._actions_id:
-                context_tmp = np.array(context[action_id])
-                estimated_reward[action_id] = float(np.dot(context_tmp, np.array(muhat)))
-                score[action_id] = float(np.dot(context_tmp, np.array(mu)))
-                uncertainty[action_id] = score[action_id] - estimated_reward[action_id]
+            for i in range(len(actions_id)):
+                estimated_reward[actions_id[i]] = float(estimated_reward_tmp[i][0])
+                score[actions_id[i]] = float(score_tmp[i])
+                uncertainty[actions_id[i]] = score[actions_id[i]] - estimated_reward[actions_id[i]]
             yield estimated_reward, uncertainty, score
 
         raise StopIteration

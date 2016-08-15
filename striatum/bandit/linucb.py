@@ -14,8 +14,8 @@ LOGGER = logging.getLogger(__name__)
 class LinUCB(BaseBandit):
     """LinUCB with Disjoint Linear Models
 
-    Parameters
-    ----------
+        Parameters
+        ----------
         actions : {array-like, None}
             Actions (arms) for recommendation
 
@@ -34,7 +34,7 @@ class LinUCB(BaseBandit):
         Attributes
         ----------
         linucb\_ : 'linucb' object instance
-            The contextual bandit algorithm instances,
+            The contextual bandit algorithm instances.
 
         References
         ----------
@@ -164,8 +164,8 @@ class LinUCB(BaseBandit):
 
             Parameters
             ----------
-            actions : {array-like, None}
-                Actions (arms) for recommendation
+            actions : list
+                A list of Action objects for recommendation
         """
 
         actions_id = [actions[i].action_id for i in range(len(actions))]

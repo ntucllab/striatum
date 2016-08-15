@@ -1,5 +1,8 @@
 """ Thompson Sampling with Linear Payoff
-In This module contains a class that implements Thompson Sampling with Linear Payoff, a contextual bandit algorithm.
+In This module contains a class that implements Thompson Sampling with Linear Payoff.
+Thompson Sampling with linear payoff is a contexutal multi-armed bandit algorithm which assume the underlying
+relationship between rewards and contexts is linear. The sampling method is used to balance the exploration and
+exploitation. Please check the reference for more details.
 """
 
 import numpy as np
@@ -12,43 +15,39 @@ LOGGER = logging.getLogger(__name__)
 
 class LinThompSamp (BaseBandit):
 
-    """Thompson Sampling with Linear Payoff:
+    """Thompson Sampling with Linear Payoff.
 
-    Thompson Sampling with linear payoff is a contexutal multi-armed bandit algorithm which assume the underlying
-    relationship between rewards and contexts is linear. The sampling method is used to balance the exploration and
-    exploitation. Please check the reference for more details.
+        Parameters
+        ----------
+        actions : array-like
+            Actions (arms) for recommendation.
 
-    Parameters
-    ----------
-    actions : array-like
-        Actions (arms) for recommendation.
+        historystorage: a HistoryStorage object
+            The object where we store the histories of contexts and rewards.
 
-    historystorage: a HistoryStorage object
-        The object where we store the histories of contexts and rewards.
+        modelstorage: a ModelStorage object
+            The object where we store the model parameters.
 
-    modelstorage: a ModelStorage object
-        The object where we store the model parameters.
+        delta: float, 0 < delta < 1
+            With probability 1 - delta, LinThompSamp satisfies the theoretical regret bound.
 
-    delta: float, 0 < delta < 1
-        With probability 1 - delta, LinThompSamp satisfies the theoretical regret bound.
+        r: float, r >= 0
+            Assume that the residual ri(t) - bi(t)^T * muhat is r-sub-gaussian. In this case, r^2 represents
+            the variance for residuals of the linear model bi(t)^T.
 
-    r: float, r >= 0
-        Assume that the residual ri(t) - bi(t)^T * muhat is r-sub-gaussian. In this case, r^2 represents the variance
-        for residuals of the linear model bi(t)^T.
+        epsilon: float, 0 < epsilon < 1
+            A  parameter  used  by  the  Thompson Sampling algorithm. If the total trials T is known, we can choose
+            epsilon = 1/ln(T)
 
-    epsilon: float, 0 < epsilon < 1
-        A  parameter  used  by  the  Thompson Sampling algorithm. If the total trials T is known, we can choose
-        epsilon = 1/ln(T)
+        Attributes
+        ----------
+        linthomp\_ : 'linthomp' object instance
+            The contextual bandit algorithm instances
 
-    Attributes
-    ----------
-    linthomp\_ : 'linthomp' object instance
-        The contextual bandit algorithm instances
-
-    References
-    ----------
-    .. [1]  Shipra Agrawal, and Navin Goyal. "Thompson Sampling for Contextual Bandits with Linear Payoffs."
-            Advances in Neural Information Processing Systems 24. 2011.
+        References
+        ----------
+        .. [1]  Shipra Agrawal, and Navin Goyal. "Thompson Sampling for Contextual Bandits with Linear Payoffs."
+                Advances in Neural Information Processing Systems 24. 2011.
     """
 
     def __init__(self, actions, historystorage, modelstorage, d, delta=0.5, r=0.5, epsilon=0.1):
@@ -186,7 +185,7 @@ class LinThompSamp (BaseBandit):
             Parameters
             ----------
             actions : list
-                Actions (arms) for recommendation
+                A list of Action objects for recommendation
         """
         actions_id = [actions[i].action_id for i in range(len(actions))]
         self._actions.extend(actions)

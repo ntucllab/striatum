@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 
 class Exp3(BaseBandit):
 
-    """Exp3 with pre-trained supervised learning algorithm.
+    """Exp3 algorithm.
 
         Parameters
         ----------
@@ -163,7 +163,7 @@ class Exp3(BaseBandit):
             Parameters
             ----------
             actions : list
-                Actions (arms) for recommendation
+                A list of Action objects for recommendation
         """
 
         actions_id = [actions[i].action_id for i in range(len(actions))]

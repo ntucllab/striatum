@@ -18,8 +18,10 @@ class UCB1(BaseBandit):
     ----------
     actions : {array-like, None}
         Actions (arms) for recommendation
+
     historystorage: a :py:mod:'striatum.storage.HistoryStorage' object
         The object where we store the histories of contexts and rewards.
+
     modelstorage: a :py:mod:'straitum.storage.ModelStorage' object
         The object where we store the model parameters.
 
@@ -130,8 +132,8 @@ class UCB1(BaseBandit):
 
             Parameters
             ----------
-            actions : {array-like, None}
-                Actions (arms) for recommendation
+            actions : list
+                A list of Action objects for recommendation
         """
         actions_id = [actions[i].action_id for i in range(len(actions))]
         self._actions.extend(actions)

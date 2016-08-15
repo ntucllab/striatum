@@ -116,7 +116,7 @@ class BaseBandit(object):
 
             Parameters
             ----------
-            actions : {array-like, None}
-                Actions (arms) for recommendation
+            actions : list
+                A list of Action objects for recommendation
         """
         pass

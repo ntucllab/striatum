@@ -194,7 +194,7 @@ class Exp4P(BaseBandit):
             Parameters
             ----------
             actions : list
-                Actions (arms) for recommendation
+                A list of Action objects for recommendation
         """
 
         actions_id = [actions[i].action_id for i in range(len(actions))]

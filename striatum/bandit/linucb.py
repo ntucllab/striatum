@@ -14,32 +14,32 @@ LOGGER = logging.getLogger(__name__)
 class LinUCB(BaseBandit):
     """LinUCB with Disjoint Linear Models
 
-        Parameters
-        ----------
-        actions : {array-like, None}
-            Actions (arms) for recommendation
+    Parameters
+    ----------
+    actions : list of Action objects
+        List of actions to be chosen from.
 
-        historystorage: a :py:mod:'striatum.storage.HistoryStorage' object
-            The object where we store the histories of contexts and rewards.
+    historystorage: a HistoryStorage object
+        The place where we store the histories of contexts and rewards.
 
-        modelstorage: a :py:mod:'straitum.storage.ModelStorage' object
-            The object where we store the model parameters.
+    modelstorage: a ModelStorage object
+        The place where we store the model parameters.
 
-        alpha: float
-            The constant determines the width of the upper confidence bound.
+    alpha: float
+        The constant determines the width of the upper confidence bound.
 
         d: int
-            The dimension of the context.
+        The dimension of the context.
 
-        Attributes
-        ----------
-        linucb\_ : 'linucb' object instance
-            The contextual bandit algorithm instances.
+    Attributes
+    ----------
+    linucb\_ : 'linucb' object instance
+        The contextual bandit algorithm instances.
 
-        References
-        ----------
-        .. [1]  Lihong Li, et al. "A Contextual-Bandit Approach to Personalized News Article Recommendation."
-                In Proceedings of the 19th International Conference on World Wide Web (WWW), 2010.
+    References
+    ----------
+    .. [1]  Lihong Li, et al. "A Contextual-Bandit Approach to Personalized News Article Recommendation."
+            In Proceedings of the 19th International Conference on World Wide Web (WWW), 2010.
     """
 
     def __init__(self, actions, historystorage, modelstorage, alpha, d=1):
@@ -86,24 +86,24 @@ class LinUCB(BaseBandit):
 
         raise StopIteration
 
-    def get_action(self, context, n_action=1):
+    def get_action(self, context, n_actions=1):
         """Return the action to perform
 
-            Parameters
-            ----------
-            context : dictionary
-                Contexts {action_id: context} of different actions.
+        Parameters
+        ----------
+        context : dictionary
+            Contexts {action_id: context} of different actions.
 
-            n_action: int
-                Number of actions wanted to recommend users.
+        n_actions: int
+            Number of actions wanted to recommend users.
 
-            Returns
-            -------
-            history_id : int
-                The history id of the action.
+        Returns
+        -------
+        history_id : int
+            The history id of the action.
 
-            action_recommend : list of dictionaries
-                In each dictionary, it will contains {Action object, estimated_reward, uncertainty}
+        action_recommendation : list of dictionaries
+            In each dictionary, it will contains {Action object, estimated_reward, uncertainty}
         """
 
         if context is None:
@@ -117,27 +117,27 @@ class LinUCB(BaseBandit):
             six.next(self.linucb_)
             estimated_reward, uncertainty, score = self.linucb_.send(context)
 
-        action_recommend = []
-        actions_recommend_id = sorted(score, key=score.get, reverse=True)[:n_action]
-        for action_id in actions_recommend_id:
+        action_recommendation = []
+        action_recommendation_ids = sorted(score, key=score.get, reverse=True)[:n_actions]
+        for action_id in action_recommendation_ids:
             action_id = int(action_id)
             action = [action for action in self._actions if action.action_id == action_id][0]
-            action_recommend.append({'action': action, 'estimated_reward': estimated_reward[action_id],
-                                     'uncertainty': uncertainty[action_id], 'score': score[action_id]})
+            action_recommendation.append({'action': action, 'estimated_reward': estimated_reward[action_id],
+                                          'uncertainty': uncertainty[action_id], 'score': score[action_id]})
 
-        history_id = self._historystorage.add_history(context, action_recommend, reward=None)
-        return history_id, action_recommend
+        history_id = self._historystorage.add_history(context, action_recommendation, reward=None)
+        return history_id, action_recommendation
 
-    def reward(self, history_id, reward):
+    def reward(self, history_id, rewards):
         """Reward the previous action with reward.
 
-            Parameters
-            ----------
-            history_id : int
-                The history id of the action to reward.
+        Parameters
+        ----------
+        history_id : int
+            The history id of the action to reward.
 
-            reward : dictionary
-                The dictionary {action_id, reward}, where reward is a float.
+        rewards : dictionary
+            The dictionary {action_id, reward}, where reward is a float.
         """
 
         context = self._historystorage.unrewarded_histories[history_id].context
@@ -148,7 +148,7 @@ class LinUCB(BaseBandit):
         b = self._modelstorage.get_model()['b']
         theta = self._modelstorage.get_model()['theta']
 
-        for action_id, reward_tmp in reward.items():
+        for action_id, reward_tmp in rewards.items():
             context_tmp = np.matrix(context[action_id])
             matrix_a[action_id] += np.dot(context_tmp.T, context_tmp)
             matrix_ainv[action_id] = np.linalg.solve(matrix_a[action_id], np.identity(self.d))
@@ -157,15 +157,15 @@ class LinUCB(BaseBandit):
         self._modelstorage.save_model({'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv, 'b': b, 'theta': theta})
 
         # Update the history
-        self._historystorage.add_reward(history_id, reward)
+        self._historystorage.add_reward(history_id, rewards)
 
     def add_action(self, actions):
         """ Add new actions (if needed).
 
-            Parameters
-            ----------
-            actions : list
-                A list of Action objects for recommendation
+        Parameters
+        ----------
+        actions : iterable
+            A list of Action objects for recommendation
         """
 
         actions_id = [actions[i].action_id for i in range(len(actions))]

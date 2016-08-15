@@ -12,32 +12,32 @@ LOGGER = logging.getLogger(__name__)
 class Exp4P(BaseBandit):
     """Exp4.P with pre-trained supervised learning algorithm.
 
-        Parameters
-        ----------
-        actions : {array-like, None}
-            Actions (arms) for recommendation
+    Parameters
+    ----------
+    actions : list of Action objects
+        List of actions to be chosen from.
 
-        historystorage: a HistoryStorage object
-            The place where we store the histories of contexts and rewards.
+    historystorage: a HistoryStorage object
+        The place where we store the histories of contexts and rewards.
 
-        modelstorage: a ModelStorage object
-            The place where we store the model parameters.
+    modelstorage: a ModelStorage object
+        The place where we store the model parameters.
 
-        delta: float, 0 < delta <= 1
-            With probability 1 - delta, LinThompSamp satisfies the theoretical regret bound.
+    delta: float, 0 < delta <= 1
+        With probability 1 - delta, LinThompSamp satisfies the theoretical regret bound.
 
-        pmin: float, 0 < pmin < 1/k
-            The minimum probability to choose each action.
+    pmin: float, 0 < pmin < 1/k
+        The minimum probability to choose each action.
 
-        Attributes
-        ----------
-        exp4p\_ : 'exp4p' object instance
-            The contextual bandit algorithm instances
+    Attributes
+    ----------
+    exp4p\_ : 'exp4p' object instance
+        The contextual bandit algorithm instances
 
-        References
-        ----------
-        .. [1]  Beygelzimer, Alina, et al. "Contextual bandit algorithms with supervised learning guarantees."
-                International Conference on Artificial Intelligence and Statistics (AISTATS). 2011u.
+    References
+    ----------
+    .. [1]  Beygelzimer, Alina, et al. "Contextual bandit algorithms with supervised learning guarantees."
+            International Conference on Artificial Intelligence and Statistics (AISTATS). 2011u.
     """
 
     def __init__(self, actions, historystorage, modelstorage, delta=0.1, pmin=None):
@@ -100,25 +100,24 @@ class Exp4P(BaseBandit):
 
         raise StopIteration
 
-    def get_action(self, context=None, n_action=1):
+    def get_action(self, context=None, n_actions=1):
         """Return the action to perform
 
-            Parameters
-            ----------
-            context : dictionary
-                The advice vectors from other experts, {expert_id: advice_vectors}, where advice_vectors is
-                a dictionary {action_id: probability} predicted probability for each action.
+        Parameters
+        ----------
+        context : dictionary
+            Contexts {action_id: context} of different actions.
 
-            n_action: int
-                Number of actions wanted to recommend users.
+        n_actions: int
+            Number of actions wanted to recommend users.
 
-            Returns
-            -------
-            history_id : int
-                The history id of the action.
+        Returns
+        -------
+        history_id : int
+            The history id of the action.
 
-            action : list of dictionaries
-                In each dictionary, it will contains {Action object, estimated_reward, uncertainty}
+        action_recommendation : list of dictionaries
+            In each dictionary, it will contains {Action object, estimated_reward, uncertainty}.
         """
 
         if self.exp4p_ is None:
@@ -130,29 +129,29 @@ class Exp4P(BaseBandit):
             six.next(self.exp4p_)
             estimated_reward, uncertainty, score = self.exp4p_.send(context)
 
-        action_recommend = []
-        actions_recommend_id = sorted(score, key=score.get, reverse=True)[:n_action]
+        action_recommendation = []
+        action_recommendation_ids = sorted(score, key=score.get, reverse=True)[:n_actions]
 
-        for action_id in actions_recommend_id:
+        for action_id in action_recommendation_ids:
             action_id = int(action_id)
             action = [action for action in self._actions if action.action_id == action_id][0]
-            action_recommend.append({'action': action, 'estimated_reward': estimated_reward[action_id],
-                                     'uncertainty': uncertainty[action_id], 'score': score[action_id]})
+            action_recommendation.append({'action': action, 'estimated_reward': estimated_reward[action_id],
+                                          'uncertainty': uncertainty[action_id], 'score': score[action_id]})
 
         self.n_total += 1
-        history_id = self._historystorage.add_history(context, action_recommend, reward=None)
-        return history_id, action_recommend
+        history_id = self._historystorage.add_history(context, action_recommendation, reward=None)
+        return history_id, action_recommendation
 
-    def reward(self, history_id, reward):
+    def reward(self, history_id, rewards):
         """Reward the previous action with reward.
 
-            Parameters
-            ----------
-            history_id : int
-                The history id of the action to reward.
+        Parameters
+        ----------
+        history_id : int
+            The history id of the action to reward.
 
-            reward : dictionary
-                The dictionary {action_id, reward}, where reward is a float.
+        rewards : dictionary
+            The dictionary {action_id, reward}, where reward is a float.
         """
 
         w_old = self._modelstorage.get_model()['w']
@@ -165,7 +164,7 @@ class Exp4P(BaseBandit):
             query_vector[actions_id[k]] = query_vector_tmp[k]
 
         # Update the model
-        for action_id, reward_tmp in reward.items():
+        for action_id, reward_tmp in rewards.items():
             rhat = {}
             for i in actions_id:
                 rhat[i] = 0.0
@@ -186,15 +185,15 @@ class Exp4P(BaseBandit):
         self._modelstorage.save_model({'query_vector': query_vector, 'w': w_new})
 
         # Update the history
-        self._historystorage.add_reward(history_id, reward)
+        self._historystorage.add_reward(history_id, rewards)
 
     def add_action(self, actions):
         """ Add new actions (if needed).
 
-            Parameters
-            ----------
-            actions : list
-                A list of Action objects for recommendation
+        Parameters
+        ----------
+        actions : iterable
+            A list of Action objects for recommendation
         """
 
         actions_id = [actions[i].action_id for i in range(len(actions))]

@@ -27,42 +27,42 @@ class TestExp3(unittest.TestCase):
 
     def test_get_first_action(self):
         policy = exp3.Exp3(self.actions, self.historystorage, self.modelstorage, self.gamma)
-        history_id, action = policy.get_action(context=None, n_action=1)
+        history_id, action = policy.get_action(context=None, n_actions=1)
         self.assertEqual(history_id, 0)
         self.assertIn(action[0]['action'], self.actions)
 
     def test_update_reward(self):
         policy = exp3.Exp3(self.actions, self.historystorage, self.modelstorage, self.gamma)
-        history_id, action = policy.get_action(context=None, n_action=1)
+        history_id, action = policy.get_action(context=None, n_actions=1)
         policy.reward(history_id, {1: 1.0})
         self.assertEqual(policy._historystorage.get_history(history_id).reward, {1: 1.0})
 
     def test_model_storage(self):
         policy = exp3.Exp3(self.actions, self.historystorage, self.modelstorage, self.gamma)
-        history_id, action = policy.get_action(context=None, n_action=1)
+        history_id, action = policy.get_action(context=None, n_actions=1)
         policy.reward(history_id, {1: 1.0})
         self.assertEqual(len(policy._modelstorage._model['w']), 5)
         self.assertEqual(len(policy._modelstorage._model['query_vector']), 5)
 
     def test_delay_reward(self):
         policy = exp3.Exp3(self.actions, self.historystorage, self.modelstorage, self.gamma)
-        history_id1, action1 = policy.get_action(context=None, n_action=1)
-        history_id2, action2 = policy.get_action(context=None, n_action=1)
+        history_id1, action1 = policy.get_action(context=None, n_actions=1)
+        history_id2, action2 = policy.get_action(context=None, n_actions=1)
         policy.reward(history_id1, {1: 1.0})
         self.assertEqual(policy._historystorage.get_history(history_id1).reward, {1: 1.0})
         self.assertEqual(policy._historystorage.get_history(history_id2).reward, None)
 
     def test_reward_order_descending(self):
         policy = exp3.Exp3(self.actions, self.historystorage, self.modelstorage, self.gamma)
-        history_id1, action1 = policy.get_action(context=None, n_action=1)
-        history_id2, action2 = policy.get_action(context=None, n_action=1)
+        history_id1, action1 = policy.get_action(context=None, n_actions=1)
+        history_id2, action2 = policy.get_action(context=None, n_actions=1)
         policy.reward(history_id2, {1: 1.0, 2: 0.0})
         self.assertEqual(policy._historystorage.get_history(history_id1).reward, None)
         self.assertEqual(policy._historystorage.get_history(history_id2).reward, {1: 1.0, 2: 0.0})
 
     def test_add_action(self):
         policy = exp3.Exp3(self.actions, self.historystorage, self.modelstorage, self.gamma)
-        history_id, action = policy.get_action(context=None, n_action=1)
+        history_id, action = policy.get_action(context=None, n_actions=1)
         a6 = Action(6, 'a6', 'how are you?')
         a7 = Action(7, 'a7', 'i am fine')
         policy.add_action([a6, a7])

@@ -15,39 +15,39 @@ LOGGER = logging.getLogger(__name__)
 
 class LinThompSamp (BaseBandit):
 
-    """Thompson Sampling with Linear Payoff.
+    """Thompson sampling with linear payoff.
 
-        Parameters
-        ----------
-        actions : array-like
-            Actions (arms) for recommendation.
+    Parameters
+    ----------
+    actions : list of Action objects
+        List of actions to be chosen from.
 
-        historystorage: a HistoryStorage object
-            The object where we store the histories of contexts and rewards.
+    historystorage: a HistoryStorage object
+        The place where we store the histories of contexts and rewards.
 
-        modelstorage: a ModelStorage object
-            The object where we store the model parameters.
+    modelstorage: a ModelStorage object
+        The place where we store the model parameters.
 
-        delta: float, 0 < delta < 1
-            With probability 1 - delta, LinThompSamp satisfies the theoretical regret bound.
+    delta: float, 0 < delta < 1
+        With probability 1 - delta, LinThompSamp satisfies the theoretical regret bound.
 
-        r: float, r >= 0
-            Assume that the residual ri(t) - bi(t)^T * muhat is r-sub-gaussian. In this case, r^2 represents
-            the variance for residuals of the linear model bi(t)^T.
+    r: float, r >= 0
+        Assume that the residual ri(t) - bi(t)^T * muhat is r-sub-gaussian. In this case, r^2 represents
+        the variance for residuals of the linear model bi(t)^T.
 
-        epsilon: float, 0 < epsilon < 1
-            A  parameter  used  by  the  Thompson Sampling algorithm. If the total trials T is known, we can choose
-            epsilon = 1/ln(T)
+    epsilon: float, 0 < epsilon < 1
+        A  parameter  used  by  the  Thompson Sampling algorithm. If the total trials T is known, we can choose
+        epsilon = 1/ln(T)
 
-        Attributes
-        ----------
-        linthomp\_ : 'linthomp' object instance
-            The contextual bandit algorithm instances
+    Attributes
+    ----------
+    linthomp\_ : 'linthomp' object instance
+        The contextual bandit algorithm instances
 
-        References
-        ----------
-        .. [1]  Shipra Agrawal, and Navin Goyal. "Thompson Sampling for Contextual Bandits with Linear Payoffs."
-                Advances in Neural Information Processing Systems 24. 2011.
+    References
+    ----------
+    .. [1]  Shipra Agrawal, and Navin Goyal. "Thompson Sampling for Contextual Bandits with Linear Payoffs."
+            Advances in Neural Information Processing Systems 24. 2011.
     """
 
     def __init__(self, actions, historystorage, modelstorage, d, delta=0.5, r=0.5, epsilon=0.1):
@@ -110,24 +110,24 @@ class LinThompSamp (BaseBandit):
 
         raise StopIteration
 
-    def get_action(self, context, n_action=1):
+    def get_action(self, context, n_actions=1):
         """Return the action to perform
 
-            Parameters
-            ----------
-            context : dictionary
-                Contexts {action_id: context} of different actions.
+        Parameters
+        ----------
+        context : dictionary
+            Contexts {action_id: context} of different actions.
 
-            n_action: int
-                Number of actions wanted to recommend users.
+        n_actions: int
+            Number of actions wanted to recommend users.
 
-            Returns
-            -------
-            history_id : int
-                The history id of the action.
+        Returns
+        -------
+        history_id : int
+            The history id of the action.
 
-            action : list of dictionaries
-                In each dictionary, it will contains {Action object, estimated_reward, uncertainty}
+        action_recommendation : list of dictionaries
+            In each dictionary, it will contains {Action object, estimated_reward, uncertainty}.
         """
 
         if context is None:
@@ -141,35 +141,36 @@ class LinThompSamp (BaseBandit):
             six.next(self.linthompsamp_)
             estimated_reward, uncertainty, score = self.linthompsamp_.send(context)
 
-        action_recommend = []
-        actions_recommend_id = sorted(score, key=score.get, reverse=True)[:n_action]
-        for action_id in actions_recommend_id:
+        action_recommendation = []
+        action_recommendation_ids = sorted(score, key=score.get, reverse=True)[:n_actions]
+        for action_id in action_recommendation_ids:
             action_id = int(action_id)
             action = [action for action in self._actions if action.action_id == action_id][0]
-            action_recommend.append({'action': action, 'estimated_reward': estimated_reward[action_id],
-                                     'uncertainty': uncertainty[action_id], 'score': score[action_id]})
+            action_recommendation.append({'action': action, 'estimated_reward': estimated_reward[action_id],
+                                          'uncertainty': uncertainty[action_id], 'score': score[action_id]})
 
-        history_id = self._historystorage.add_history(context, action_recommend, reward=None)
-        return history_id, action_recommend
+        history_id = self._historystorage.add_history(context, action_recommendation, reward=None)
+        return history_id, action_recommendation
 
-    def reward(self, history_id, reward):
+    def reward(self, history_id, rewards):
         """Reward the previous action with reward.
 
-            Parameters
-            ----------
-            history_id : int
-                The history id of the action to reward.
+        Parameters
+        ----------
+        history_id : int
+            The history id of the action to reward.
 
-            reward : dictionary
-                The dictionary {action_id, reward}, where reward is a float.
+        rewards : dictionary
+            The dictionary {action_id, reward}, where reward is a float.
         """
+
         context = self._historystorage.unrewarded_histories[history_id].context
 
         # Update the model
         b = self._modelstorage.get_model()['B']
         f = self._modelstorage.get_model()['f']
 
-        for action_id, reward_tmp in reward.items():
+        for action_id, reward_tmp in rewards.items():
             context_tmp = np.matrix(context[action_id])
             b += np.dot(context_tmp.T, context_tmp)
             f += reward_tmp * context_tmp.T
@@ -177,16 +178,17 @@ class LinThompSamp (BaseBandit):
         self._modelstorage.save_model({'B': b, 'muhat': muhat, 'f': f})
 
         # Update the history
-        self._historystorage.add_reward(history_id, reward)
+        self._historystorage.add_reward(history_id, rewards)
 
     def add_action(self, actions):
         """ Add new actions (if needed).
 
-            Parameters
-            ----------
-            actions : list
-                A list of Action objects for recommendation
+        Parameters
+        ----------
+        actions : iterable
+            A list of Action objects for recommendation
         """
+
         actions_id = [actions[i].action_id for i in range(len(actions))]
         self._actions.extend(actions)
         self._actions_id.extend(actions_id)

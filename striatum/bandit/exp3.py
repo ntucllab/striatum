@@ -16,29 +16,29 @@ class Exp3(BaseBandit):
 
     """Exp3 algorithm.
 
-        Parameters
-        ----------
-        actions : array-like
-            Actions (arms) for recommendation.
+    Parameters
+    ----------
+    actions : list of Action objects
+        List of actions to be chosen from.
 
-        historystorage: a HistoryStorage object
-            The place where we store the histories of contexts and rewards.
+    historystorage: a HistoryStorage object
+        The place where we store the histories of contexts and rewards.
 
-        modelstorage: a ModelStorage object
-            The place where we store the model parameters.
+    modelstorage: a ModelStorage object
+        The place where we store the model parameters.
 
-        gamma: float, 0 < gamma <= 1
-            The parameter used to control the minimum chosen probability for each action.
+    gamma: float, 0 < gamma <= 1
+        The parameter used to control the minimum chosen probability for each action.
 
-        Attributes
-        ----------
-        exp3\_ : 'exp3' object instance
-            The contextual bandit algorithm instances
+    Attributes
+    ----------
+    exp3\_ : 'exp3' object instance
+        The contextual bandit algorithm instances
 
-        References
-        ----------
-        .. [1]  Peter Auer, Nicolo Cesa-Bianchi, et al. "The non-stochastic multi-armed bandit problem ."
-                SIAM Journal of Computing. 2002.
+    References
+    ----------
+    .. [1]  Peter Auer, Nicolo Cesa-Bianchi, et al. "The non-stochastic multi-armed bandit problem ."
+            SIAM Journal of Computing. 2002.
     """
 
     def __init__(self, actions, historystorage, modelstorage, gamma):
@@ -90,24 +90,24 @@ class Exp3(BaseBandit):
 
         raise StopIteration
 
-    def get_action(self, context, n_action=1):
+    def get_action(self, context, n_actions=1):
         """Return the action to perform
 
-            Parameters
-            ----------
-            context : {array-like, None}
-                The context of current state, None if no context available.
+        Parameters
+        ----------
+        context : {array-like, None}
+            The context of current state, None if no context available.
 
-            n_action: int
-                Number of actions wanted to recommend users.
+        n_actions: int
+            Number of actions wanted to recommend users.
 
-            Returns
-            -------
-            history_id : int
-                The history id of the action.
+        Returns
+        -------
+        history_id : int
+            The history id of the action.
 
-            action : list of dictionaries
-                In each dictionary, it will contains {Action object, estimated_reward, uncertainty}
+        action_recommendation : list of dictionaries
+            In each dictionary, it will contains {Action object, estimated_reward, uncertainty}
         """
 
         if self.exp3_ is None:
@@ -116,19 +116,19 @@ class Exp3(BaseBandit):
         else:
             estimated_reward, uncertainty, score = six.next(self.exp3_)
 
-        action_recommend = []
-        actions_recommend_id = np.random.choice(self._actions_id, size=n_action, p=score.values(), replace=False)
+        action_recommendation = []
+        action_recommendation_ids = np.random.choice(self._actions_id, size=n_actions, p=score.values(), replace=False)
 
-        for action_id in actions_recommend_id:
+        for action_id in action_recommendation_ids:
             action_id = int(action_id)
             action = [action for action in self._actions if action.action_id == action_id][0]
-            action_recommend.append({'action': action, 'estimated_reward': estimated_reward[action_id],
+            action_recommendation.append({'action': action, 'estimated_reward': estimated_reward[action_id],
                                      'uncertainty': uncertainty[action_id], 'score': score[action_id]})
 
-        history_id = self._historystorage.add_history(context, action_recommend, reward=None)
-        return history_id, action_recommend
+        history_id = self._historystorage.add_history(context, action_recommendation, reward=None)
+        return history_id, action_recommendation
 
-    def reward(self, history_id, reward):
+    def reward(self, history_id, rewards):
         """Reward the previous action with reward.
 
             Parameters
@@ -136,7 +136,7 @@ class Exp3(BaseBandit):
             history_id : int
                 The history id of the action to reward.
 
-            reward : dictionary
+            rewards : dictionary
                 The dictionary {action_id, reward}, where reward is a float.
         """
 
@@ -145,7 +145,7 @@ class Exp3(BaseBandit):
         actions_id = query_vector.keys()
 
         # Update the model
-        for action_id, reward_tmp in reward.items():
+        for action_id, reward_tmp in rewards.items():
             rhat = {}
             for i in actions_id:
                 rhat[i] = 0.0
@@ -155,17 +155,16 @@ class Exp3(BaseBandit):
         self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
 
         # Update the history
-        self._historystorage.add_reward(history_id, reward)
+        self._historystorage.add_reward(history_id, rewards)
 
     def add_action(self, actions):
         """ Add new actions (if needed).
 
-            Parameters
-            ----------
-            actions : list
-                A list of Action objects for recommendation
+        Parameters
+        ----------
+        actions : iterable
+            A list of Action objects for recommendation
         """
-
         actions_id = [actions[i].action_id for i in range(len(actions))]
         w = self._modelstorage.get_model()['w']
         query_vector = self._modelstorage.get_model()['query_vector']

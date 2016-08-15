@@ -14,26 +14,26 @@ class UCB1(BaseBandit):
 
     """Upper Confidence Bound 1
 
-    Parameters
-    ----------
-    actions : {array-like, None}
-        Actions (arms) for recommendation
+        Parameters
+        ----------
+        actions : {array-like, None}
+            Actions (arms) for recommendation
 
-    historystorage: a :py:mod:'striatum.storage.HistoryStorage' object
-        The object where we store the histories of contexts and rewards.
+        historystorage: a :py:mod:'striatum.storage.HistoryStorage' object
+            The object where we store the histories of contexts and rewards.
 
-    modelstorage: a :py:mod:'straitum.storage.ModelStorage' object
-        The object where we store the model parameters.
+        modelstorage: a :py:mod:'straitum.storage.ModelStorage' object
+            The object where we store the model parameters.
 
-    Attributes
-    ----------
-    ucb1\_ : 'ucb1' object instance
-        The multi-armed bandit algorithm instances.
+        Attributes
+        ----------
+        ucb1\_ : 'ucb1' object instance
+            The multi-armed bandit algorithm instances.
 
-    References
-    ----------
-    .. [1]  Peter Auer, et al. "Finite-time Analysis of the Multiarmed Bandit Problem."
-            Machine Learning, 47. 2002.
+        References
+        ----------
+        .. [1]  Peter Auer, et al. "Finite-time Analysis of the Multiarmed Bandit Problem."
+                Machine Learning, 47. 2002.
     """
 
     def __init__(self, actions, historystorage, modelstorage):

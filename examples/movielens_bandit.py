@@ -29,7 +29,7 @@ def get_data():
 
     actions = []
     for key in actions_id:
-        action = Action(key, key, key)
+        action = Action(key)
         actions.append(action)
     return streaming_batch, user_feature, actions, reward_list, action_context
 

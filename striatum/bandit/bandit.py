@@ -11,17 +11,9 @@ class Action(object):
     ----------
     action_id: int
         The index of this action.
-
-    title: string
-        The title of this action.
-
-    content: object
-        The content of this action.
     """
-    def __init__(self, action_id, title, content):
+    def __init__(self, action_id):
         self.action_id = action_id
-        self.title = title
-        self.content = content
 
 
 class BaseBandit(object):

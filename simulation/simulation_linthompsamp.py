@@ -12,11 +12,11 @@ def main():
 
     times = 1000
     d = 5
-    a1 = Action(1, 'a1', 'content 1')
-    a2 = Action(2, 'a2', 'content 2')
-    a3 = Action(3, 'a3', 'content 3')
-    a4 = Action(4, 'a4', 'content 4')
-    a5 = Action(5, 'a5', 'content 5')
+    a1 = Action(1)
+    a2 = Action(2)
+    a3 = Action(3)
+    a4 = Action(4)
+    a5 = Action(5)
     actions = [a1, a2, a3, a4, a5]
 
     # Parameter tunning

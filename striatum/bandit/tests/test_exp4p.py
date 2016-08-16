@@ -15,11 +15,11 @@ class Exp4P(unittest.TestCase):
     def setUp(self):
         self.modelstorage = model.MemoryModelStorage()
         self.historystorage = history.MemoryHistoryStorage()
-        a1 = Action(1, 'a1', 'i love u')
-        a2 = Action(2, 'a2', 'i hate u')
-        a3 = Action(3, 'a3', 'i do not understand')
-        a4 = Action(4, 'a4', 'i love u very much')
-        a5 = Action(5, 'a5', 'i hate u very nuch')
+        a1 = Action(1)
+        a2 = Action(2)
+        a3 = Action(3)
+        a4 = Action(4)
+        a5 = Action(5)
         self.actions = [a1, a2, a3, a4, a5]
         self.action_ids = [1, 2, 3, 4, 5]
 
@@ -93,8 +93,8 @@ class Exp4P(unittest.TestCase):
         prob2 = {1: 0.72, 2: 0.07, 3: 0.07, 4: 0.07, 5: 0.07}
         context = {1: prob1, 2: prob2}
         history_id, action = policy.get_action(context, 2)
-        a6 = Action(6, 'a6', 'how are you?')
-        a7 = Action(7, 'a7', 'i am fine')
+        a6 = Action(6)
+        a7 = Action(7)
         policy.add_action([a6, a7])
         policy.reward(history_id, {3: 1})
         self.assertEqual(len(policy._actions), 7)

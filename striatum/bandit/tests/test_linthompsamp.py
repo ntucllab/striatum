@@ -10,9 +10,9 @@ class TestLinThompSamp(unittest.TestCase):
     def setUp(self):
         self.modelstorage = model.MemoryModelStorage()
         self.historystorage = history.MemoryHistoryStorage()
-        a1 = Action(1, 'a1', 'i love u')
-        a2 = Action(2, 'a2', 'i hate u')
-        a3 = Action(3, 'a3', 'i do not understand')
+        a1 = Action(1)
+        a2 = Action(2)
+        a3 = Action(3)
         self.actions = [a1, a2, a3]
         self.d = 2
         self.delta = 0.5
@@ -85,8 +85,8 @@ class TestLinThompSamp(unittest.TestCase):
                                            self.modelstorage, self.d, self.delta, self.R, self.epsilon)
         context1 = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
         history_id, action = policy.get_action(context1, 2)
-        a4 = Action(4, 'a4', 'how are you?')
-        a5 = Action(5, 'a5', 'i am fine')
+        a4 = Action(4)
+        a5 = Action(5)
         policy.add_action([a4, a5])
         policy.reward(history_id, {3: 1})
         self.assertEqual(len(policy._actions), 5)

@@ -13,9 +13,9 @@ class TestLinUcb(unittest.TestCase):
     def setUp(self):
         self.modelstorage = model.MemoryModelStorage()
         self.historystorage = history.MemoryHistoryStorage()
-        a1 = Action(1, 'a1', 'i love u')
-        a2 = Action(2, 'a2', 'i hate u')
-        a3 = Action(3, 'a3', 'i do not understand')
+        a1 = Action(1)
+        a2 = Action(2)
+        a3 = Action(3)
         self.actions = [a1, a2, a3]
         self.alpha = 1.00
 
@@ -85,8 +85,8 @@ class TestLinUcb(unittest.TestCase):
                                self.modelstorage, 1.00, 2)
         context1 = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
         history_id, action = policy.get_action(context1, 2)
-        a4 = Action(4, 'a4', 'how are you?')
-        a5 = Action(5, 'a5', 'i am fine')
+        a4 = Action(4)
+        a5 = Action(5)
         policy.add_action([a4, a5])
         policy.reward(history_id, {3: 1})
         self.assertTrue((policy._modelstorage.get_model()['matrix_a'][4] == np.identity(2)).all())

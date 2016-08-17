@@ -5,12 +5,19 @@ from striatum import simulation
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
+from striatum.bandit.bandit import Action
 
 
 def main():
+
     times = 1000
     d = 5
-    actions = [1, 2, 3, 4, 5]
+    a1 = Action(1)
+    a2 = Action(2)
+    a3 = Action(3)
+    a4 = Action(4)
+    a5 = Action(5)
+    actions = [a1, a2, a3, a4, a5]
 
     # Parameter tunning
     tunning_region = np.arange(0.01, 0.99, 0.1)
@@ -79,8 +86,8 @@ def main():
     policy = linthompsamp.LinThompSamp(actions, historystorage, modelstorage,
                                        d=d, delta=delta_opt, r=r_opt, epsilon=epsilon_opt)
     regret = simulation.regret_calculation(simulation.policy_evaluation(policy, context2, desired_action2))
-    simulation.regret_plot(times, regret,
-                   label='delta = ' + str(delta_opt) + ', r = ' + str(r_opt) + ', epsilon = ' + str(epsilon_opt))
+    simulation.regret_plot(times, regret, label='delta = ' + str(delta_opt) +
+                                                ', r = ' + str(r_opt) + ', epsilon = ' + str(epsilon_opt))
 
 
 if __name__ == '__main__':

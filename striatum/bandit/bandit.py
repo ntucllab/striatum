@@ -4,12 +4,16 @@ Bandit interfaces
 from abc import abstractmethod
 
 
-# TODO: think about how to use this
 class Action(object):
-    """The action object"""
-    @abstractmethod
-    def __init__(self):
-        pass
+    """The action object
+
+    Parameters
+    ----------
+    action_id: int
+        The index of this action.
+    """
+    def __init__(self, action_id):
+        self.action_id = action_id
 
 
 class BaseBandit(object):
@@ -28,15 +32,19 @@ class BaseBandit(object):
 
     Attributes
     ----------
-    historystorage : historystorage object
+    \_historystorage : historystorage object
         The historystorage object to store history context, actions and rewards.
 
-    modelstorage : modelstorage object
+    \_modelstorage : modelstorage object
         The modelstorage object to store model parameters.
 
-    actions : list of Action objects
+    \_actions : list of Action objects
         List of actions to be chosen from.
+
+    \_action_ids: list of integers
+        List of all action_id's.
     """
+
     def __init__(self, historystorage, modelstorage, actions):
         self._historystorage = historystorage
         self._modelstorage = modelstorage
@@ -57,36 +65,53 @@ class BaseBandit(object):
         """List of actions"""
         return self._actions
 
+    @property
+    def action_ids(self):
+        return [self._actions[i].action_id for i in range(len(self._actions))]
+
     @abstractmethod
-    def get_action(self, context):
+    def get_action(self, context, n_actions=1):
         """Return the action to perform
 
         Parameters
         ----------
-        context : {array-like, None}
-            The context of current state, None if no context avaliable.
+        context : dictionary
+            Contexts {action_id: context} of different actions.
+
+        n_actions: int
+            Number of actions wanted to recommend users.
 
         Returns
         -------
         history_id : int
             The history id of the action.
 
-        action : Actions object
-            The action to perform.
+        action_recommendation : list of dictionaries
+            In each dictionary, it will contains {Action object, estimated_reward, uncertainty}.
         """
         pass
 
     @abstractmethod
-    def reward(self, history_id, reward):
-        """Reward the preivous action with reward.
+    def reward(self, history_id, rewards):
+        """Reward the previous action with reward.
 
         Parameters
         ----------
         history_id : int
             The history id of the action to reward.
 
-        reward : float
-            A float representing the feedback given to the action, the higher
-            the better.
+        rewards : dictionary
+            The dictionary {action_id, reward}, where reward is a float.
+        """
+        pass
+
+    @abstractmethod
+    def add_action(self, actions):
+        """ Add new actions (if needed).
+
+        Parameters
+        ----------
+        actions : iterable
+            A list of Action objects for recommendation
         """
         pass

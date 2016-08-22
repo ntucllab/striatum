@@ -28,3 +28,13 @@ def plot_avg_reward(policy, last_history_id):
     plt.legend()
     plt.title("Average Reward with respect to Time")
     plt.show()
+
+
+def plot_avg_regret(policy, last_history_id):
+    avg_reward = calculate_avg_reward(policy, last_history_id)
+    plt.plot(avg_reward.keys(), 1 - avg_reward.values(), 'r-', label="average regret")
+    plt.xlabel('time')
+    plt.ylabel('avg regret')
+    plt.legend()
+    plt.title("Average Reward with respect to Time")
+    plt.show()

@@ -26,8 +26,8 @@ def main():
         historystorage = history.MemoryHistoryStorage()
         modelstorage = model.MemoryModelStorage()
         policy = linucb.LinUCB(actions, historystorage, modelstorage, alpha=alpha, d=d)
-        seq_error = simulation.evaluate_policy(policy, context1, desired_action1)
-        ctr_tuning[i] = times - seq_error[-1]
+        cum_regret = simulation.evaluate_policy(policy, context1, desired_action1)
+        ctr_tuning[i] = times - cum_regret[-1]
         i += 1
     ctr_tuning /= times
     alpha_opt = tuning_region[np.argmax(ctr_tuning)]
@@ -40,14 +40,7 @@ def main():
     modelstorage = model.MemoryModelStorage()
     policy = linucb.LinUCB(actions, historystorage, modelstorage, alpha=alpha_opt, d=d)
 
-    for t in range(times):
-        history_id, action = policy.get_action(context2[t], 1)
-        if desired_action2[t][0] != action[0]['action'].action_id:
-            policy.reward(history_id, {action[0]['action'].action_id: 0})
-        else:
-            policy.reward(history_id, {action[0]['action'].action_id: 1})
-
-    rplt.plot_avg_regret(policy, history_id)
+    cum_regret
 
 
 if __name__ == '__main__':

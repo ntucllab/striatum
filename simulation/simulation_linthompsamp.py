@@ -34,23 +34,23 @@ def main():
         modelstorage = model.MemoryModelStorage()
         policy = linthompsamp.LinThompSamp(actions, historystorage, modelstorage,
                                            d=d, delta=para, r=0.01, epsilon=0.5)
-        seq_error = simulation.evaluate_policy(policy, context1, desired_action1)
-        ctr_delta[i] = times - seq_error[-1]
+        cum_regret = simulation.evaluate_policy(policy, context1, desired_action1)
+        ctr_delta[i] = times - cum_regret[-1]
 
         historystorage = history.MemoryHistoryStorage()
         modelstorage = model.MemoryModelStorage()
         policy = linthompsamp.LinThompSamp(actions, historystorage, modelstorage,
                                            d=d, delta=0.5, r=para, epsilon=0.5)
 
-        seq_error = simulation.evaluate_policy(policy, context1, desired_action1)
-        ctr_r[i] = times - seq_error[-1]
+        cum_regret = simulation.evaluate_policy(policy, context1, desired_action1)
+        ctr_r[i] = times - cum_regret[-1]
 
         historystorage = history.MemoryHistoryStorage()
         modelstorage = model.MemoryModelStorage()
         policy = linthompsamp.LinThompSamp(actions, historystorage, modelstorage,
                                            d=d,  delta=0.5, r=0.01, epsilon=para)
-        seq_error = simulation.evaluate_policy(policy, context1, desired_action1)
-        ctr_epsilon[i] = times - seq_error[-1]
+        cum_regret = simulation.evaluate_policy(policy, context1, desired_action1)
+        ctr_epsilon[i] = times - cum_regret[-1]
         i += 1
 
     ctr_delta /= times

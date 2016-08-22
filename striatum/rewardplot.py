@@ -96,5 +96,5 @@ def plot_avg_regret(policy, last_history_id):
     plt.xlabel('time')
     plt.ylabel('avg regret')
     plt.legend()
-    plt.title("Average Reward with respect to Time")
+    plt.title("Average Regret with respect to Time")
     plt.show()

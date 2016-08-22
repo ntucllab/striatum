@@ -2,7 +2,7 @@ from striatum.storage import history
 from striatum.storage import model
 from striatum.bandit import ucb1
 from striatum import simulation
-import matplotlib.pyplot as plt
+from striatum import rewardplot as rplt
 from striatum.bandit.bandit import Action
 
 
@@ -17,23 +17,19 @@ def main():
 
     # Regret Analysis
     times = 40000
-    context, desired_action = simulation.data_simulation(times, d, actions)
+    context, desired_action = simulation.simulate_data(times, d, actions)
     historystorage = history.MemoryHistoryStorage()
     modelstorage = model.MemoryModelStorage()
     policy = ucb1.UCB1(actions, historystorage, modelstorage)
 
-    seq_error = simulation.policy_evaluation(policy, context, desired_action)
-    seq_error = [x / y for x, y in zip(seq_error, range(1, times + 1))]
+    for t in range(times):
+        history_id, action = policy.get_action(context[t], 1)
+        if desired_action[t][0] != action[0]['action'].action_id:
+            policy.reward(history_id, {action[0]['action'].action_id: 0})
+        else:
+            policy.reward(history_id, {action[0]['action'].action_id: 1})
 
-    # Plot the regret analysis
-    plt.plot(range(times), seq_error, 'r-')
-    plt.xlabel('time')
-    plt.ylabel('regret')
-    plt.legend()
-    axes = plt.gca()
-    axes.set_ylim([0, 1])
-    plt.title("Regret Bound with respect to T - UCB1")
-    plt.show()
+    rplt.plot_avg_regret(policy, history_id)
 
 
 if __name__ == '__main__':

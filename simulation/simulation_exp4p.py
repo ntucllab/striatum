@@ -2,6 +2,7 @@ from striatum.storage import history
 from striatum.storage import model
 from striatum.bandit import exp4p
 from striatum import simulation
+from striatum import rewardplot as rplt
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
@@ -40,35 +41,42 @@ def main():
     a5 = Action(5)
     actions = [a1, a2, a3, a4, a5]
     actions_id = [1, 2, 3, 4, 5]
-    history_context, history_action = simulation.data_simulation(3000, d, actions, "Exp4P")
+    history_context, history_action = simulation.simulate_data(3000, d, actions, "Exp4P")
     experts = train_expert(history_context, history_action)
 
-    # Parameter tunning
-    tunning_region = np.arange(0.01, 1, 0.05)
-    ctr_tunning = np.zeros(shape=(len(tunning_region), 1))
-    context1, desired_action1 = simulation.data_simulation(times, d, actions, "Exp4P")
+    # Parameter tuning
+    tuning_region = np.arange(0.01, 1, 0.05)
+    ctr_tuning = np.zeros(shape=(len(tuning_region), 1))
+    context1, desired_action1 = simulation.simulate_data(times, d, actions, "Exp4P")
     advice1 = get_advice(context1, actions_id, experts)
     i = 0
-    for delta in tunning_region:
+    for delta in tuning_region:
         historystorage = history.MemoryHistoryStorage()
         modelstorage = model.MemoryModelStorage()
         policy = exp4p.Exp4P(actions, historystorage, modelstorage, delta=delta, pmin=None)
-        seq_error = simulation.policy_evaluation(policy, advice1, desired_action1)
-        ctr_tunning[i] = times - seq_error[-1]
+        cum_regret = simulation.evaluate_policy(policy, advice1, desired_action1)
+        ctr_tuning[i] = times - cum_regret[-1]
         i += 1
-    ctr_tunning /= times
-    delta_opt = tunning_region[np.argmax(ctr_tunning)]
-    simulation.tuning_plot(tunning_region, ctr_tunning, label="delta changes")
+    ctr_tuning /= times
+    delta_opt = tuning_region[np.argmax(ctr_tuning)]
+    simulation.plot_tuning_curve(tuning_region, ctr_tuning, label="delta changes")
 
     # Regret Analysis
     times = 10000
-    context2, desired_action2 = simulation.data_simulation(times, d, actions, "Exp4P")
+    context2, desired_action2 = simulation.simulate_data(times, d, actions, "Exp4P")
     advice2 = get_advice(context2, actions_id, experts)
     historystorage = history.MemoryHistoryStorage()
     modelstorage = model.MemoryModelStorage()
     policy = exp4p.Exp4P(actions, historystorage, modelstorage, delta=delta_opt, pmin=None)
-    regret = simulation.regret_calculation(simulation.policy_evaluation(policy, advice2, desired_action2))
-    simulation.regret_plot(times, regret, label='delta = ' + str(delta_opt))
+
+    for t in range(times):
+        history_id, action = policy.get_action(advice2[t], 1)
+        if desired_action2[t][0] != action[0]['action'].action_id:
+            policy.reward(history_id, {action[0]['action'].action_id: 0})
+        else:
+            policy.reward(history_id, {action[0]['action'].action_id: 1})
+
+    rplt.plot_avg_regret(policy, history_id)
 
 
 if __name__ == '__main__':

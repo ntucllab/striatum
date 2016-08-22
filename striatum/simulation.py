@@ -111,24 +111,24 @@ def regret_calculation(seq_error):
     return regret
 
 
-def tuning_plot(tunning_region, ctr_tunning, label):
+def tuning_plot(tuning_region, ctr_tuning, label):
 
-    """Draw the parameter tunning plot
+    """Draw the parameter tuning plot
 
         Parameters
         ----------
-        tunning_region: array
-            The region for tunning parameter.
+        tuning_region: array
+            The region for tuning parameter.
 
-        ctr_tunning: array
-            The resulted ctrs for each number of the tunning parameter.
+        ctr_tuning: array
+            The resulted ctrs for each number of the tuning parameter.
 
         label: string
             The name of label want to show.
 
     """
 
-    plt.plot(tunning_region, ctr_tunning, 'ro-', label=label)
+    plt.plot(tuning_region, ctr_tuning, 'ro-', label=label)
     plt.xlabel('parameter value')
     plt.ylabel('CTR')
     plt.legend()
@@ -140,7 +140,7 @@ def tuning_plot(tunning_region, ctr_tunning, label):
 
 def regret_plot(times, regret, label):
 
-    """Draw the parameter tunning plot
+    """Draw the parameter tuning plot
 
         Parameters
         ----------

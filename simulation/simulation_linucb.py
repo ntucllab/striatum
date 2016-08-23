@@ -40,7 +40,15 @@ def main():
     modelstorage = model.MemoryModelStorage()
     policy = linucb.LinUCB(actions, historystorage, modelstorage, alpha=alpha_opt, d=d)
 
-    cum_regret
+    for t in range(times):
+        history_id, action = policy.get_action(context2[t], 1)
+        if desired_action2[t][0] != action[0]['action'].action_id:
+            policy.reward(history_id, {action[0]['action'].action_id: 0})
+        else:
+            policy.reward(history_id, {action[0]['action'].action_id: 1})
+
+    policy.plot_avg_regret()
+
 
 
 if __name__ == '__main__':

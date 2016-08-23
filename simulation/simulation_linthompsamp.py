@@ -94,7 +94,7 @@ def main():
         else:
             policy.reward(history_id, {action[0]['action'].action_id: 1})
 
-    rplt.plot_avg_regret(policy, history_id)
+    policy.plot_avg_regret()
 
 
 if __name__ == '__main__':

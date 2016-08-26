@@ -68,7 +68,6 @@ def plot_avg_reward(policy):
     plt.ylabel('avg reward')
     plt.legend()
     plt.title("Average Reward with respect to Time")
-    plt.show()
 
 
 def plot_avg_regret(policy):
@@ -87,4 +86,3 @@ def plot_avg_regret(policy):
     plt.ylabel('avg regret')
     plt.legend()
     plt.title("Average Regret with respect to Time")
-    plt.show()

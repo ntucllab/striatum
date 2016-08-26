@@ -2,8 +2,8 @@ from striatum.storage import history
 from striatum.storage import model
 from striatum.bandit import exp3
 from striatum import simulation
+from striatum import rewardplot as rplt
 import numpy as np
-import matplotlib.pyplot as plt
 from striatum.bandit.bandit import Action
 
 
@@ -17,30 +17,37 @@ def main():
     a5 = Action(5)
     actions = [a1, a2, a3, a4, a5]
 
-    # Parameter tunning
-    tunning_region = np.arange(0.001, 1, 0.03)
-    ctr_tunning = np.zeros(shape=(len(tunning_region), 1))
-    context1, desired_action1 = simulation.data_simulation(times, d, actions)
+    # Parameter tuning
+    tuning_region = np.arange(0.001, 1, 0.03)
+    ctr_tuning = np.zeros(shape=(len(tuning_region), 1))
+    context1, desired_action1 = simulation.simulate_data(times, d, actions)
     i = 0
-    for gamma in tunning_region:
+    for gamma in tuning_region:
         historystorage = history.MemoryHistoryStorage()
         modelstorage = model.MemoryModelStorage()
         policy = exp3.Exp3(actions, historystorage, modelstorage, gamma)
-        seq_error = simulation.policy_evaluation(policy, context1, desired_action1)
-        ctr_tunning[i] = times - seq_error[-1]
+        cum_regret = simulation.evaluate_policy(policy, context1, desired_action1)
+        ctr_tuning[i] = times - cum_regret[-1]
         i += 1
-    ctr_tunning /= times
-    gamma_opt = tunning_region[np.argmax(ctr_tunning)]
-    simulation.tuning_plot(tunning_region, ctr_tunning, label="gamma changes")
+    ctr_tuning /= times
+    gamma_opt = tuning_region[np.argmax(ctr_tuning)]
+    simulation.plot_tuning_curve(tuning_region, ctr_tuning, label="gamma changes")
 
     # Regret Analysis
     times = 10000
-    context2, desired_action2 = simulation.data_simulation(times, d, actions)
+    context2, desired_action2 = simulation.simulate_data(times, d, actions)
     historystorage = history.MemoryHistoryStorage()
     modelstorage = model.MemoryModelStorage()
     policy = exp3.Exp3(actions, historystorage, modelstorage, gamma=gamma_opt)
-    regret = simulation.regret_calculation(simulation.policy_evaluation(policy, context2, desired_action2))
-    simulation.regret_plot(times, regret, label='gamma = ' + str(gamma_opt))
+
+    for t in range(times):
+        history_id, action = policy.get_action(context2[t], 1)
+        if desired_action2[t][0] != action[0]['action'].action_id:
+            policy.reward(history_id, {action[0]['action'].action_id: 0})
+        else:
+            policy.reward(history_id, {action[0]['action'].action_id: 1})
+
+    policy.plot_avg_regret()
 
 
 if __name__ == '__main__':

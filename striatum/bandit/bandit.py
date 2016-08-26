@@ -2,7 +2,7 @@
 Bandit interfaces
 """
 from abc import abstractmethod
-
+from striatum import rewardplot as rplt
 
 class Action(object):
     """The action object
@@ -115,3 +115,23 @@ class BaseBandit(object):
             A list of Action objects for recommendation
         """
         pass
+
+    def calculate_cum_reward(self):
+        """Calculate cumulative reward with respect to time.
+        """
+        return rplt.calculate_cum_reward(self)
+
+    def calculate_avg_reward(self):
+        """Calculate average reward with respect to time.
+        """
+        return rplt.calculate_avg_reward(self)
+
+    def plot_avg_reward(self):
+        """Plot average reward with respect to time.
+        """
+        rplt.plot_avg_reward(self)
+
+    def plot_avg_regret(self):
+        """Plot average regret with respect to time.
+        """
+        rplt.plot_avg_regret(self)

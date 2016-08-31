@@ -21,11 +21,13 @@ setup(
     packages=[
         'striatum',
         'striatum.bandit',
-        'striatum.storage'
+        'striatum.storage',
+        'striatum.cbma'
     ],
     package_dir={
         'striatum': 'striatum',
         'striatum.bandit': 'striatum/bandit',
-        'striatum.storage': 'striatum/storage'
+        'striatum.storage': 'striatum/storage',
+        'striatum.cbma': 'striatum/cbma'
     },
 )

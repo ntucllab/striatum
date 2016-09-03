@@ -90,8 +90,8 @@ class LinThompSamp (BaseBandit):
 
         while True:
             context = yield
-            action_ids = context.keys()
-            context_tmp = np.matrix(context.values())
+            action_ids = list(context.keys())
+            context_tmp = np.matrix(list(context.values()))
             b = self._modelstorage.get_model()['B']
             muhat = self._modelstorage.get_model()['muhat']
             v = self.R * np.sqrt(24 / self.epsilon * self.d * np.log(1 / self.delta))

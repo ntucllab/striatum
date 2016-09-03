@@ -70,7 +70,7 @@ class Exp3(BaseBandit):
 
         while True:
             w = self._modelstorage.get_model()['w']
-            w_sum = np.sum(w.values())
+            w_sum = sum(w.values())
 
             query_vector = {}
             for action_id in self.action_ids:
@@ -116,8 +116,10 @@ class Exp3(BaseBandit):
         else:
             estimated_reward, uncertainty, score = six.next(self.exp3_)
 
+        query_vector = np.array([score[act] for act in self.action_ids])
         action_recommendation = []
-        action_recommendation_ids = np.random.choice(self.action_ids, size=n_actions, p=score.values(), replace=False)
+        action_recommendation_ids = np.random.choice(self.action_ids,
+                            size=n_actions, p=query_vector, replace=False)
 
         for action_id in action_recommendation_ids:
             action_id = int(action_id)

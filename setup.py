@@ -1,4 +1,19 @@
+#!/usr/bin/env python
+
+import os
 from setuptools import setup
+import sys
+
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+# read the docs could not compile numpy and c extensions
+if on_rtd:
+    setup_requires = []
+else:
+    setup_requires=[
+        'numpy',
+        'scipy',
+        'scikit-learn',
+    ]
 
 setup(
     name='striatum',
@@ -6,12 +21,9 @@ setup(
     description='Contextual bandit in python',
     long_description='Contextual bandit in python',
     author='Y.-Y. Yang, Y.-A. Lin',
-    author_email='r02922163@csie.ntu.edu.tw',
+    author_email='b01902066@csie.ntu.edu.tw, r02922163@csie.ntu.edu.tw',
     url='https://github.com/ntucllab/straitum',
-    setup_requires=[
-        'nose>=1.0',
-        'coverage',
-    ],
+    setup_requires=setup_requires,
     classifiers=[
         'Topic :: Scientific/Engineering',
         'Programming Language :: Python :: 2.7',

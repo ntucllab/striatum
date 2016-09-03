@@ -75,13 +75,13 @@ class Exp4P(BaseBandit):
 
         while True:
             context = yield
-            advisors_id = context.keys()
+            advisors_id = list(context.keys())
 
             w = self._modelstorage.get_model()['w']
             if w == {}:
                 for i in advisors_id:
                     w[i] = 1
-            w_sum = np.sum(w.values())
+            w_sum = sum(w.values())
 
             query_vector = [(1 - self.k * self.pmin) *
                             np.sum(np.array([w[i] * context[i][action_id] for i in advisors_id])/w_sum) +
@@ -157,7 +157,7 @@ class Exp4P(BaseBandit):
         w_old = self._modelstorage.get_model()['w']
         query_vector_tmp = self._modelstorage.get_model()['query_vector']
         context = self._historystorage.unrewarded_histories[history_id].context
-        action_ids = context[context.keys()[0]].keys()
+        action_ids = list(context[list(context.keys())[0]].keys())
 
         query_vector = {}
         for k in range(len(query_vector_tmp)):
@@ -173,8 +173,8 @@ class Exp4P(BaseBandit):
             vhat = {}
             rhat[action_id] = reward_tmp/query_vector[action_id]
             for i in context.keys():
-                yhat[i] = np.dot(context[i].values(), rhat.values())
-                vhat[i] = sum([context[i][k]/np.array(query_vector.values()) for k in action_ids])
+                yhat[i] = np.dot(list(context[i].values()), list(rhat.values()))
+                vhat[i] = sum([context[i][k]/np.array(list(query_vector.values())) for k in action_ids])
                 w_new[i] = w_old[i] + np.exp(self.pmin / 2 * (
                     yhat[i] + vhat[i] * np.sqrt(
                         np.log(len(context) / self.delta) / self.k / self.n_total

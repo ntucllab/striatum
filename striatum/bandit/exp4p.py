@@ -81,7 +81,7 @@ class Exp4P(BaseBandit):
             if w == {}:
                 for i in advisors_id:
                     w[i] = 1
-            w_sum = np.sum(w.values())
+            w_sum = sum(w.values())
 
             query_vector = [(1 - self.k * self.pmin) *
                             np.sum(np.array([w[i] * context[i][action_id] for i in advisors_id])/w_sum) +

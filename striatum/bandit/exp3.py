@@ -70,7 +70,7 @@ class Exp3(BaseBandit):
 
         while True:
             w = self._modelstorage.get_model()['w']
-            w_sum = np.sum(w.values())
+            w_sum = np.sum(list(w.values()))
 
             query_vector = {}
             for action_id in self.action_ids:

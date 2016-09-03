@@ -2,6 +2,4 @@ numpy
 scipy
 scikit-learn
 matplotlib
-nose
-coverage
 pylint

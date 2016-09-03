@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from setuptools import setup
 
 setup(
@@ -6,11 +8,12 @@ setup(
     description='Contextual bandit in python',
     long_description='Contextual bandit in python',
     author='Y.-Y. Yang, Y.-A. Lin',
-    author_email='r02922163@csie.ntu.edu.tw',
+    author_email='b01902066@csie.ntu.edu.tw, r02922163@csie.ntu.edu.tw',
     url='https://github.com/ntucllab/straitum',
     setup_requires=[
-        'nose>=1.0',
-        'coverage',
+        'numpy',
+        'scipy',
+        'scikit-learn',
     ],
     classifiers=[
         'Topic :: Scientific/Engineering',

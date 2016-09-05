@@ -1,48 +1,49 @@
-striatum.storage package
-===================
+striatum.bandit package
+=======================
 
 Submodules
 ----------
 
-striatum.bandit.Exp3 module
---------------------------
+striatum.bandit.exp3 module
+---------------------------
 
-.. automodule:: striatum.bandit.Exp3
+.. automodule:: striatum.bandit.exp3
     :members:
     :undoc-members:
     :show-inheritance:
 
-striatum.bandit.Exp4P module
---------------------------
+striatum.bandit.exp4p module
+----------------------------
 
-.. automodule:: striatum.bandit.Exp4P
+.. automodule:: striatum.bandit.exp4p
     :members:
     :undoc-members:
     :show-inheritance:
 
-striatum.bandit.LinThompSamp module
---------------------------
+striatum.bandit.linthompsamp module
+-----------------------------------
 
-.. automodule:: striatum.bandit.LinThompSamp
+.. automodule:: striatum.bandit.linthompsamp
     :members:
     :undoc-members:
     :show-inheritance:
 
-striatum.bandit.LinUCB module
---------------------------
+striatum.bandit.linucb module
+-----------------------------
 
-.. automodule:: striatum.bandit.LinUCB
+.. automodule:: striatum.bandit.linucb
     :members:
     :undoc-members:
     :show-inheritance:
 
-striatum.bandit.UCB1 module
---------------------------
+striatum.bandit.ucb1 module
+---------------------------
 
-.. automodule:: striatum.bandit.UCB1
+.. automodule:: striatum.bandit.ucb1
     :members:
     :undoc-members:
     :show-inheritance:
+
 
 Module contents
 ---------------

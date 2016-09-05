@@ -1,21 +1,21 @@
 striatum.storage package
-===================
+========================
 
 Submodules
 ----------
 
-striatum.storage.MemoryHistoryStorage module
---------------------------
+striatum.storage.model module
+-----------------------------
 
-.. automodule:: striatum.storage.MemoryHistoryStorage
+.. automodule:: striatum.storage.model
     :members:
     :undoc-members:
     :show-inheritance:
 
-striatum.storage.MemoryModelStorage module
---------------------------
+striatum.storage.history module
+-------------------------------
 
-.. automodule:: striatum.storage.MemoryModelStorage
+.. automodule:: striatum.storage.history
     :members:
     :undoc-members:
     :show-inheritance:

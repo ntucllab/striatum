@@ -9,12 +9,9 @@ striatum: Contextual bandit in python
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+  :maxdepth: 2
 
-
-
-Indices and tables
-==================
+  api_reference.rst
 
 * :ref:`genindex`
 * :ref:`modindex`

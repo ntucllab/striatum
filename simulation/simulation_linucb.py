@@ -1,8 +1,7 @@
 import numpy as np
 
 from striatum import simulation
-from striatum.storage import history
-from striatum.storage import model
+from striatum.storage import MemoryHistoryStorage, MemoryModelStorage
 from striatum.bandit import linucb
 from striatum.bandit.bandit import Action
 
@@ -14,14 +13,15 @@ def main():
 
     # Parameter tuning
     tuning_region = np.arange(0, 3, 0.05)
-    ctr_tuning = np.zeros(shape=(len(tuning_region), 1))
-    context1, desired_action1 = simulation.simulate_data(times, d, actions)
+    ctr_tuning = np.zeros(shape=len(tuning_region))
+    context1, desired_actions1 = simulation.simulate_data(times, d, actions)
     i = 0
     for alpha in tuning_region:
-        historystorage = history.MemoryHistoryStorage()
-        modelstorage = model.MemoryModelStorage()
-        policy = linucb.LinUCB(actions, historystorage, modelstorage, alpha=alpha, d=d)
-        cum_regret = simulation.evaluate_policy(policy, context1, desired_action1)
+        policy = linucb.LinUCB(actions,
+                               historystorage=MemoryHistoryStorage(),
+                               modelstorage=MemoryModelStorage(),
+                               alpha=alpha, d=d)
+        cum_regret = simulation.evaluate_policy(policy, context1, desired_actions1)
         ctr_tuning[i] = times - cum_regret[-1]
         i += 1
     ctr_tuning /= times
@@ -30,14 +30,14 @@ def main():
 
     # Regret Analysis
     times = 10000
-    context2, desired_action2 = simulation.simulate_data(times, d, actions)
-    historystorage = history.MemoryHistoryStorage()
-    modelstorage = model.MemoryModelStorage()
+    context2, desired_actions2 = simulation.simulate_data(times, d, actions)
+    historystorage = MemoryHistoryStorage()
+    modelstorage = MemoryModelStorage()
     policy = linucb.LinUCB(actions, historystorage, modelstorage, alpha=alpha_opt, d=d)
 
     for t in range(times):
         history_id, action = policy.get_action(context2[t], 1)
-        if desired_action2[t][0] != action[0]['action'].action_id:
+        if desired_actions2[t][0] != action[0]['action'].action_id:
             policy.reward(history_id, {action[0]['action'].action_id: 0})
         else:
             policy.reward(history_id, {action[0]['action'].action_id: 1})

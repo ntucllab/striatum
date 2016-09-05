@@ -1,75 +1,74 @@
+from six.moves import range
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 def simulate_data(times, d, actions, algorithm=None):
-
     """Simulate dataset for the contextual bandit problem.
 
-        Parameters
-        ----------
-        times: int
-            Total number of (context, reward) tuples you want to generate.
+    Parameters
+    ----------
+    times: int
+        Total number of (context, reward) tuples you want to generate.
 
-        d: int
-            Dimension of the context.
+    d: int
+        Dimension of the context.
 
-        actions : list of Action objects
-            List of actions to be chosen from.
+    actions : list of Action objects
+        List of actions to be chosen from.
 
-        algorithm: string
-            The bandit algorithm you want to use.
+    algorithm: string
+        The bandit algorithm you want to use.
 
-        Return
-        ---------
-        context: dictionary
-            The dictionary stores contexts (dictionary with n_actions d-by-1 action) at each iteration.
+    Return
+    ---------
+    context: dictionary
+        The dictionary stores contexts (dictionary with n_actions d-by-1 action) at each iteration.
 
-        desired_action:
-            The action which will receive reward 1.
+    desired_action:
+        The action which will receive reward 1.
     """
 
-    actions_id = [actions[i].action_id for i in range(len(actions))]
+    action_ids = [action.action_id for action in actions]
     context = {}
-    desired_action = np.zeros((times, 1))
+    desired_action = np.empty(shape=(times,), dtype=np.int)
 
     if algorithm == 'Exp4P':
         for t in range(times):
             context[t] = np.random.uniform(0, 1, d)
             for i in range(len(actions)):
                 if i * d / len(actions) < sum(context[t]) <= (i + 1) * d / len(actions):
-                    desired_action[t] = actions_id[i]
+                    desired_action[t] = action_ids[i]
 
     else:
         for t in range(times):
             context[t] = {}
-            for i in actions_id:
-                context[t][i] = np.random.uniform(0, 1, d)
-            desired_action[t] = actions_id[np.argmax([np.sum(context[t][i]) for i in actions_id])]
+            for action_id in action_ids:
+                context[t][action_id] = np.random.uniform(0, 1, d)
+            desired_action[t] = max(
+                context[t],
+                key=lambda action_id: context[t][action_id].sum())
     return context, desired_action
 
 
 def evaluate_policy(policy, context, desired_action):
-
     """Evaluate a given policy based on a (context, desired_action) dataset.
 
-        Parameters
-        ----------
-        policy: bandit object
-            The bandit algorithm you want to evaluate.
+    Parameters
+    ----------
+    policy: bandit object
+        The bandit algorithm you want to evaluate.
 
-        context: {array, dictionary}
-            The contexts for evaluation.
+    context: {array, dictionary}
+        The contexts for evaluation.
 
-        desired_action:
-             The desired_action for evaluation.
+    desired_action:
+         The desired_action for evaluation.
 
-        Return
-        ---------
-
-        cum_regret: array
-            The cumulative regret at each iteration.
-
+    Return
+    ---------
+    cum_regret: array
+        The cumulative regret at each iteration.
     """
 
     times = len(desired_action)
@@ -90,20 +89,18 @@ def evaluate_policy(policy, context, desired_action):
 
 
 def plot_tuning_curve(tuning_region, ctr_tuning, label):
-
     """Draw the parameter tuning plot
 
-        Parameters
-        ----------
-        tuning_region: array
-            The region for tuning parameter.
+    Parameters
+    ----------
+    tuning_region: array
+        The region for tuning parameter.
 
-        ctr_tuning: array
-            The resulted ctrs for each number of the tuning parameter.
+    ctr_tuning: array
+        The resulted ctrs for each number of the tuning parameter.
 
-        label: string
-            The name of label want to show.
-
+    label: string
+        The name of label want to show.
     """
 
     plt.plot(tuning_region, ctr_tuning, 'ro-', label=label)

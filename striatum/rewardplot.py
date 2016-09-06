@@ -1,3 +1,5 @@
+import six
+from six.moves import range
 import matplotlib.pyplot as plt
 
 
@@ -15,18 +17,16 @@ def calculate_cum_reward(policy):
         cum_reward: dictionary
             The dictionary stores {history_id: cumulative reward} .
 
-        time: dictionary
+        cum_n_actions: dictionary
             The dictionary stores {history_id: cumulative number of recommended actions} .
     """
-
-    last_history_id = policy.historystorage.n_histories
     cum_reward = {-1: 0.0}
-    time = {-1: 0.0}
-    for i in range(0, last_history_id):
+    cum_n_actions = {-1: 0}
+    for i in range(policy.historystorage.n_histories):
         reward = policy.historystorage.get_history(i).reward
-        time[i] = time[i - 1] + len(reward.values())
-        cum_reward[i] = cum_reward[i - 1] + sum(reward.values())
-    return cum_reward, time
+        cum_n_actions[i] = cum_n_actions[i - 1] + len(reward)
+        cum_reward[i] = cum_reward[i - 1] + sum(six.viewvalues(reward))
+    return cum_reward, cum_n_actions
 
 
 def calculate_avg_reward(policy):
@@ -43,12 +43,10 @@ def calculate_avg_reward(policy):
         avg_reward: dictionary
             The dictionary stores {history_id: average reward} .
     """
-
-    last_history_id = policy.historystorage.n_histories
-    cum_reward, time = calculate_cum_reward(policy)
+    cum_reward, cum_n_actions = calculate_cum_reward(policy)
     avg_reward = {}
-    for i in range(0, last_history_id):
-        avg_reward[i] = cum_reward[i] / time[i]
+    for i in range(policy.historystorage.n_histories):
+        avg_reward[i] = cum_reward[i] / cum_n_actions[i]
     return avg_reward
 
 
@@ -81,7 +79,9 @@ def plot_avg_regret(policy):
     """
 
     avg_reward = calculate_avg_reward(policy)
-    plt.plot(avg_reward.keys(), [1.0 - reward for reward in avg_reward.values()], 'r-', label="average regret")
+    points = sorted(six.viewitems(avg_reward), key=lambda x: x[0])
+    x, y = zip(*points)
+    plt.plot(x, y, 'r-', label="average regret")
     plt.xlabel('time')
     plt.ylabel('avg regret')
     plt.legend()

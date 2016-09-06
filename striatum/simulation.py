@@ -1,109 +1,109 @@
+from six.moves import range
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-def simulate_data(times, d, actions, algorithm=None):
-
+def simulate_data(n_rounds, n_dimensions, actions, algorithm=None):
     """Simulate dataset for the contextual bandit problem.
 
-        Parameters
-        ----------
-        times: int
-            Total number of (context, reward) tuples you want to generate.
+    Parameters
+    ----------
+    n_rounds: int
+        Total number of (context, reward) tuples you want to generate.
 
-        d: int
-            Dimension of the context.
+    n_dimensions: int
+        Dimension of the context.
 
-        actions : list of Action objects
-            List of actions to be chosen from.
+    actions : list of Action objects
+        List of actions to be chosen from.
 
-        algorithm: string
-            The bandit algorithm you want to use.
+    algorithm: string
+        The bandit algorithm you want to use.
 
-        Return
-        ---------
-        context: dictionary
-            The dictionary stores contexts (dictionary with n_actions d-by-1 action) at each iteration.
+    Return
+    ---------
+    context: dict
+        The dict stores contexts (dict with {action_id: n_dimensions ndarray}) at each iteration.
 
-        desired_action:
-            The action which will receive reward 1.
+    desired_actions:
+        The action which will receive reward 1.
     """
 
-    actions_id = [actions[i].action_id for i in range(len(actions))]
+    action_ids = [action.action_id for action in actions]
     context = {}
-    desired_action = np.zeros((times, 1))
+    desired_actions = np.empty(shape=n_rounds, dtype=np.int)
 
     if algorithm == 'Exp4P':
-        for t in range(times):
-            context[t] = np.random.uniform(0, 1, d)
+        for t in range(n_rounds):
+            context[t] = np.random.uniform(0, 1, n_dimensions)
             for i in range(len(actions)):
-                if i * d / len(actions) < sum(context[t]) <= (i + 1) * d / len(actions):
-                    desired_action[t] = actions_id[i]
+                if i * n_dimensions / len(actions) < sum(context[t]) <= (i + 1) * n_dimensions / len(actions):
+                    desired_actions[t] = action_ids[i]
 
     else:
-        for t in range(times):
+        for t in range(n_rounds):
             context[t] = {}
-            for i in actions_id:
-                context[t][i] = np.random.uniform(0, 1, d)
-            desired_action[t] = actions_id[np.argmax([np.sum(context[t][i]) for i in actions_id])]
-    return context, desired_action
+            for action_id in action_ids:
+                context[t][action_id] = np.random.uniform(0, 1, n_dimensions)
+            desired_actions[t] = max(
+                context[t],
+                key=lambda action_id: context[t][action_id].sum())
+    return context, desired_actions
 
 
-def evaluate_policy(policy, context, desired_action):
+def evaluate_policy(policy, context, desired_actions):
+    """Evaluate a given policy based on a (context, desired_actions) dataset.
 
-    """Evaluate a given policy based on a (context, desired_action) dataset.
+    Parameters
+    ----------
+    policy: bandit object
+        The bandit algorithm you want to evaluate.
 
-        Parameters
-        ----------
-        policy: bandit object
-            The bandit algorithm you want to evaluate.
+    context: {array, dictionary}
+        The contexts for evaluation.
 
-        context: {array, dictionary}
-            The contexts for evaluation.
+    desired_actions:
+         The desired_actions for evaluation.
 
-        desired_action:
-             The desired_action for evaluation.
-
-        Return
-        ---------
-
-        cum_regret: array
-            The cumulative regret at each iteration.
-
+    Return
+    ---------
+    cum_regret: array
+        The cumulative regret at each iteration.
     """
 
-    times = len(desired_action)
-    cum_regret = np.zeros(shape=(times, 1))
-    for t in range(times):
+    n_rounds = len(desired_actions)
+    cum_regret = np.empty(shape=n_rounds)
+    for t in range(n_rounds):
         history_id, action = policy.get_action(context[t], 1)
-        if desired_action[t][0] != action[0]['action'].action_id:
-            policy.reward(history_id, {action[0]['action'].action_id: 0})
+        action_id = action[0]['action'].action_id
+        if desired_actions[t] != action_id:
+            policy.reward(history_id, {action_id: 0})
             if t == 0:
-                cum_regret[t] = 1.0
+                cum_regret[t] = 1.
             else:
-                cum_regret[t] = cum_regret[t - 1] + 1.0
+                cum_regret[t] = cum_regret[t - 1] + 1.
         else:
-            policy.reward(history_id, {action[0]['action'].action_id: 1})
-            if t > 0:
+            policy.reward(history_id, {action_id: 1})
+            if t == 0:
+                cum_regret[t] = 0.
+            else:
                 cum_regret[t] = cum_regret[t - 1]
     return cum_regret
 
 
 def plot_tuning_curve(tuning_region, ctr_tuning, label):
-
     """Draw the parameter tuning plot
 
-        Parameters
-        ----------
-        tuning_region: array
-            The region for tuning parameter.
+    Parameters
+    ----------
+    tuning_region: array
+        The region for tuning parameter.
 
-        ctr_tuning: array
-            The resulted ctrs for each number of the tuning parameter.
+    ctr_tuning: array
+        The resulted ctrs for each number of the tuning parameter.
 
-        label: string
-            The name of label want to show.
-
+    label: string
+        The name of label want to show.
     """
 
     plt.plot(tuning_region, ctr_tuning, 'ro-', label=label)

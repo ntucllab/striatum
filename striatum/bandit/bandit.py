@@ -1,23 +1,27 @@
 """
 Bandit interfaces
 """
+
 from abc import abstractmethod
+
 from striatum import rewardplot as rplt
 
+
 class Action(object):
-    """The action object
+    r"""The action object
 
     Parameters
     ----------
     action_id: int
         The index of this action.
     """
+
     def __init__(self, action_id):
         self.action_id = action_id
 
 
 class BaseBandit(object):
-    """Bandit algorithm
+    r"""Bandit algorithm
 
     Parameters
     ----------
@@ -67,6 +71,7 @@ class BaseBandit(object):
 
     @property
     def action_ids(self):
+        """List of action ids"""
         return [self._actions[i].action_id for i in range(len(self._actions))]
 
     @abstractmethod
@@ -87,7 +92,8 @@ class BaseBandit(object):
             The history id of the action.
 
         action_recommendation : list of dictionaries
-            In each dictionary, it will contains {Action object, estimated_reward, uncertainty}.
+            Each dictionary contains
+            {Action object, estimated_reward, uncertainty}.
         """
         pass
 

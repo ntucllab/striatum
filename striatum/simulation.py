@@ -3,7 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def simulate_data(n_rounds, n_dimensions, actions, algorithm=None):
+def simulate_data(n_rounds, n_dimensions, actions, algorithm=None,
+                  random_state=None):
     """Simulate dataset for the contextual bandit problem.
 
     Parameters
@@ -20,6 +21,10 @@ def simulate_data(n_rounds, n_dimensions, actions, algorithm=None):
     algorithm: string
         The bandit algorithm you want to use.
 
+    random_state: int, np.random.RandomState (default: None)
+        If int, np.random.RandomState will used it as seed. If None, a random
+        seed will be used.
+
     Return
     ---------
     context: dict
@@ -28,6 +33,10 @@ def simulate_data(n_rounds, n_dimensions, actions, algorithm=None):
     desired_actions:
         The action which will receive reward 1.
     """
+    if random_state is None:
+        random_state = np.random.RandomState()
+    elif not isinstance(random_state, np.random.RandomState):
+        random_state = np.random.RandomState(seed=random_state)
 
     action_ids = [action.action_id for action in actions]
     context = {}
@@ -35,7 +44,7 @@ def simulate_data(n_rounds, n_dimensions, actions, algorithm=None):
 
     if algorithm == 'Exp4P':
         for t in range(n_rounds):
-            context[t] = np.random.uniform(0, 1, n_dimensions)
+            context[t] = random_state.uniform(0, 1, n_dimensions)
             for i in range(len(actions)):
                 if i * n_dimensions / len(actions) < sum(context[t]) <= (i + 1) * n_dimensions / len(actions):
                     desired_actions[t] = action_ids[i]
@@ -44,7 +53,7 @@ def simulate_data(n_rounds, n_dimensions, actions, algorithm=None):
         for t in range(n_rounds):
             context[t] = {}
             for action_id in action_ids:
-                context[t][action_id] = np.random.uniform(0, 1, n_dimensions)
+                context[t][action_id] = random_state.uniform(0, 1, n_dimensions)
             desired_actions[t] = max(
                 context[t],
                 key=lambda action_id: context[t][action_id].sum())

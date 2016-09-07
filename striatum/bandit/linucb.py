@@ -110,7 +110,7 @@ class LinUCB(BaseBandit):
 
         Parameters
         ----------
-        context : dictionary
+        context : dict
             Contexts {action_id: context} of different actions.
 
         n_actions: int
@@ -121,13 +121,12 @@ class LinUCB(BaseBandit):
         history_id : int
             The history id of the action.
 
-        action_recommendation : list of dictionaries
-            Each dictionary contains {Action object, estimated_reward,
+        action_recommendation : list of dict
+            Each dict contains {Action object, estimated_reward,
             uncertainty}
         """
-
-        if context is None:
-            raise ValueError("LinUCB requires contexts for all actions!")
+        if not isinstance(context, dict):
+            raise ValueError("LinUCB requires context dict for all actions!")
 
         if self.linucb_ is None:
             self.linucb_ = self.linucb

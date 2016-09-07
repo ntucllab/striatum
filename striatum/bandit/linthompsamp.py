@@ -116,8 +116,8 @@ class LinThompSamp(BaseBandit):
                 estimated_reward[action_ids[i]] = float(
                     estimated_reward_tmp[i][0])
                 score[action_ids[i]] = float(score_tmp[i])
-                uncertainty[action_ids[i]] = score[action_ids[i]] - \
-                    estimated_reward[action_ids[i]]
+                uncertainty[action_ids[i]] = score[action_ids[i]] \
+                    - estimated_reward[action_ids[i]]
             yield estimated_reward, uncertainty, score
 
         raise StopIteration
@@ -167,7 +167,8 @@ class LinThompSamp(BaseBandit):
                 'action': action,
                 'estimated_reward': estimated_reward[action_id],
                 'uncertainty': uncertainty[action_id],
-                'score': score[action_id]})
+                'score': score[action_id],
+            })
 
         history_id = self._historystorage.add_history(context,
                                                       action_recommendation,

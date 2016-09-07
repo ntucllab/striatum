@@ -93,10 +93,12 @@ class Exp4P(BaseBandit):
                     w[i] = 1
             w_sum = sum(w.values())
 
-            query_vector = [(1 - self.k * self.pmin) * np.sum(
-                    np.array([w[i] * context[i][action_id]
-                              for i in advisors_id]) / w_sum
-                ) + self.pmin for action_id in self.action_ids]
+            query_vector = []
+            for action_id in self.action_ids:
+                prob_vector = np.sum(np.array([w[i] * context[i][action_id]
+                                               for i in advisors_id]) / w_sum)
+                query_vector.append((1 - self.k * self.pmin) * prob_vector
+                                    + self.pmin)
             query_vector /= sum(query_vector)
             self._modelstorage.save_model(
                 {'query_vector': query_vector, 'w': w})
@@ -154,7 +156,8 @@ class Exp4P(BaseBandit):
                 'action': action,
                 'estimated_reward': estimated_reward[action_id],
                 'uncertainty': uncertainty[action_id],
-                'score': score[action_id]})
+                'score': score[action_id],
+            })
 
         self.n_total += 1
         history_id = self._historystorage.add_history(
@@ -194,7 +197,7 @@ class Exp4P(BaseBandit):
             for i in context.keys():
                 yhat[i] = np.dot(list(context[i].values()), list(rhat.values()))
                 vhat[i] = sum(
-                    [context[i][k]/np.array(list(query_vector.values()))
+                    [context[i][k] / np.array(list(query_vector.values()))
                      for k in action_ids])
                 w_new[i] = w_old[i] + np.exp(self.pmin / 2 * (
                     yhat[i] + vhat[i] * np.sqrt(np.log(

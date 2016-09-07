@@ -77,8 +77,8 @@ class Exp3(BaseBandit):
 
             query_vector = {}
             for action_id in self.action_ids:
-                query_vector[action_id] = (1 - self.gamma) *\
-                    w[action_id] / w_sum + self.gamma / len(self.action_ids)
+                query_vector[action_id] = (1 - self.gamma) \
+                    * w[action_id] / w_sum + self.gamma / len(self.action_ids)
 
             self._modelstorage.save_model(
                 {'query_vector': query_vector, 'w': w})
@@ -135,7 +135,7 @@ class Exp3(BaseBandit):
                 'action': action,
                 'estimated_reward': estimated_reward[action_id],
                 'uncertainty': uncertainty[action_id],
-                'score': score[action_id]
+                'score': score[action_id],
             })
 
         history_id = self._historystorage.add_history(
@@ -164,8 +164,8 @@ class Exp3(BaseBandit):
             for i in actions_id:
                 rhat[i] = 0.0
             rhat[action_id] = reward_tmp / query_vector[action_id]
-            w[action_id] *= \
-                np.exp(self.gamma * rhat[action_id] / len(self.action_ids))
+            w[action_id] *= np.exp(
+                self.gamma * rhat[action_id] / len(self.action_ids))
 
         self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
 

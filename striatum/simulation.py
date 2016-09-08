@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def simulate_data(n_rounds, n_dimensions, actions, algorithm=None,
+def simulate_data(n_rounds, context_dimension, actions, algorithm=None,
                   random_state=None):
     """Simulate dataset for the contextual bandit problem.
 
@@ -12,7 +12,7 @@ def simulate_data(n_rounds, n_dimensions, actions, algorithm=None,
     n_rounds: int
         Total number of (context, reward) tuples you want to generate.
 
-    n_dimensions: int
+    context_dimension: int
         Dimension of the context.
 
     actions : list of Action objects
@@ -28,7 +28,7 @@ def simulate_data(n_rounds, n_dimensions, actions, algorithm=None,
     Return
     ---------
     context: dict
-        The dict stores contexts (dict with {action_id: n_dimensions ndarray}) at each iteration.
+        The dict stores contexts (dict with {action_id: context_dimension ndarray}) at each iteration.
 
     desired_actions:
         The action which will receive reward 1.
@@ -44,16 +44,16 @@ def simulate_data(n_rounds, n_dimensions, actions, algorithm=None,
 
     if algorithm == 'Exp4P':
         for t in range(n_rounds):
-            context[t] = random_state.uniform(0, 1, n_dimensions)
+            context[t] = random_state.uniform(0, 1, context_dimension)
             for i in range(len(actions)):
-                if i * n_dimensions / len(actions) < sum(context[t]) <= (i + 1) * n_dimensions / len(actions):
+                if i * context_dimension / len(actions) < sum(context[t]) <= (i + 1) * context_dimension / len(actions):
                     desired_actions[t] = action_ids[i]
 
     else:
         for t in range(n_rounds):
             context[t] = {}
             for action_id in action_ids:
-                context[t][action_id] = random_state.uniform(0, 1, n_dimensions)
+                context[t][action_id] = random_state.uniform(0, 1, context_dimension)
             desired_actions[t] = max(
                 context[t],
                 key=lambda action_id: context[t][action_id].sum())

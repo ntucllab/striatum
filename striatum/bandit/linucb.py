@@ -32,7 +32,7 @@ class LinUCB(BaseBandit):
     alpha: float
         The constant determines the width of the upper confidence bound.
 
-    n_dimensions: int
+    context_dimension: int
         The dimension of the context.
 
     Attributes
@@ -47,11 +47,11 @@ class LinUCB(BaseBandit):
             International Conference on World Wide Web (WWW), 2010.
     """
 
-    def __init__(self, actions, historystorage, modelstorage, alpha, n_dimensions=1):
+    def __init__(self, actions, historystorage, modelstorage, alpha, context_dimension=1):
         super(LinUCB, self).__init__(historystorage, modelstorage, actions)
         self.last_reward = None
         self.alpha = alpha
-        self.n_dimensions = n_dimensions
+        self.context_dimension = context_dimension
         self.linucb_ = None
 
         # Initialize LinUCB Model Parameters
@@ -68,10 +68,10 @@ class LinUCB(BaseBandit):
         theta = {}
 
         for action_id in self.action_ids:
-            matrix_a[action_id] = np.identity(self.n_dimensions)
-            matrix_ainv[action_id] = np.identity(self.n_dimensions)
-            b[action_id] = np.zeros((self.n_dimensions, 1))
-            theta[action_id] = np.zeros((self.n_dimensions, 1))
+            matrix_a[action_id] = np.identity(self.context_dimension)
+            matrix_ainv[action_id] = np.identity(self.context_dimension)
+            b[action_id] = np.zeros((self.context_dimension, 1))
+            theta[action_id] = np.zeros((self.context_dimension, 1))
 
         self._modelstorage.save_model({'matrix_a': matrix_a,
                                        'matrix_ainv': matrix_ainv,
@@ -178,7 +178,7 @@ class LinUCB(BaseBandit):
             context_tmp = np.matrix(context[action_id])
             matrix_a[action_id] += np.dot(context_tmp.T, context_tmp)
             matrix_ainv[action_id] = np.linalg.solve(
-                matrix_a[action_id], np.identity(self.n_dimensions))
+                matrix_a[action_id], np.identity(self.context_dimension))
             b[action_id] += reward_tmp * context_tmp.T
             theta[action_id] = np.dot(matrix_ainv[action_id], b[action_id])
         self._modelstorage.save_model({
@@ -206,10 +206,10 @@ class LinUCB(BaseBandit):
         theta = self._modelstorage.get_model()['theta']
 
         for action_id in action_ids:
-            matrix_a[action_id] = np.identity(self.n_dimensions)
-            matrix_ainv[action_id] = np.identity(self.n_dimensions)
-            b[action_id] = np.zeros((self.n_dimensions, 1))
-            theta[action_id] = np.zeros((self.n_dimensions, 1))
+            matrix_a[action_id] = np.identity(self.context_dimension)
+            matrix_ainv[action_id] = np.identity(self.context_dimension)
+            b[action_id] = np.zeros((self.context_dimension, 1))
+            theta[action_id] = np.zeros((self.context_dimension, 1))
 
         self._modelstorage.save_model({
             'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv,

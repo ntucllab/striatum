@@ -84,7 +84,7 @@ class LinUCB(BaseBandit):
         matrix_ainv = model['matrix_ainv']
         theta = model['theta']
 
-        # The recommended actions hould maximize the Linear UCB.
+        # The recommended actions should maximize the Linear UCB.
         estimated_reward = {}
         uncertainty = {}
         score = {}

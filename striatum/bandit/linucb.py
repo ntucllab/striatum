@@ -8,7 +8,6 @@ of the context.
 import logging
 
 import numpy as np
-import six
 
 from striatum.bandit.bandit import BaseBandit
 
@@ -47,12 +46,12 @@ class LinUCB(BaseBandit):
             International Conference on World Wide Web (WWW), 2010.
     """
 
-    def __init__(self, actions, historystorage, modelstorage, alpha, context_dimension=1):
+    def __init__(self, actions, historystorage, modelstorage, alpha,
+                 context_dimension=1):
         super(LinUCB, self).__init__(historystorage, modelstorage, actions)
         self.last_reward = None
         self.alpha = alpha
         self.context_dimension = context_dimension
-        self.linucb_ = None
 
         # Initialize LinUCB Model Parameters
 
@@ -78,32 +77,28 @@ class LinUCB(BaseBandit):
                                        'b': b,
                                        'theta': theta})
 
-    @property
-    def linucb(self):
-        """The generator implementing the disjoint LINUCB algorithm.
+    def linucb_score(self, context):
+        """disjoint LINUCB algorithm.
         """
+        model = self._modelstorage.get_model()
+        matrix_ainv = model['matrix_ainv']
+        theta = model['theta']
 
-        while True:
-            context = yield
-            matrix_ainv_tmp = self._modelstorage.get_model()['matrix_ainv']
-            theta_tmp = self._modelstorage.get_model()['theta']
+        # The recommended actions should maximize the Linear UCB.
+        estimated_reward = {}
+        uncertainty = {}
+        score = {}
+        for action_id in self.action_ids:
+            action_context = np.array(context[action_id])
+            estimated_reward[action_id] = float(
+                np.dot(action_context, theta[action_id]))
+            uncertainty[action_id] = float(self.alpha * np.sqrt(
+                np.dot(np.dot(action_context, matrix_ainv[action_id]),
+                       action_context.T)))
+            score[action_id] = estimated_reward[action_id] + \
+                uncertainty[action_id]
+        return estimated_reward, uncertainty, score
 
-            # The recommended action should maximize the Linear UCB.
-            estimated_reward = {}
-            uncertainty = {}
-            score = {}
-            for action_id in self.action_ids:
-                context_tmp = np.array(context[action_id])
-                estimated_reward[action_id] = float(
-                    np.dot(context_tmp, theta_tmp[action_id]))
-                uncertainty[action_id] = float(self.alpha * np.sqrt(
-                    np.dot(np.dot(context_tmp, matrix_ainv_tmp[action_id]),
-                           context_tmp.T)))
-                score[action_id] = estimated_reward[action_id] + \
-                    uncertainty[action_id]
-            yield estimated_reward, uncertainty, score
-
-        raise StopIteration
 
     def get_action(self, context, n_actions=1):
         """Return the action to perform
@@ -128,13 +123,7 @@ class LinUCB(BaseBandit):
         if not isinstance(context, dict):
             raise ValueError("LinUCB requires context dict for all actions!")
 
-        if self.linucb_ is None:
-            self.linucb_ = self.linucb
-            six.next(self.linucb_)
-            estimated_reward, uncertainty, score = self.linucb_.send(context)
-        else:
-            six.next(self.linucb_)
-            estimated_reward, uncertainty, score = self.linucb_.send(context)
+        estimated_reward, uncertainty, score = self.linucb_score(context)
 
         action_recommendation = []
         action_recommendation_ids = sorted(score, key=score.get,

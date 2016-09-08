@@ -25,7 +25,7 @@ class TestLinUcb(unittest.TestCase):
                                self.modelstorage, 1.00, 2)
         self.assertEqual(self.actions, policy._actions)
         self.assertEqual(1.00, policy.alpha)
-        self.assertEqual(2, policy.d)
+        self.assertEqual(2, policy.context_dimension)
         self.assertEqual([1, 2, 3], policy.action_ids)
 
     def test_get_first_action(self):

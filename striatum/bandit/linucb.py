@@ -32,7 +32,7 @@ class LinUCB(BaseBandit):
     alpha: float
         The constant determines the width of the upper confidence bound.
 
-        d: int
+    context_dimension: int
         The dimension of the context.
 
     Attributes
@@ -47,11 +47,11 @@ class LinUCB(BaseBandit):
             International Conference on World Wide Web (WWW), 2010.
     """
 
-    def __init__(self, actions, historystorage, modelstorage, alpha, d=1):
+    def __init__(self, actions, historystorage, modelstorage, alpha, context_dimension=1):
         super(LinUCB, self).__init__(historystorage, modelstorage, actions)
         self.last_reward = None
         self.alpha = alpha
-        self.d = d
+        self.context_dimension = context_dimension
         self.linucb_ = None
 
         # Initialize LinUCB Model Parameters
@@ -68,10 +68,10 @@ class LinUCB(BaseBandit):
         theta = {}
 
         for action_id in self.action_ids:
-            matrix_a[action_id] = np.identity(self.d)
-            matrix_ainv[action_id] = np.identity(self.d)
-            b[action_id] = np.zeros((self.d, 1))
-            theta[action_id] = np.zeros((self.d, 1))
+            matrix_a[action_id] = np.identity(self.context_dimension)
+            matrix_ainv[action_id] = np.identity(self.context_dimension)
+            b[action_id] = np.zeros((self.context_dimension, 1))
+            theta[action_id] = np.zeros((self.context_dimension, 1))
 
         self._modelstorage.save_model({'matrix_a': matrix_a,
                                        'matrix_ainv': matrix_ainv,
@@ -110,7 +110,7 @@ class LinUCB(BaseBandit):
 
         Parameters
         ----------
-        context : dictionary
+        context : dict
             Contexts {action_id: context} of different actions.
 
         n_actions: int
@@ -121,13 +121,12 @@ class LinUCB(BaseBandit):
         history_id : int
             The history id of the action.
 
-        action_recommendation : list of dictionaries
-            Each dictionary contains {Action object, estimated_reward,
+        action_recommendation : list of dict
+            Each dict contains {Action object, estimated_reward,
             uncertainty}
         """
-
-        if context is None:
-            raise ValueError("LinUCB requires contexts for all actions!")
+        if not isinstance(context, dict):
+            raise ValueError("LinUCB requires context dict for all actions!")
 
         if self.linucb_ is None:
             self.linucb_ = self.linucb
@@ -179,7 +178,7 @@ class LinUCB(BaseBandit):
             context_tmp = np.matrix(context[action_id])
             matrix_a[action_id] += np.dot(context_tmp.T, context_tmp)
             matrix_ainv[action_id] = np.linalg.solve(
-                matrix_a[action_id], np.identity(self.d))
+                matrix_a[action_id], np.identity(self.context_dimension))
             b[action_id] += reward_tmp * context_tmp.T
             theta[action_id] = np.dot(matrix_ainv[action_id], b[action_id])
         self._modelstorage.save_model({
@@ -207,10 +206,10 @@ class LinUCB(BaseBandit):
         theta = self._modelstorage.get_model()['theta']
 
         for action_id in action_ids:
-            matrix_a[action_id] = np.identity(self.d)
-            matrix_ainv[action_id] = np.identity(self.d)
-            b[action_id] = np.zeros((self.d, 1))
-            theta[action_id] = np.zeros((self.d, 1))
+            matrix_a[action_id] = np.identity(self.context_dimension)
+            matrix_ainv[action_id] = np.identity(self.context_dimension)
+            b[action_id] = np.zeros((self.context_dimension, 1))
+            theta[action_id] = np.zeros((self.context_dimension, 1))
 
         self._modelstorage.save_model({
             'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv,

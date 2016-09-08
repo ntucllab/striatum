@@ -28,7 +28,8 @@ def simulate_data(n_rounds, context_dimension, actions, algorithm=None,
     Return
     ---------
     context: dict
-        The dict stores contexts (dict with {action_id: context_dimension ndarray}) at each iteration.
+        The dict stores contexts (dict with {action_id: context_dimension
+        ndarray}) at each iteration.
 
     desired_actions:
         The action which will receive reward 1.
@@ -46,14 +47,17 @@ def simulate_data(n_rounds, context_dimension, actions, algorithm=None,
         for t in range(n_rounds):
             context[t] = random_state.uniform(0, 1, context_dimension)
             for i in range(len(actions)):
-                if i * context_dimension / len(actions) < sum(context[t]) <= (i + 1) * context_dimension / len(actions):
+                if (i * context_dimension / len(actions)
+                        < sum(context[t])
+                        <= (i + 1) * context_dimension / len(actions)):
                     desired_actions[t] = action_ids[i]
 
     else:
         for t in range(n_rounds):
             context[t] = {}
             for action_id in action_ids:
-                context[t][action_id] = random_state.uniform(0, 1, context_dimension)
+                context[t][action_id] = random_state.uniform(0, 1,
+                                                             context_dimension)
             desired_actions[t] = max(
                 context[t],
                 key=lambda action_id: context[t][action_id].sum())

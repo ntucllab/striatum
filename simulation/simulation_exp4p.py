@@ -1,4 +1,5 @@
-from six.moves import range
+import six
+from six.moves import range, zip
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
@@ -24,13 +25,13 @@ def train_expert(history_context, history_action):
 
 def get_advice(context, action_ids, experts):
     advice = {}
-    for t in range(len(context)):
+    for t, context_t in six.viewitems(context):
         advice[t] = {}
         for exp_i, expert in enumerate(experts):
-            prob = expert.predict_proba(context[t][np.newaxis, :])[0]
+            prob = expert.predict_proba(context_t[np.newaxis, :])[0]
             advice[t][exp_i] = {}
-            for j in range(len(prob)):
-                advice[t][exp_i][action_ids[j]] = prob[j]
+            for action_id, action_prob in zip(action_ids, prob):
+                advice[t][exp_i][action_id] = action_prob
     return advice
 
 

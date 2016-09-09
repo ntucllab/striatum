@@ -1,14 +1,14 @@
 from six.moves import range
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import LogisticRegression
+from sklearn.multiclass import OneVsRestClassifier
+import numpy as np
 import matplotlib.pyplot as plt
 
 from striatum.storage import MemoryHistoryStorage, MemoryModelStorage
 from striatum.bandit import Exp4P
 from striatum.bandit.bandit import Action
 from striatum import simulation
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.linear_model import LogisticRegression
-from sklearn.multiclass import OneVsRestClassifier
-import numpy as np
 
 
 def train_expert(history_context, history_action):

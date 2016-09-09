@@ -37,7 +37,7 @@ def get_advice(context, action_ids, experts):
 def main():
     n_rounds = 1000
     context_dimension = 5
-    actions = [Action(i) for i in range(5)]
+    actions = [Action(i) for i in range(1, 6)]
     action_ids = [1, 2, 3, 4, 5]
     history_context, history_action = simulation.simulate_data(
         3000, context_dimension, actions, "Exp4P", random_state=0)

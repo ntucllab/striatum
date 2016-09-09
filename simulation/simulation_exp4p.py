@@ -1,8 +1,7 @@
 from six.moves import range
 
-from striatum.storage import history
-from striatum.storage import model
-from striatum.bandit import exp4p
+from striatum.storage import MemoryHistoryStorage, MemoryModelStorage
+from striatum.bandit import Exp4P
 from striatum import simulation
 from striatum import rewardplot as rplt
 from sklearn.naive_bayes import MultinomialNB
@@ -23,15 +22,15 @@ def train_expert(history_context, history_action):
     return [logreg, mnb]
 
 
-def get_advice(context, actions_id, experts):
+def get_advice(context, action_ids, experts):
     advice = {}
-    for time in context.keys():
-        advice[time] = {}
-        for i in range(len(experts)):
-            prob = experts[i].predict_proba(context[time])[0]
-            advice[time][i] = {}
+    for t in range(len(context)):
+        advice[t] = {}
+        for exp_i, expert in enumerate(experts):
+            prob = expert.predict_proba(context[t][np.newaxis, :])[0]
+            advice[t][exp_i] = {}
             for j in range(len(prob)):
-                advice[time][i][actions_id[j]] = prob[j]
+                advice[t][exp_i][action_ids[j]] = prob[j]
     return advice
 
 
@@ -39,35 +38,38 @@ def main():
     n_rounds = 1000
     context_dimension = 5
     actions = [Action(i) for i in range(5)]
-    actions_id = [1, 2, 3, 4, 5]
+    action_ids = [1, 2, 3, 4, 5]
     history_context, history_action = simulation.simulate_data(
         3000, context_dimension, actions, "Exp4P", random_state=0)
     experts = train_expert(history_context, history_action)
 
     # Parameter tuning
     tuning_region = np.arange(0.01, 1, 0.05)
-    ctr_tuning = np.zeros(shape=(len(tuning_region), 1))
-    context1, desired_actions1 = simulation.simulate_data(n_rounds, context_dimension, actions, "Exp4P")
-    advice1 = get_advice(context1, actions_id, experts)
-    i = 0
-    for delta in tuning_region:
-        historystorage = history.MemoryHistoryStorage()
-        modelstorage = model.MemoryModelStorage()
-        policy = exp4p.Exp4P(actions, historystorage, modelstorage, delta=delta, pmin=None)
-        cum_regret = simulation.evaluate_policy(policy, advice1, desired_actions1)
-        ctr_tuning[i] = n_rounds - cum_regret[-1]
-        i += 1
+    ctr_tuning = np.empty(len(tuning_region))
+    context1, desired_actions1 = simulation.simulate_data(
+        n_rounds, context_dimension, actions, "Exp4P", random_state=0)
+    advice1 = get_advice(context1, action_ids, experts)
+
+    for delta_i, delta in enumerate(tuning_region):
+        historystorage = MemoryHistoryStorage()
+        modelstorage = MemoryModelStorage()
+        policy = Exp4P(actions, historystorage, modelstorage,
+                       delta=delta, pmin=None)
+        cum_regret = simulation.evaluate_policy(policy, advice1,
+                                                desired_actions1)
+        ctr_tuning[delta_i] = n_rounds - cum_regret[-1]
     ctr_tuning /= n_rounds
     delta_opt = tuning_region[np.argmax(ctr_tuning)]
-    simulation.plot_tuning_curve(tuning_region, ctr_tuning, label="delta changes")
+    simulation.plot_tuning_curve(tuning_region, ctr_tuning,
+                                 label="delta changes")
 
     # Regret Analysis
     n_rounds = 10000
     context2, desired_actions2 = simulation.simulate_data(n_rounds, context_dimension, actions, "Exp4P")
-    advice2 = get_advice(context2, actions_id, experts)
+    advice2 = get_advice(context2, action_ids, experts)
     historystorage = history.MemoryHistoryStorage()
     modelstorage = model.MemoryModelStorage()
-    policy = exp4p.Exp4P(actions, historystorage, modelstorage, delta=delta_opt, pmin=None)
+    policy = Exp4P(actions, historystorage, modelstorage, delta=delta_opt, pmin=None)
 
     for t in range(n_rounds):
         history_id, action = policy.get_action(advice2[t], 1)

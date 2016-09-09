@@ -41,7 +41,7 @@ def simulate_data(n_rounds, context_dimension, actions, algorithm=None,
 
     action_ids = [action.action_id for action in actions]
     context = {}
-    desired_actions = np.empty(shape=n_rounds, dtype=np.int)
+    desired_actions = {}
 
     if algorithm == 'Exp4P':
         for t in range(n_rounds):

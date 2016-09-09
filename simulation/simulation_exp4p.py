@@ -1,14 +1,14 @@
 from six.moves import range
+import matplotlib.pyplot as plt
 
 from striatum.storage import MemoryHistoryStorage, MemoryModelStorage
 from striatum.bandit import Exp4P
+from striatum.bandit.bandit import Action
 from striatum import simulation
-from striatum import rewardplot as rplt
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
 import numpy as np
-from striatum.bandit.bandit import Action
 
 
 def train_expert(history_context, history_action):
@@ -34,7 +34,7 @@ def get_advice(context, action_ids, experts):
     return advice
 
 
-def main():
+def main():  # pylint: disable=too-many-locals
     n_rounds = 1000
     context_dimension = 5
     actions = [Action(i) for i in range(1, 6)]
@@ -65,11 +65,13 @@ def main():
 
     # Regret Analysis
     n_rounds = 10000
-    context2, desired_actions2 = simulation.simulate_data(n_rounds, context_dimension, actions, "Exp4P")
+    context2, desired_actions2 = simulation.simulate_data(
+        n_rounds, context_dimension, actions, "Exp4P", random_state=0)
     advice2 = get_advice(context2, action_ids, experts)
-    historystorage = history.MemoryHistoryStorage()
-    modelstorage = model.MemoryModelStorage()
-    policy = Exp4P(actions, historystorage, modelstorage, delta=delta_opt, pmin=None)
+    historystorage = MemoryHistoryStorage()
+    modelstorage = MemoryModelStorage()
+    policy = Exp4P(actions, historystorage, modelstorage,
+                   delta=delta_opt, pmin=None)
 
     for t in range(n_rounds):
         history_id, action = policy.get_action(advice2[t], 1)
@@ -80,6 +82,7 @@ def main():
             policy.reward(history_id, {action_id: 1})
 
     policy.plot_avg_regret()
+    plt.show()
 
 
 if __name__ == '__main__':

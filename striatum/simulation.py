@@ -31,8 +31,8 @@ def simulate_data(n_rounds, context_dimension, actions, algorithm=None,
         The dict stores contexts (dict with {action_id: context_dimension
         ndarray}) at each iteration.
 
-    desired_actions:
-        The action which will receive reward 1.
+    desired_actions: dict
+        The action which will receive reward 1 ({history_id: action_id}).
     """
     if random_state is None:
         random_state = np.random.RandomState()

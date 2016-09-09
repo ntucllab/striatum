@@ -1,4 +1,4 @@
-import six
+from six.moves import range
 
 from striatum.storage import history
 from striatum.storage import model
@@ -13,9 +13,11 @@ from striatum.bandit.bandit import Action
 
 
 def train_expert(history_context, history_action):
-    history_context = np.array(list(six.viewvalues(history_context)))
+    n_round = len(history_context)
+    history_context = np.array([history_context[t] for t in range(n_round)])
+    history_action = np.array([history_action[t] for t in range(n_round)])
     logreg = OneVsRestClassifier(LogisticRegression())
-    mnb = OneVsRestClassifier(MultinomialNB(), )
+    mnb = OneVsRestClassifier(MultinomialNB())
     logreg.fit(history_context, history_action)
     mnb.fit(history_context, history_action)
     return [logreg, mnb]

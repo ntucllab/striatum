@@ -46,11 +46,12 @@ def simulate_data(n_rounds, context_dimension, actions, algorithm=None,
     if algorithm == 'Exp4P':
         for t in range(n_rounds):
             context[t] = random_state.uniform(0, 1, context_dimension)
-            for i in range(len(actions)):
-                if (i * context_dimension / len(actions)
-                        < sum(context[t])
-                        <= (i + 1) * context_dimension / len(actions)):
-                    desired_actions[t] = action_ids[i]
+            context_sum = context[t].sum()
+            for action_i, action_id in enumerate(action_ids):
+                if (action_i * context_dimension / len(actions)
+                        < context_sum
+                        <= (action_i + 1) * context_dimension / len(actions)):
+                    desired_actions[t] = action_id
 
     else:
         for t in range(n_rounds):

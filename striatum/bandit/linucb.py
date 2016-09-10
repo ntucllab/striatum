@@ -4,12 +4,13 @@ This module contains a class that implements LinUCB with disjoint linear model,
 a contextual bandit algorithm assuming the reward function is a linear function
 of the context.
 """
-
 import logging
 
+import six
 import numpy as np
 
 from striatum.bandit.bandit import BaseBandit
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -160,18 +161,18 @@ class LinUCB(BaseBandit):
                    .context)
 
         # Update the model
-        matrix_a = self._modelstorage.get_model()['matrix_a']
-        matrix_ainv = self._modelstorage.get_model()['matrix_ainv']
-        b = self._modelstorage.get_model()['b']
-        theta = self._modelstorage.get_model()['theta']
+        model = self._modelstorage.get_model()
+        matrix_a = model['matrix_a']
+        matrix_ainv = model['matrix_ainv']
+        b = model['b']
+        theta = model['theta']
 
-        for action_id, reward_tmp in rewards.items():
-            context_tmp = np.matrix(context[action_id])
-            matrix_a[action_id] += np.dot(context_tmp.T, context_tmp)
-            matrix_ainv[action_id] = np.linalg.solve(
-                matrix_a[action_id], np.identity(self.context_dimension))
-            b[action_id] += reward_tmp * context_tmp.T
-            theta[action_id] = np.dot(matrix_ainv[action_id], b[action_id])
+        for action_id, reward in six.viewitems(rewards):
+            action_context = np.reshape(context[action_id], (-1, 1))
+            matrix_a[action_id] += action_context.dot(action_context.T)
+            matrix_ainv[action_id] = np.linalg.inv(matrix_a[action_id])
+            b[action_id] += reward * action_context
+            theta[action_id] = matrix_ainv[action_id].dot(b[action_id])
         self._modelstorage.save_model({
             'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv,
             'b': b, 'theta': theta})

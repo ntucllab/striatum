@@ -56,7 +56,7 @@ class TestExp3(unittest.TestCase):
         history_id2, action2 = policy.get_action(context=None, n_actions=1)
         policy.reward(history_id1, {1: 1.0})
         self.assertEqual(policy._historystorage.get_history(history_id1).reward, {1: 1.0})
-        self.assertEqual(policy._historystorage.get_history(history_id2).reward, None)
+        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id2).reward, None)
 
     def test_reward_order_descending(self):
         policy = exp3.Exp3(self.actions, self.historystorage,
@@ -64,7 +64,7 @@ class TestExp3(unittest.TestCase):
         history_id1, _ = policy.get_action(context=None, n_actions=1)
         history_id2, _ = policy.get_action(context=None, n_actions=1)
         policy.reward(history_id2, {1: 1.0, 2: 0.0})
-        self.assertEqual(policy._historystorage.get_history(history_id1).reward,
+        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id1).reward,
                          None)
         self.assertEqual(policy._historystorage.get_history(history_id2).reward,
                          {1: 1.0, 2: 0.0})

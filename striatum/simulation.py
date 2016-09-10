@@ -31,8 +31,8 @@ def simulate_data(n_rounds, context_dimension, actions, algorithm=None,
         The dict stores contexts (dict with {action_id: context_dimension
         ndarray}) at each iteration.
 
-    desired_actions:
-        The action which will receive reward 1.
+    desired_actions: dict
+        The action which will receive reward 1 ({history_id: action_id}).
     """
     if random_state is None:
         random_state = np.random.RandomState()
@@ -41,16 +41,17 @@ def simulate_data(n_rounds, context_dimension, actions, algorithm=None,
 
     action_ids = [action.action_id for action in actions]
     context = {}
-    desired_actions = np.empty(shape=n_rounds, dtype=np.int)
+    desired_actions = {}
 
     if algorithm == 'Exp4P':
         for t in range(n_rounds):
             context[t] = random_state.uniform(0, 1, context_dimension)
-            for i in range(len(actions)):
-                if (i * context_dimension / len(actions)
-                        < sum(context[t])
-                        <= (i + 1) * context_dimension / len(actions)):
-                    desired_actions[t] = action_ids[i]
+            context_sum = context[t].sum()
+            for action_i, action_id in enumerate(action_ids):
+                if (action_i * context_dimension / len(actions)
+                        < context_sum
+                        <= (action_i + 1) * context_dimension / len(actions)):
+                    desired_actions[t] = action_id
 
     else:
         for t in range(n_rounds):

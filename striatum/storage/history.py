@@ -60,6 +60,26 @@ class HistoryStorage(object):
         pass
 
     @abstractmethod
+    def get_unrewarded_history(self, history_id):
+        """Get the previous unrewarded context, action and reward with
+        history_id.
+
+        Parameters
+        ----------
+        history_id : int
+            The history id of the history record to retrieve.
+
+        Returns
+        -------
+        history: History object
+
+        Raise
+        -----
+        KeyError
+        """
+        pass
+
+    @abstractmethod
     def add_history(self, context, action, reward=None):
         """Add a history record.
 
@@ -99,7 +119,7 @@ class MemoryHistoryStorage(HistoryStorage):
         self.n_histories = 0
 
     def get_history(self, history_id):
-        """Get the preivous context, action and reward with history_id.
+        """Get the previous context, action and reward with history_id.
 
         Parameters
         ----------
@@ -114,10 +134,26 @@ class MemoryHistoryStorage(HistoryStorage):
         -----
         KeyError
         """
-        try:
-            return self.histories[history_id]
-        except KeyError:
-            return self.unrewarded_histories[history_id]
+        return self.histories[history_id]
+
+    def get_unrewarded_history(self, history_id):
+        """Get the previous unrewarded context, action and reward with
+        history_id.
+
+        Parameters
+        ----------
+        history_id : int
+            The history id of the history record to retrieve.
+
+        Returns
+        -------
+        history: History object
+
+        Raise
+        -----
+        KeyError
+        """
+        return self.unrewarded_histories[history_id]
 
     def add_history(self, context, action, reward=None):
         """Add a history record.

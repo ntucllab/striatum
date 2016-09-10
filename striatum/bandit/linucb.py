@@ -155,7 +155,9 @@ class LinUCB(BaseBandit):
             The dictionary {action_id, reward}, where reward is a float.
         """
 
-        context = self._historystorage.unrewarded_histories[history_id].context
+        context = (self._historystorage
+                   .get_unrewarded_history(history_id)
+                   .context)
 
         # Update the model
         matrix_a = self._modelstorage.get_model()['matrix_a']

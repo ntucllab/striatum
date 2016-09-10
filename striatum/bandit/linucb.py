@@ -89,14 +89,15 @@ class LinUCB(BaseBandit):
         uncertainty = {}
         score = {}
         for action_id in self.action_ids:
-            action_context = np.array(context[action_id])
+            action_context = np.reshape(context[action_id], (-1, 1))
             estimated_reward[action_id] = float(
-                np.dot(action_context, theta[action_id]))
-            uncertainty[action_id] = float(self.alpha * np.sqrt(
-                np.dot(np.dot(action_context, matrix_ainv[action_id]),
-                       action_context.T)))
-            score[action_id] = estimated_reward[action_id] + \
-                uncertainty[action_id]
+                theta[action_id].T.dot(action_context))
+            uncertainty[action_id] = float(
+                self.alpha * np.sqrt(action_context.T
+                                     .dot(matrix_ainv[action_id])
+                                     .dot(action_context)))
+            score[action_id] = (estimated_reward[action_id]
+                                + uncertainty[action_id])
         return estimated_reward, uncertainty, score
 
 

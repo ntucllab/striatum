@@ -55,9 +55,9 @@ class TestLinUcb(unittest.TestCase):
         policy.reward(history_id, {2: 1, 3: 1})
         self.assertEqual(len(policy._modelstorage.get_model()['b']), 3)
         self.assertEqual(len(policy._modelstorage.get_model()['b'][1]), 2)
-        self.assertEqual(len(policy._modelstorage.get_model()['matrix_a']), 3)
+        self.assertEqual(len(policy._modelstorage.get_model()['A']), 3)
         self.assertEqual(
-            policy._modelstorage.get_model()['matrix_a'][1].shape, (2, 2))
+            policy._modelstorage.get_model()['A'][1].shape, (2, 2))
 
     def test_delay_reward(self):
         policy = linucb.LinUCB(self.actions, self.historystorage,
@@ -103,12 +103,12 @@ class TestLinUcb(unittest.TestCase):
         a5 = Action(5)
         policy.add_action([a4, a5])
         policy.reward(history_id, {3: 1})
-        self.assertTrue((policy._modelstorage.get_model()['matrix_a'][4] == np.identity(2)).all())
+        self.assertTrue((policy._modelstorage.get_model()['A'][4] == np.identity(2)).all())
 
         context2 = {1: [1, 1], 2: [2, 2], 3: [3, 3], 4: [4, 4], 5: [5, 5]}
         history_id2, _ = policy.get_action(context2, 1)
         policy.reward(history_id2, {4: 4, 5: 5})
-        self.assertFalse((policy._modelstorage.get_model()['matrix_a'][4] == np.identity(2)).all())
+        self.assertFalse((policy._modelstorage.get_model()['A'][4] == np.identity(2)).all())
 
 
 if __name__ == '__main__':

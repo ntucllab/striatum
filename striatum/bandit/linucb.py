@@ -57,11 +57,11 @@ class LinUCB(BaseBandit):
         # Initialize LinUCB Model Parameters
         model = {
             # dictionary - For any action a in actions,
-            # matrix_a[a] = (DaT*Da + I) the ridge reg solution
-            'matrix_a': {},
-            # dictionary - The inverse of each matrix_a[a] for action a
+            # A[a] = (DaT*Da + I) the ridge reg solution
+            'A': {},
+            # dictionary - The inverse of each A[a] for action a
             # in actions
-            'matrix_ainv': {},
+            'A_inv': {},
             # dictionary - The cumulative return of action a, given the
             # context xt.
             'b': {},
@@ -75,8 +75,8 @@ class LinUCB(BaseBandit):
         self._modelstorage.save_model(model)
 
     def _init_action_model(self, model, action_id):
-        model['matrix_a'][action_id] = np.identity(self.context_dimension)
-        model['matrix_ainv'][action_id] = np.identity(self.context_dimension)
+        model['A'][action_id] = np.identity(self.context_dimension)
+        model['A_inv'][action_id] = np.identity(self.context_dimension)
         model['b'][action_id] = np.zeros((self.context_dimension, 1))
         model['theta'][action_id] = np.zeros((self.context_dimension, 1))
 
@@ -84,7 +84,7 @@ class LinUCB(BaseBandit):
         """disjoint LINUCB algorithm.
         """
         model = self._modelstorage.get_model()
-        matrix_ainv = model['matrix_ainv']
+        A_inv = model['A_inv']  # pylint: disable=invalid-name
         theta = model['theta']
 
         # The recommended actions should maximize the Linear UCB.
@@ -97,7 +97,7 @@ class LinUCB(BaseBandit):
                 theta[action_id].T.dot(action_context))
             uncertainty[action_id] = float(
                 self.alpha * np.sqrt(action_context.T
-                                     .dot(matrix_ainv[action_id])
+                                     .dot(A_inv[action_id])
                                      .dot(action_context)))
             score[action_id] = (estimated_reward[action_id]
                                 + uncertainty[action_id])
@@ -163,20 +163,20 @@ class LinUCB(BaseBandit):
 
         # Update the model
         model = self._modelstorage.get_model()
-        matrix_a = model['matrix_a']
-        matrix_ainv = model['matrix_ainv']
+        A = model['A']  # pylint: disable=invalid-name
+        A_inv = model['A_inv']  # pylint: disable=invalid-name
         b = model['b']
         theta = model['theta']
 
         for action_id, reward in six.viewitems(rewards):
             action_context = np.reshape(context[action_id], (-1, 1))
-            matrix_a[action_id] += action_context.dot(action_context.T)
-            matrix_ainv[action_id] = np.linalg.inv(matrix_a[action_id])
+            A[action_id] += action_context.dot(action_context.T)
+            A_inv[action_id] = np.linalg.inv(A[action_id])
             b[action_id] += reward * action_context
-            theta[action_id] = matrix_ainv[action_id].dot(b[action_id])
+            theta[action_id] = A_inv[action_id].dot(b[action_id])
         self._modelstorage.save_model({
-            'matrix_a': matrix_a,
-            'matrix_ainv': matrix_ainv,
+            'A': A,
+            'A_inv': A_inv,
             'b': b,
             'theta': theta,
         })

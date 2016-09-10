@@ -55,30 +55,32 @@ class LinUCB(BaseBandit):
         self.context_dimension = context_dimension
 
         # Initialize LinUCB Model Parameters
-
-        # dictionary - For any action a in actions,
-        # matrix_a[a] = (DaT*Da + I) the ridge reg solution
-        matrix_a = {}
-        # dictionary - The inverse of each matrix_a[a] for action a in actions
-        matrix_ainv = {}
-        # dictionary - The cumulative return of action a, given the context xt.
-        b = {}
-        # dictionary - The coefficient vector of actiona with
-        # linear model b = dot(xt, theta)
-        theta = {}
-
+        model = {
+            # dictionary - For any action a in actions,
+            # matrix_a[a] = (DaT*Da + I) the ridge reg solution
+            'matrix_a': {},
+            # dictionary - The inverse of each matrix_a[a] for action a
+            # in actions
+            'matrix_ainv': {},
+            # dictionary - The cumulative return of action a, given the
+            # context xt.
+            'b': {},
+            # dictionary - The coefficient vector of actiona with
+            # linear model b = dot(xt, theta)
+            'theta': {},
+        }
         for action_id in self.action_ids:
-            matrix_a[action_id] = np.identity(self.context_dimension)
-            matrix_ainv[action_id] = np.identity(self.context_dimension)
-            b[action_id] = np.zeros((self.context_dimension, 1))
-            theta[action_id] = np.zeros((self.context_dimension, 1))
+            self._init_action_model(model, action_id)
 
-        self._modelstorage.save_model({'matrix_a': matrix_a,
-                                       'matrix_ainv': matrix_ainv,
-                                       'b': b,
-                                       'theta': theta})
+        self._modelstorage.save_model(model)
 
-    def linucb_score(self, context):
+    def _init_action_model(self, model, action_id):
+        model['matrix_a'][action_id] = np.identity(self.context_dimension)
+        model['matrix_ainv'][action_id] = np.identity(self.context_dimension)
+        model['b'][action_id] = np.zeros((self.context_dimension, 1))
+        model['theta'][action_id] = np.zeros((self.context_dimension, 1))
+
+    def _linucb_score(self, context):
         """disjoint LINUCB algorithm.
         """
         model = self._modelstorage.get_model()
@@ -100,7 +102,6 @@ class LinUCB(BaseBandit):
             score[action_id] = (estimated_reward[action_id]
                                 + uncertainty[action_id])
         return estimated_reward, uncertainty, score
-
 
     def get_action(self, context, n_actions=1):
         """Return the action to perform
@@ -125,7 +126,7 @@ class LinUCB(BaseBandit):
         if not isinstance(context, dict):
             raise ValueError("LinUCB requires context dict for all actions!")
 
-        estimated_reward, uncertainty, score = self.linucb_score(context)
+        estimated_reward, uncertainty, score = self._linucb_score(context)
 
         action_recommendation = []
         action_recommendation_ids = sorted(score, key=score.get,
@@ -174,8 +175,11 @@ class LinUCB(BaseBandit):
             b[action_id] += reward * action_context
             theta[action_id] = matrix_ainv[action_id].dot(b[action_id])
         self._modelstorage.save_model({
-            'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv,
-            'b': b, 'theta': theta})
+            'matrix_a': matrix_a,
+            'matrix_ainv': matrix_ainv,
+            'b': b,
+            'theta': theta,
+        })
 
         # Update the history
         self._historystorage.add_reward(history_id, rewards)
@@ -188,21 +192,10 @@ class LinUCB(BaseBandit):
         actions : iterable
             A list of Action objects for recommendation
         """
-
-        action_ids = [actions[i].action_id for i in range(len(actions))]
         self._actions.extend(actions)
+        model = self._modelstorage.get_model()
 
-        matrix_a = self._modelstorage.get_model()['matrix_a']
-        matrix_ainv = self._modelstorage.get_model()['matrix_ainv']
-        b = self._modelstorage.get_model()['b']
-        theta = self._modelstorage.get_model()['theta']
+        for action in actions:
+            self._init_action_model(model, action.action_id)
 
-        for action_id in action_ids:
-            matrix_a[action_id] = np.identity(self.context_dimension)
-            matrix_ainv[action_id] = np.identity(self.context_dimension)
-            b[action_id] = np.zeros((self.context_dimension, 1))
-            theta[action_id] = np.zeros((self.context_dimension, 1))
-
-        self._modelstorage.save_model({
-            'matrix_a': matrix_a, 'matrix_ainv': matrix_ainv,
-            'b': b, 'theta': theta})
+        self._modelstorage.save_model(model)

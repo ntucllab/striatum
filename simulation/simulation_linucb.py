@@ -34,7 +34,7 @@ def main():
     # Regret Analysis
     n_rounds = 10000
     context2, desired_actions2 = simulation.simulate_data(
-        n_rounds, context_dimension, actions, random_state=0)
+        n_rounds, context_dimension, actions, random_state=1)
     policy = LinUCB(actions,
                     historystorage=MemoryHistoryStorage(),
                     modelstorage=MemoryModelStorage(),

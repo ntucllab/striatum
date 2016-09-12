@@ -141,3 +141,10 @@ class BaseBandit(object):
         """Plot average regret with respect to time.
         """
         rplt.plot_avg_regret(self)
+
+    def get_action_with_id(self, action_id):
+        for action in self._actions:
+            if action.action_id == action_id:
+                return action
+        else:
+            raise KeyError("action_id {} not found".format(action_id))

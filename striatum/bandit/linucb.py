@@ -132,8 +132,7 @@ class LinUCB(BaseBandit):
         action_recommendation_ids = sorted(score, key=score.get,
                                            reverse=True)[:n_actions]
         for action_id in action_recommendation_ids:
-            action = [action for action in self._actions
-                      if action.action_id == action_id][0]
+            action = self.get_action_with_id(action_id)
             action_recommendation.append({
                 'action': action,
                 'estimated_reward': estimated_reward[action_id],

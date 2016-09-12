@@ -34,7 +34,7 @@ class TestLinThompSamp(unittest.TestCase):
         history_id, action = policy.get_action(context, 1)
         self.assertEqual(history_id, 0)
         self.assertIn(action[0]['action'], self.actions)
-        self.assertEqual(policy._historystorage.get_history(history_id).context, context)
+        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id).context, context)
 
     def test_update_reward(self):
         policy = linthompsamp.LinThompSamp(self.actions, self.historystorage,
@@ -63,9 +63,9 @@ class TestLinThompSamp(unittest.TestCase):
         history_id2, action2 = policy.get_action(context2, 1)
         policy.reward(history_id1, {2: 1, 3: 1})
         self.assertEqual(policy._historystorage.get_history(history_id1).context, context1)
-        self.assertEqual(policy._historystorage.get_history(history_id2).context, context2)
+        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id2).context, context2)
         self.assertEqual(policy._historystorage.get_history(history_id1).reward, {2: 1, 3: 1})
-        self.assertEqual(policy._historystorage.get_history(history_id2).reward, None)
+        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id2).reward, None)
 
     def test_reward_order_descending(self):
         policy = linthompsamp.LinThompSamp(self.actions, self.historystorage,
@@ -75,9 +75,9 @@ class TestLinThompSamp(unittest.TestCase):
         history_id1, action1 = policy.get_action(context1, 2)
         history_id2, action2 = policy.get_action(context2, 1)
         policy.reward(history_id2, {3: 1})
-        self.assertEqual(policy._historystorage.get_history(history_id1).context, context1)
+        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id1).context, context1)
         self.assertEqual(policy._historystorage.get_history(history_id2).context, context2)
-        self.assertEqual(policy._historystorage.get_history(history_id1).reward, None)
+        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id1).reward, None)
         self.assertEqual(policy._historystorage.get_history(history_id2).reward, {3: 1})
 
     def test_add_action(self):

@@ -36,7 +36,7 @@ class Exp4P(unittest.TestCase):
         history_id, action = policy.get_action(context, 1)
         self.assertEqual(history_id, 0)
         self.assertIn(action[0]['action'], self.actions)
-        self.assertEqual(policy._historystorage.get_history(history_id).context, context)
+        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id).context, context)
 
     def test_update_reward(self):
         policy = exp4p.Exp4P(self.actions, self.historystorage, self.modelstorage, delta=0.1, pmin=None)
@@ -69,9 +69,9 @@ class Exp4P(unittest.TestCase):
         history_id2, action2 = policy.get_action(context2, 2)
         policy.reward(history_id1, {1: 1.0})
         self.assertEqual(policy._historystorage.get_history(history_id1).context, context1)
-        self.assertEqual(policy._historystorage.get_history(history_id2).context, context2)
+        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id2).context, context2)
         self.assertEqual(policy._historystorage.get_history(history_id1).reward, {1: 1.0})
-        self.assertEqual(policy._historystorage.get_history(history_id2).reward, None)
+        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id2).reward, None)
 
     def test_reward_order_descending(self):
         policy = exp4p.Exp4P(self.actions, self.historystorage, self.modelstorage, delta=0.1, pmin=None)
@@ -84,7 +84,7 @@ class Exp4P(unittest.TestCase):
         context2 = {1: prob1, 2: prob2}
         history_id2, action2 = policy.get_action(context2, 2)
         policy.reward(history_id2, {1: 1.0, 2: 1.0})
-        self.assertEqual(policy._historystorage.get_history(history_id1).reward, None)
+        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id1).reward, None)
         self.assertEqual(policy._historystorage.get_history(history_id2).reward, {1: 1.0, 2: 1.0})
 
     def test_add_action(self):

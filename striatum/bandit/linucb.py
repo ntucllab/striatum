@@ -50,7 +50,6 @@ class LinUCB(BaseBandit):
     def __init__(self, actions, historystorage, modelstorage, alpha,
                  context_dimension=1):
         super(LinUCB, self).__init__(historystorage, modelstorage, actions)
-        self.last_reward = None
         self.alpha = alpha
         self.context_dimension = context_dimension
 

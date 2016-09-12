@@ -84,7 +84,7 @@ class Exp4P(BaseBandit):
         self._modelstorage.save_model(model)
 
     def _exp4p_score(self, context):
-        """The generator which implements the main part of Exp4.P.
+        """The main part of Exp4.P.
         """
         advisor_ids = list(six.viewkeys(context))
 
@@ -96,10 +96,9 @@ class Exp4P(BaseBandit):
 
         action_probs_list = []
         for action_id in self.action_ids:
-            weighted_exp = np.asarray(
-                [w[advisor_id] * context[advisor_id][action_id]
-                 for advisor_id in advisor_ids])
-            prob_vector = np.sum(weighted_exp / w_sum)
+            weighted_exp = [w[advisor_id] * context[advisor_id][action_id]
+                            for advisor_id in advisor_ids]
+            prob_vector = np.sum(weighted_exp) / w_sum
             action_probs_list.append((1 - self.n_actions * self.p_min)
                                      * prob_vector
                                      + self.p_min)

@@ -1,53 +1,53 @@
+import matplotlib.pyplot as plt
+
 from striatum.storage import history
 from striatum.storage import model
-from striatum.bandit import exp3
-from striatum import simulation
-from striatum import rewardplot as rplt
-import numpy as np
+from striatum.bandit import Exp3
 from striatum.bandit.bandit import Action
+from striatum import simulation
+import numpy as np
 
 
 def main():
-    times = 1000
-    d = 5
-    a1 = Action(1)
-    a2 = Action(2)
-    a3 = Action(3)
-    a4 = Action(4)
-    a5 = Action(5)
-    actions = [a1, a2, a3, a4, a5]
+    n_rounds = 1000
+    context_dimension = 5
+    actions = [Action(action_id) for action_id in range(1, 6)]
 
     # Parameter tuning
     tuning_region = np.arange(0.001, 1, 0.03)
-    ctr_tuning = np.zeros(shape=(len(tuning_region), 1))
-    context1, desired_action1 = simulation.simulate_data(times, d, actions)
-    i = 0
-    for gamma in tuning_region:
+    ctr_tuning = np.zeros(shape=len(tuning_region))
+    context1, desired_actions1 = simulation.simulate_data(
+        n_rounds, context_dimension, actions, random_state=0)
+    for gamma_i, gamma in enumerate(tuning_region):
         historystorage = history.MemoryHistoryStorage()
         modelstorage = model.MemoryModelStorage()
-        policy = exp3.Exp3(actions, historystorage, modelstorage, gamma)
-        cum_regret = simulation.evaluate_policy(policy, context1, desired_action1)
-        ctr_tuning[i] = times - cum_regret[-1]
-        i += 1
-    ctr_tuning /= times
+        policy = Exp3(actions, historystorage, modelstorage, gamma)
+        cum_regret = simulation.evaluate_policy(policy, context1,
+                                                desired_actions1)
+        ctr_tuning[gamma_i] = n_rounds - cum_regret[-1]
+    ctr_tuning /= n_rounds
     gamma_opt = tuning_region[np.argmax(ctr_tuning)]
-    simulation.plot_tuning_curve(tuning_region, ctr_tuning, label="gamma changes")
+    simulation.plot_tuning_curve(tuning_region, ctr_tuning,
+                                 label="gamma changes")
 
     # Regret Analysis
-    times = 10000
-    context2, desired_action2 = simulation.simulate_data(times, d, actions)
+    n_rounds = 10000
+    context2, desired_actions2 = simulation.simulate_data(
+        n_rounds, context_dimension, actions, random_state=1)
     historystorage = history.MemoryHistoryStorage()
     modelstorage = model.MemoryModelStorage()
-    policy = exp3.Exp3(actions, historystorage, modelstorage, gamma=gamma_opt)
+    policy = Exp3(actions, historystorage, modelstorage, gamma=gamma_opt)
 
-    for t in range(times):
+    for t in range(n_rounds):
         history_id, action = policy.get_action(context2[t], 1)
-        if desired_action2[t][0] != action[0]['action'].action_id:
-            policy.reward(history_id, {action[0]['action'].action_id: 0})
+        action_id = action[0]['action'].action_id
+        if desired_actions2[t] != action_id:
+            policy.reward(history_id, {action_id: 0})
         else:
-            policy.reward(history_id, {action[0]['action'].action_id: 1})
+            policy.reward(history_id, {action_id: 1})
 
     policy.plot_avg_regret()
+    plt.show()
 
 
 if __name__ == '__main__':

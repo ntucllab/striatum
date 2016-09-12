@@ -51,7 +51,8 @@ class Exp4P(BaseBandit):
                  p_min=None, max_rounds=10000):
         super(Exp4P, self).__init__(historystorage, modelstorage, actions)
         self.n_total = 0
-        self.n_actions = len(self._actions)  # number of actions (i.e. K in the paper)
+        # number of actions (i.e. K in the paper)
+        self.n_actions = len(self._actions)
         self.exp4p_ = None
         self.max_rounds = max_rounds
 

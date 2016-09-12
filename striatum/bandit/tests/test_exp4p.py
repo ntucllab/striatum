@@ -55,7 +55,7 @@ class Exp4P(unittest.TestCase):
         history_id, action = policy.get_action(context, 1)
         policy.reward(history_id, {1: 1.0})
         self.assertEqual(len(policy._modelstorage._model['w']), 2)
-        self.assertEqual(len(policy._modelstorage._model['query_vector']), 5)
+        self.assertEqual(len(policy._modelstorage._model['action_probs']), 5)
 
     def test_delay_reward(self):
         policy = exp4p.Exp4P(self.actions, self.historystorage, self.modelstorage, delta=0.1, p_min=None)

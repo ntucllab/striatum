@@ -130,17 +130,18 @@ class LinUCB(BaseBandit):
         action_recommendation = []
         action_recommendation_ids = sorted(score, key=score.get,
                                            reverse=True)[:n_actions]
+
         for action_id in action_recommendation_ids:
             action = self.get_action_with_id(action_id)
             action_recommendation.append({
                 'action': action,
                 'estimated_reward': estimated_reward[action_id],
                 'uncertainty': uncertainty[action_id],
-                'score': score[action_id]})
+                'score': score[action_id],
+            })
 
-        history_id = self._historystorage.add_history(context,
-                                                      action_recommendation,
-                                                      reward=None)
+        history_id = self._historystorage.add_history(
+            context, action_recommendation, reward=None)
         return history_id, action_recommendation
 
     def reward(self, history_id, rewards):
@@ -154,7 +155,6 @@ class LinUCB(BaseBandit):
         rewards : dictionary
             The dictionary {action_id, reward}, where reward is a float.
         """
-
         context = (self._historystorage
                    .get_unrewarded_history(history_id)
                    .context)

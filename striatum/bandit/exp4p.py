@@ -48,11 +48,12 @@ class Exp4P(BaseBandit):
     """
 
     def __init__(self, actions, historystorage, modelstorage, delta=0.1,
-                 p_min=None):
+                 p_min=None, max_rounds=10000):
         super(Exp4P, self).__init__(historystorage, modelstorage, actions)
         self.n_total = 0
         self.n_actions = len(self._actions)  # number of actions (i.e. K in the paper)
         self.exp4p_ = None
+        self.max_rounds = max_rounds
 
         # delta > 0
         if not isinstance(delta, float):
@@ -62,7 +63,7 @@ class Exp4P(BaseBandit):
 
         # p_min in [0, 1/k]
         if p_min is None:
-            self.p_min = np.sqrt(np.log(10) / self.n_actions / 10000)
+            self.p_min = np.sqrt(np.log(10) / self.n_actions / self.max_rounds)
         elif not isinstance(p_min, float):
             raise ValueError("p_min should be float, the one"
                              "given is: %f" % p_min)
@@ -174,28 +175,27 @@ class Exp4P(BaseBandit):
                    .context)
 
         model = self._modelstorage.get_model()
-        w_old = model['w']
+        w = model['w']
         action_probs = model['action_probs']
         action_ids = list(six.viewkeys(six.next(six.itervalues(context))))
 
         # Update the model
         for action_id, reward in six.viewitems(rewards):
-            w_new = {}
             yhat = {}
             vhat = {}
             for i in six.viewkeys(context):
                 yhat[i] = (context[i][action_id] * reward
                            / action_probs[action_id])
                 vhat[i] = sum(
-                    [context[i][k] / np.array(list(action_probs.values()))
-                     for k in action_ids])
-                w_new[i] = w_old[i] + np.exp(self.p_min / 2 * (
-                    yhat[i] + vhat[i] * np.sqrt(np.log(
-                        len(context) / self.delta) / self.n_actions / self.n_total)
-                ))
+                    [context[i][k] / action_probs[k] for k in action_ids])
+                w[i] = w[i] * np.exp(
+                    self.p_min / 2
+                    * (yhat[i] + vhat[i]
+                       * np.sqrt(np.log(len(context) / self.delta)
+                                 / (len(action_ids) * self.max_rounds))))
 
         self._modelstorage.save_model({
-            'action_probs': action_probs, 'w': w_new})
+            'action_probs': action_probs, 'w': w})
 
         # Update the history
         self._historystorage.add_reward(history_id, rewards)

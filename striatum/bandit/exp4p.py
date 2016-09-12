@@ -176,18 +176,18 @@ class Exp4P(BaseBandit):
         model = self._modelstorage.get_model()
         w_old = model['w']
         action_probs = model['action_probs']
-        action_ids = self.action_ids
+        action_ids = list(six.viewkeys(six.next(six.itervalues(context))))
 
         # Update the model
-        for action_id, reward_tmp in rewards.items():
+        for action_id, reward in six.viewitems(rewards):
             rhat = {}
             for i in action_ids:
                 rhat[i] = 0.0
             w_new = {}
             yhat = {}
             vhat = {}
-            rhat[action_id] = reward_tmp / action_probs[action_id]
-            for i in context.keys():
+            rhat[action_id] = reward / action_probs[action_id]
+            for i in six.viewkeys(context):
                 yhat[i] = np.dot(list(context[i].values()), list(rhat.values()))
                 vhat[i] = sum(
                     [context[i][k] / np.array(list(action_probs.values()))

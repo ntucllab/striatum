@@ -48,7 +48,7 @@ def main():  # pylint: disable=too-many-locals
     tuning_region = np.arange(0.01, 1, 0.05)
     ctr_tuning = np.empty(len(tuning_region))
     context1, desired_actions1 = simulation.simulate_data(
-        n_rounds, context_dimension, actions, "Exp4P", random_state=0)
+        n_rounds, context_dimension, actions, "Exp4P", random_state=1)
     advice1 = get_advice(context1, action_ids, experts)
 
     for delta_i, delta in enumerate(tuning_region):
@@ -67,7 +67,7 @@ def main():  # pylint: disable=too-many-locals
     # Regret Analysis
     n_rounds = 10000
     context2, desired_actions2 = simulation.simulate_data(
-        n_rounds, context_dimension, actions, "Exp4P", random_state=0)
+        n_rounds, context_dimension, actions, "Exp4P", random_state=2)
     advice2 = get_advice(context2, action_ids, experts)
     historystorage = MemoryHistoryStorage()
     modelstorage = MemoryModelStorage()

@@ -79,40 +79,38 @@ class Exp4P(BaseBandit):
         w = {}
         self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
 
-    def exp4p(self):
+    def _exp4p_score(self, context):
         """The generator which implements the main part of Exp4.P.
         """
+        advisor_ids = list(six.viewkeys(context))
 
-        while True:
-            context = yield
-            advisor_ids = list(context.keys())
+        w = self._modelstorage.get_model()['w']
+        if len(w) == 0:
+            for i in advisor_ids:
+                w[i] = 1
+        w_sum = sum(six.viewvalues(w))
 
-            w = self._modelstorage.get_model()['w']
-            if len(w) == 0:
-                for i in advisor_ids:
-                    w[i] = 1
-            w_sum = sum(six.viewvalues(w))
+        query_vector = []
+        for action_id in self.action_ids:
+            weighted_exp = np.asarray(
+                [w[advisor_id] * context[advisor_id][action_id]
+                 for advisor_id in advisor_ids])
+            prob_vector = np.sum(weighted_exp / w_sum)
+            query_vector.append((1 - self.n_actions * self.p_min) * prob_vector
+                                + self.p_min)
+        query_vector /= sum(query_vector)
+        self._modelstorage.save_model(
+            {'query_vector': query_vector, 'w': w})
 
-            query_vector = []
-            for action_id in self.action_ids:
-                weighted_exp = np.asarray(
-                    [w[advisor_id] * context[advisor_id][action_id]
-                     for advisor_id in advisor_ids])
-                prob_vector = np.sum(weighted_exp / w_sum)
-                query_vector.append((1 - self.n_actions * self.p_min) * prob_vector
-                                    + self.p_min)
-            query_vector /= sum(query_vector)
-            self._modelstorage.save_model(
-                {'query_vector': query_vector, 'w': w})
+        estimated_reward = {}
+        uncertainty = {}
+        score = {}
+        for action_id, action_prob in zip(self.action_ids, query_vector):
+            estimated_reward[action_id] = action_prob
+            uncertainty[action_id] = 0
+            score[action_id] = action_prob
 
-            estimated_reward = {}
-            uncertainty = {}
-            score = {}
-            for action_id, action_prob in zip(self.action_ids, query_vector):
-                estimated_reward[action_id] = action_prob
-                uncertainty[action_id] = 0
-                score[action_id] = action_prob
-            yield estimated_reward, uncertainty, score
+        return estimated_reward, uncertainty, score
 
     def get_action(self, context=None, n_actions=1):
         """Return the action to perform
@@ -134,15 +132,7 @@ class Exp4P(BaseBandit):
             In each dictionary, it will contains {Action object,
             estimated_reward, uncertainty}.
         """
-
-        if self.exp4p_ is None:
-            self.exp4p_ = self.exp4p()
-            six.next(self.exp4p_)
-            estimated_reward, uncertainty, score = self.exp4p_.send(context)
-
-        else:
-            six.next(self.exp4p_)
-            estimated_reward, uncertainty, score = self.exp4p_.send(context)
+        estimated_reward, uncertainty, score = self._exp4p_score(context)
 
         action_recommendation = []
         action_recommendation_ids = sorted(score, key=score.get,

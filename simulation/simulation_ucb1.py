@@ -1,35 +1,34 @@
-from striatum.storage import history
-from striatum.storage import model
+from six.moves import range
+import matplotlib.pyplot as plt
+
+from striatum.storage import MemoryHistoryStorage, MemoryModelStorage
 from striatum.bandit import ucb1
 from striatum import simulation
-from striatum import rewardplot as rplt
 from striatum.bandit.bandit import Action
 
 
 def main():
-    d = 5
-    a1 = Action(1)
-    a2 = Action(2)
-    a3 = Action(3)
-    a4 = Action(4)
-    a5 = Action(5)
-    actions = [a1, a2, a3, a4, a5]
+    context_dimension = 5
+    actions = [Action(action_id) for action_id in range(1, 6)]
 
     # Regret Analysis
-    times = 40000
-    context, desired_action = simulation.simulate_data(times, d, actions)
-    historystorage = history.MemoryHistoryStorage()
-    modelstorage = model.MemoryModelStorage()
+    n_rounds = 40000
+    context, desired_actions = simulation.simulate_data(
+        n_rounds, context_dimension, actions, random_state=0)
+    historystorage = MemoryHistoryStorage()
+    modelstorage = MemoryModelStorage()
     policy = ucb1.UCB1(actions, historystorage, modelstorage)
 
-    for t in range(times):
+    for t in range(n_rounds):
         history_id, action = policy.get_action(context[t], 1)
-        if desired_action[t][0] != action[0]['action'].action_id:
-            policy.reward(history_id, {action[0]['action'].action_id: 0})
+        action_id = action[0]['action'].action_id
+        if desired_actions[t] != action_id:
+            policy.reward(history_id, {action_id: 0})
         else:
-            policy.reward(history_id, {action[0]['action'].action_id: 1})
+            policy.reward(history_id, {action_id: 1})
 
     policy.plot_avg_regret()
+    plt.show()
 
 
 if __name__ == '__main__':

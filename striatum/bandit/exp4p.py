@@ -6,6 +6,7 @@ bandit algorithm with expert advice.
 import logging
 
 import six
+from six.moves import zip
 import numpy as np
 
 from striatum.bandit.bandit import BaseBandit

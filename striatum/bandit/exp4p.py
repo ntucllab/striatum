@@ -31,7 +31,7 @@ class Exp4P(BaseBandit):
         With probability 1 - delta, LinThompSamp satisfies the theoretical
         regret bound.
 
-    pmin: float, 0 < pmin < 1/k
+    p_min: float, 0 < p_min < 1/k
         The minimum probability to choose each action.
 
     Attributes
@@ -47,34 +47,34 @@ class Exp4P(BaseBandit):
     """
 
     def __init__(self, actions, historystorage, modelstorage, delta=0.1,
-                 pmin=None):
+                 p_min=None):
         super(Exp4P, self).__init__(historystorage, modelstorage, actions)
         self.n_total = 0
-        self.k = len(self._actions)  # number of actions (i.e. K in the paper)
+        self.n_actions = len(self._actions)  # number of actions (i.e. K in the paper)
         self.exp4p_ = None
 
         # delta > 0
         if not isinstance(delta, float):
             raise ValueError("delta should be float, the one"
-                             "given is: %f" % pmin)
+                             "given is: %f" % p_min)
         self.delta = delta
 
         # p_min in [0, 1/k]
-        if pmin is None:
-            self.pmin = np.sqrt(np.log(10) / self.k / 10000)
-        elif not isinstance(pmin, float):
-            raise ValueError("pmin should be float, the one"
-                             "given is: %f" % pmin)
-        elif (pmin < 0) or (pmin > (1. / self.k)):
-            raise ValueError("pmin should be in [0, 1/k], the one"
-                             "given is: %f" % pmin)
+        if p_min is None:
+            self.p_min = np.sqrt(np.log(10) / self.n_actions / 10000)
+        elif not isinstance(p_min, float):
+            raise ValueError("p_min should be float, the one"
+                             "given is: %f" % p_min)
+        elif (p_min < 0) or (p_min > (1. / self.n_actions)):
+            raise ValueError("p_min should be in [0, 1/k], the one"
+                             "given is: %f" % p_min)
         else:
-            self.pmin = pmin
+            self.p_min = p_min
 
         # Initialize the model storage
 
         # probability distribution for action recommendation
-        query_vector = np.zeros(self.k)
+        query_vector = np.zeros(self.n_actions)
         # weight vector for each expert
         w = {}
         self._modelstorage.save_model({'query_vector': query_vector, 'w': w})
@@ -85,20 +85,22 @@ class Exp4P(BaseBandit):
 
         while True:
             context = yield
-            advisors_id = list(context.keys())
+            advisor_ids = list(context.keys())
 
             w = self._modelstorage.get_model()['w']
-            if w == {}:
-                for i in advisors_id:
+            if len(w) == 0:
+                for i in advisor_ids:
                     w[i] = 1
-            w_sum = sum(w.values())
+            w_sum = sum(six.viewvalues(w))
 
             query_vector = []
             for action_id in self.action_ids:
-                prob_vector = np.sum(np.array([w[i] * context[i][action_id]
-                                               for i in advisors_id]) / w_sum)
-                query_vector.append((1 - self.k * self.pmin) * prob_vector
-                                    + self.pmin)
+                weighted_exp = np.asarray(
+                    [w[advisor_id] * context[advisor_id][action_id]
+                     for advisor_id in advisor_ids])
+                prob_vector = np.sum(weighted_exp / w_sum)
+                query_vector.append((1 - self.n_actions * self.p_min) * prob_vector
+                                    + self.p_min)
             query_vector /= sum(query_vector)
             self._modelstorage.save_model(
                 {'query_vector': query_vector, 'w': w})
@@ -106,13 +108,11 @@ class Exp4P(BaseBandit):
             estimated_reward = {}
             uncertainty = {}
             score = {}
-            for i in range(self.k):
-                estimated_reward[self.action_ids[i]] = query_vector[i]
-                uncertainty[self.action_ids[i]] = 0
-                score[self.action_ids[i]] = query_vector[i]
+            for action_id, action_prob in zip(self.action_ids, query_vector):
+                estimated_reward[action_id] = action_prob
+                uncertainty[action_id] = 0
+                score[action_id] = action_prob
             yield estimated_reward, uncertainty, score
-
-        raise StopIteration
 
     def get_action(self, context=None, n_actions=1):
         """Return the action to perform
@@ -193,16 +193,16 @@ class Exp4P(BaseBandit):
             w_new = {}
             yhat = {}
             vhat = {}
-            rhat[action_id] = reward_tmp/query_vector[action_id]
+            rhat[action_id] = reward_tmp / query_vector[action_id]
             for i in context.keys():
                 yhat[i] = np.dot(list(context[i].values()), list(rhat.values()))
                 vhat[i] = sum(
                     [context[i][k] / np.array(list(query_vector.values()))
                      for k in action_ids])
-                w_new[i] = w_old[i] + np.exp(self.pmin / 2 * (
+                w_new[i] = w_old[i] + np.exp(self.p_min / 2 * (
                     yhat[i] + vhat[i] * np.sqrt(np.log(
-                        len(context) / self.delta) / self.k / self.n_total)
-                    ))
+                        len(context) / self.delta) / self.n_actions / self.n_total)
+                ))
 
         self._modelstorage.save_model({
             'query_vector': query_vector, 'w': w_new})

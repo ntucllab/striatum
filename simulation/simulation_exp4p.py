@@ -55,7 +55,7 @@ def main():  # pylint: disable=too-many-locals
         historystorage = MemoryHistoryStorage()
         modelstorage = MemoryModelStorage()
         policy = Exp4P(actions, historystorage, modelstorage,
-                       delta=delta, pmin=None)
+                       delta=delta, p_min=None)
         cum_regret = simulation.evaluate_policy(policy, advice1,
                                                 desired_actions1)
         ctr_tuning[delta_i] = n_rounds - cum_regret[-1]
@@ -72,7 +72,7 @@ def main():  # pylint: disable=too-many-locals
     historystorage = MemoryHistoryStorage()
     modelstorage = MemoryModelStorage()
     policy = Exp4P(actions, historystorage, modelstorage,
-                   delta=delta_opt, pmin=None)
+                   delta=delta_opt, p_min=None)
 
     for t in range(n_rounds):
         history_id, action = policy.get_action(advice2[t], 1)

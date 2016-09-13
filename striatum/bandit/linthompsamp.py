@@ -55,12 +55,12 @@ class LinThompSamp(BaseBandit):
             Processing Systems 24. 2011.
     """
 
-    def __init__(self, actions, historystorage, modelstorage, d, delta=0.5,
-                 r=0.5, epsilon=0.1):
+    def __init__(self, actions, historystorage, modelstorage,
+                 context_dimension, delta=0.5, r=0.5, epsilon=0.1):
         super(LinThompSamp, self).__init__(historystorage, modelstorage,
                                            actions)
         self.linthompsamp_ = None
-        self.d = d
+        self.context_dimension = context_dimension
 
         # 0 < delta < 1
         if not isinstance(delta, float):
@@ -87,9 +87,9 @@ class LinThompSamp(BaseBandit):
             self.epsilon = epsilon
 
         # model initialization
-        b = np.identity(self.d)
-        muhat = np.matrix(np.zeros(self.d)).T
-        f = np.matrix(np.zeros(self.d)).T
+        b = np.identity(self.context_dimension)
+        muhat = np.matrix(np.zeros(self.context_dimension)).T
+        f = np.matrix(np.zeros(self.context_dimension)).T
         self._modelstorage.save_model({'B': b, 'muhat': muhat, 'f': f})
 
     @property
@@ -102,7 +102,7 @@ class LinThompSamp(BaseBandit):
             context_tmp = np.matrix(list(context.values()))
             b = self._modelstorage.get_model()['B']
             muhat = self._modelstorage.get_model()['muhat']
-            v = self.R * np.sqrt(24 / self.epsilon * self.d *
+            v = self.R * np.sqrt(24 / self.epsilon * self.context_dimension *
                                  np.log(1 / self.delta))
             mu = np.random.multivariate_normal(np.array(muhat.T)[0],
                                                v**2 * np.linalg.inv(b), 1)[0]

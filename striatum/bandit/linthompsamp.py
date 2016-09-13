@@ -56,7 +56,7 @@ class LinThompSamp(BaseBandit):
     """
 
     def __init__(self, actions, historystorage, modelstorage,
-                 context_dimension, delta=0.5, r=0.5, epsilon=0.1,
+                 context_dimension, delta=0.5, R=0.5, epsilon=0.1,
                  random_state=None):
         super(LinThompSamp, self).__init__(historystorage, modelstorage,
                                            actions)
@@ -77,12 +77,12 @@ class LinThompSamp(BaseBandit):
             self.delta = delta
 
         # R > 0
-        if not isinstance(r, float):
+        if not isinstance(R, float):
             raise ValueError("R should be float")
-        elif r <= 0:
+        elif R <= 0:
             raise ValueError("R should be positive")
         else:
-            self.R = r  # pylint: disable=invalid-name
+            self.R = R  # pylint: disable=invalid-name
 
         # 0 < epsilon < 1
         if not isinstance(epsilon, float):

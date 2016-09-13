@@ -60,20 +60,15 @@ def main():
 
     # Plot the parameter tuning result
     plt.plot(np.arange(0.01, 0.99, 0.1), ctr_delta, 'ro-',
-             np.arange(0.01, 0.99, 0.1), ctr_r, 'gs-',
-             np.arange(0.01, 0.99, 0.1), ctr_epsilon, 'b^-')
-    line1 = mlines.Line2D([], [], color='r', marker='o',
-                          label="delta changes, R = 0.01, eps = 0.5")
-    line2 = mlines.Line2D([], [], color='g', marker='s',
-                          label="delta = 0.5, R = changes, eps = 0.5")
-    line3 = mlines.Line2D([], [], color='b', marker='^',
-                          label="delta = 0.5, R = 0.01, eps = changes")
+             label="delta changes, R = 0.01, eps = 0.5")
+    plt.plot(np.arange(0.01, 0.99, 0.1), ctr_r, 'gs-',
+             label="delta = 0.5, R = changes, eps = 0.5")
+    plt.plot(np.arange(0.01, 0.99, 0.1), ctr_epsilon, 'b^-',
+             label="delta = 0.5, R = 0.01, eps = changes")
     plt.xlabel('parameter value')
     plt.ylabel('CTR')
-    plt.legend(handles=[line1, line2, line3],
-               loc='upper center', bbox_to_anchor=(0.5, -0.15))
-    axes = plt.gca()
-    axes.set_ylim([0, 1])
+    plt.legend(bbox_to_anchor=(1., 0.7))
+    plt.ylim([0, 1])
     plt.title("Parameter Tunning Curve - LinThompSamp")
     plt.show()
 

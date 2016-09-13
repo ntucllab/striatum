@@ -56,9 +56,15 @@ class LinThompSamp(BaseBandit):
     """
 
     def __init__(self, actions, historystorage, modelstorage,
-                 context_dimension, delta=0.5, r=0.5, epsilon=0.1):
+                 context_dimension, delta=0.5, r=0.5, epsilon=0.1,
+                 random_state=None):
         super(LinThompSamp, self).__init__(historystorage, modelstorage,
                                            actions)
+        if random_state is None:
+            random_state = np.random.RandomState()
+        elif not isinstance(random_state, np.random.RandomState):
+            random_state = np.random.RandomState(seed=random_state)
+        self.random_state = random_state
         self.linthompsamp_ = None
         self.context_dimension = context_dimension
 
@@ -104,8 +110,8 @@ class LinThompSamp(BaseBandit):
             muhat = self._modelstorage.get_model()['muhat']
             v = self.R * np.sqrt(24 / self.epsilon * self.context_dimension *
                                  np.log(1 / self.delta))
-            mu = np.random.multivariate_normal(np.array(muhat.T)[0],
-                                               v**2 * np.linalg.inv(b), 1)[0]
+            mu = self.random_state.multivariate_normal(
+                np.array(muhat.T)[0], v**2 * np.linalg.inv(b), 1)[0]
             estimated_reward_tmp = np.dot(context_tmp, np.array(muhat)).tolist()
             score_tmp = np.dot(context_tmp, np.array(mu)).tolist()[0]
 

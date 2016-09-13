@@ -1,7 +1,6 @@
 from six.moves import range
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
 
 from striatum.storage import MemoryHistoryStorage, MemoryModelStorage
 from striatum.bandit import LinThompSamp
@@ -28,7 +27,8 @@ def main():
         policy = LinThompSamp(actions,
                               MemoryHistoryStorage(), MemoryModelStorage(),
                               context_dimension=context_dimension,
-                              delta=param, r=0.01, epsilon=0.5)
+                              delta=param, r=0.01, epsilon=0.5,
+                              random_state=random_state)
         cum_regret = simulation.evaluate_policy(policy, context1,
                                                 desired_actions1)
         ctr_delta[param_i] = n_rounds - cum_regret[-1]
@@ -36,7 +36,8 @@ def main():
         policy = LinThompSamp(actions,
                               MemoryHistoryStorage(), MemoryModelStorage(),
                               context_dimension=context_dimension,
-                              delta=0.5, r=param, epsilon=0.5)
+                              delta=0.5, r=param, epsilon=0.5,
+                              random_state=random_state)
 
         cum_regret = simulation.evaluate_policy(policy, context1,
                                                 desired_actions1)
@@ -45,7 +46,8 @@ def main():
         policy = LinThompSamp(actions,
                               MemoryHistoryStorage(), MemoryModelStorage(),
                               context_dimension=context_dimension,
-                              delta=0.5, r=0.01, epsilon=param)
+                              delta=0.5, r=0.01, epsilon=param,
+                              random_state=random_state)
         cum_regret = simulation.evaluate_policy(policy, context1,
                                                 desired_actions1)
         ctr_epsilon[param_i] = n_rounds - cum_regret[-1]
@@ -79,7 +81,8 @@ def main():
     policy = LinThompSamp(actions,
                           MemoryHistoryStorage(), MemoryModelStorage(),
                           context_dimension=context_dimension,
-                          delta=delta_opt, r=r_opt, epsilon=epsilon_opt)
+                          delta=delta_opt, r=r_opt, epsilon=epsilon_opt,
+                          random_state=random_state)
 
     for t in range(n_rounds):
         history_id, action = policy.get_action(context2[t], 1)

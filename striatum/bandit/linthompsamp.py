@@ -5,9 +5,9 @@ algorithm which assume the underlying relationship between rewards and contexts
 is linear. The sampling method is used to balance the exploration and
 exploitation. Please check the reference for more details.
 """
-
 import logging
 import six
+from six.moves import zip
 
 import numpy as np
 
@@ -104,27 +104,29 @@ class LinThompSamp(BaseBandit):
 
         while True:
             context = yield
-            action_ids = list(context.keys())
-            context_tmp = np.matrix(list(context.values()))
-            B = self._modelstorage.get_model()['B']  # pylint: disable=invalid-name
-            mu_hat = self._modelstorage.get_model()['mu_hat']
-            v = self.R * np.sqrt(24 / self.epsilon * self.context_dimension *
-                                 np.log(1 / self.delta))
-            mu = self.random_state.multivariate_normal(
-                np.array(mu_hat.T)[0], v**2 * np.linalg.inv(B), 1)[0]
-            estimated_reward_tmp = np.dot(context_tmp, np.array(mu_hat)).tolist()
-            score_tmp = np.dot(context_tmp, np.array(mu)).tolist()[0]
+            context_items = six.viewitems(context)
+            action_ids = [item[0] for item in context_items]
+            context_array = np.asarray([item[1] for item in context_items])
+            model = self._modelstorage.get_model()
+            B = model['B']  # pylint: disable=invalid-name
+            mu_hat = model['mu_hat']
+            v = self.R * np.sqrt(24 / self.epsilon
+                                 * self.context_dimension
+                                 * np.log(1 / self.delta))
+            mu_tilde = self.random_state.multivariate_normal(
+                mu_hat.flat, v**2 * np.linalg.inv(B))[..., np.newaxis]
+            estimated_reward_array = context_array.dot(mu_hat)
+            score_array = context_array.dot(mu_tilde)
 
-            estimated_reward = {}
-            uncertainty = {}
-            score = {}
-            for i in range(len(action_ids)):
-                estimated_reward[action_ids[i]] = float(
-                    estimated_reward_tmp[i][0])
-                score[action_ids[i]] = float(score_tmp[i])
-                uncertainty[action_ids[i]] = score[action_ids[i]] \
-                    - estimated_reward[action_ids[i]]
-            yield estimated_reward, uncertainty, score
+            estimated_reward_dict = {}
+            uncertainty_dict = {}
+            score_dict = {}
+            for action_id, estimated_reward, score in zip(
+                    action_ids, estimated_reward_array, score_array):
+                estimated_reward_dict[action_id] = float(estimated_reward)
+                score_dict[action_id] = float(score)
+                uncertainty_dict[action_id] = float(score - estimated_reward)
+            yield estimated_reward_dict, uncertainty_dict, score_dict
 
         raise StopIteration
 
@@ -148,9 +150,9 @@ class LinThompSamp(BaseBandit):
             In each dictionary, it contains {Action object,
             estimated_reward, uncertainty}.
         """
-
-        if context is None:
-            raise ValueError("LinThompSamp requires contexts for all actions!")
+        if not isinstance(context, dict):
+            raise ValueError(
+                "LinThompSamp requires context dict for all actions!")
 
         if self.linthompsamp_ is None:
             self.linthompsamp_ = self.linthompsamp

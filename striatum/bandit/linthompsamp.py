@@ -34,9 +34,9 @@ class LinThompSamp(BaseBandit):
         With probability 1 - delta, LinThompSamp satisfies the theoretical
         regret bound.
 
-    r: float, r >= 0
+    R: float, R >= 0
         Assume that the residual  :math:`ri(t) - bi(t)^T \hat{\mu}`
-        is r-sub-gaussian. In this case, r^2 represents the variance for
+        is R-sub-gaussian. In this case, R^2 represents the variance for
         residuals of the linear model :math:`bi(t)^T`.
 
     epsilon: float, 0 < epsilon < 1
@@ -98,37 +98,31 @@ class LinThompSamp(BaseBandit):
         f = np.zeros(shape=(self.context_dimension, 1))
         self._modelstorage.save_model({'B': B, 'mu_hat': mu_hat, 'f': f})
 
-    @property
-    def linthompsamp(self):
-        """linThompSamp generator"""
+    def _linthompsamp_score(self, context):
+        """Thompson Sampling"""
+        context_items = six.viewitems(context)
+        action_ids = [item[0] for item in context_items]
+        context_array = np.asarray([item[1] for item in context_items])
+        model = self._modelstorage.get_model()
+        B = model['B']  # pylint: disable=invalid-name
+        mu_hat = model['mu_hat']
+        v = self.R * np.sqrt(24 / self.epsilon
+                             * self.context_dimension
+                             * np.log(1 / self.delta))
+        mu_tilde = self.random_state.multivariate_normal(
+            mu_hat.flat, v**2 * np.linalg.inv(B))[..., np.newaxis]
+        estimated_reward_array = context_array.dot(mu_hat)
+        score_array = context_array.dot(mu_tilde)
 
-        while True:
-            context = yield
-            context_items = six.viewitems(context)
-            action_ids = [item[0] for item in context_items]
-            context_array = np.asarray([item[1] for item in context_items])
-            model = self._modelstorage.get_model()
-            B = model['B']  # pylint: disable=invalid-name
-            mu_hat = model['mu_hat']
-            v = self.R * np.sqrt(24 / self.epsilon
-                                 * self.context_dimension
-                                 * np.log(1 / self.delta))
-            mu_tilde = self.random_state.multivariate_normal(
-                mu_hat.flat, v**2 * np.linalg.inv(B))[..., np.newaxis]
-            estimated_reward_array = context_array.dot(mu_hat)
-            score_array = context_array.dot(mu_tilde)
-
-            estimated_reward_dict = {}
-            uncertainty_dict = {}
-            score_dict = {}
-            for action_id, estimated_reward, score in zip(
-                    action_ids, estimated_reward_array, score_array):
-                estimated_reward_dict[action_id] = float(estimated_reward)
-                score_dict[action_id] = float(score)
-                uncertainty_dict[action_id] = float(score - estimated_reward)
-            yield estimated_reward_dict, uncertainty_dict, score_dict
-
-        raise StopIteration
+        estimated_reward_dict = {}
+        uncertainty_dict = {}
+        score_dict = {}
+        for action_id, estimated_reward, score in zip(
+                action_ids, estimated_reward_array, score_array):
+            estimated_reward_dict[action_id] = float(estimated_reward)
+            score_dict[action_id] = float(score)
+            uncertainty_dict[action_id] = float(score - estimated_reward)
+        return estimated_reward_dict, uncertainty_dict, score_dict
 
     def get_action(self, context, n_actions=1):
         """Return the action to perform
@@ -154,15 +148,7 @@ class LinThompSamp(BaseBandit):
             raise ValueError(
                 "LinThompSamp requires context dict for all actions!")
 
-        if self.linthompsamp_ is None:
-            self.linthompsamp_ = self.linthompsamp
-            six.next(self.linthompsamp_)
-            estimated_reward, uncertainty, score = self.linthompsamp_.send(
-                context)
-        else:
-            six.next(self.linthompsamp_)
-            estimated_reward, uncertainty, score = self.linthompsamp_.send(
-                context)
+        estimated_reward, uncertainty, score = self._linthompsamp_score(context)
 
         action_recommendation = []
         action_recommendation_ids = sorted(score, key=score.get,

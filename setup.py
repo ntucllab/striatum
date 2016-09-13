@@ -17,7 +17,7 @@ else:
 
 setup(
     name='striatum',
-    version='0.0.1',
+    version='0.1.0',
     description='Contextual bandit in python',
     long_description='Contextual bandit in python',
     author='Y.-Y. Yang, Y.-A. Lin',

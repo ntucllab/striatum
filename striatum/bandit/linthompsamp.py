@@ -167,10 +167,9 @@ class LinThompSamp(BaseBandit):
         action_recommendation = []
         action_recommendation_ids = sorted(score, key=score.get,
                                            reverse=True)[:n_actions]
+
         for action_id in action_recommendation_ids:
-            action_id = int(action_id)
-            action = [action for action in self._actions
-                      if action.action_id == action_id][0]
+            action = self.get_action_with_id(action_id)
             action_recommendation.append({
                 'action': action,
                 'estimated_reward': estimated_reward[action_id],
@@ -178,9 +177,8 @@ class LinThompSamp(BaseBandit):
                 'score': score[action_id],
             })
 
-        history_id = self._historystorage.add_history(context,
-                                                      action_recommendation,
-                                                      reward=None)
+        history_id = self._historystorage.add_history(
+            context, action_recommendation, reward=None)
         return history_id, action_recommendation
 
     def reward(self, history_id, rewards):
@@ -194,18 +192,20 @@ class LinThompSamp(BaseBandit):
         rewards : dictionary
             The dictionary {action_id, reward}, where reward is a float.
         """
-
-        context = self._historystorage.unrewarded_histories[history_id].context
+        context = (self._historystorage
+                   .get_unrewarded_history(history_id)
+                   .context)
 
         # Update the model
-        B = self._modelstorage.get_model()['B']  # pylint: disable=invalid-name
-        f = self._modelstorage.get_model()['f']
+        model = self._modelstorage.get_model()
+        B = model['B']  # pylint: disable=invalid-name
+        f = model['f']
 
-        for action_id, reward_tmp in rewards.items():
-            context_tmp = np.matrix(context[action_id])
-            B += np.dot(context_tmp.T, context_tmp)  # pylint: disable=invalid-name
-            f += reward_tmp * context_tmp.T
-            mu_hat = np.dot(np.linalg.inv(B), f)
+        for action_id, reward in six.viewitems(rewards):
+            context_t = np.reshape(context[action_id], (-1, 1))
+            B += context_t.dot(context_t.T)  # pylint: disable=invalid-name
+            f += reward * context_t
+            mu_hat = np.linalg.inv(B).dot(f)
         self._modelstorage.save_model({'B': B, 'mu_hat': mu_hat, 'f': f})
 
         # Update the history
@@ -219,5 +219,4 @@ class LinThompSamp(BaseBandit):
         actions : iterable
             A list of Action oBjects for recommendation
         """
-
         self._actions.extend(actions)

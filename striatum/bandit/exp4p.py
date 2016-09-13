@@ -181,16 +181,16 @@ class Exp4P(BaseBandit):
 
         # Update the model
         for action_id, reward in six.viewitems(rewards):
-            yhat = {}
-            vhat = {}
+            y_hat = {}
+            v_hat = {}
             for i in six.viewkeys(context):
-                yhat[i] = (context[i][action_id] * reward
-                           / action_probs[action_id])
-                vhat[i] = sum(
+                y_hat[i] = (context[i][action_id] * reward
+                            / action_probs[action_id])
+                v_hat[i] = sum(
                     [context[i][k] / action_probs[k] for k in action_ids])
                 w[i] = w[i] * np.exp(
                     self.p_min / 2
-                    * (yhat[i] + vhat[i]
+                    * (y_hat[i] + v_hat[i]
                        * np.sqrt(np.log(len(context) / self.delta)
                                  / (len(action_ids) * self.max_rounds))))
 

@@ -82,7 +82,7 @@ class LinThompSamp(BaseBandit):
         elif r <= 0:
             raise ValueError("R should be positive")
         else:
-            self.R = r
+            self.R = r  # pylint: disable=invalid-name
 
         # 0 < epsilon < 1
         if not isinstance(epsilon, float):
@@ -93,10 +93,10 @@ class LinThompSamp(BaseBandit):
             self.epsilon = epsilon
 
         # model initialization
-        b = np.identity(self.context_dimension)
-        muhat = np.matrix(np.zeros(self.context_dimension)).T
-        f = np.matrix(np.zeros(self.context_dimension)).T
-        self._modelstorage.save_model({'B': b, 'muhat': muhat, 'f': f})
+        B = np.identity(self.context_dimension)  # pylint: disable=invalid-name
+        mu_hat = np.zeros(shape=(self.context_dimension, 1))
+        f = np.zeros(shape=(self.context_dimension, 1))
+        self._modelstorage.save_model({'B': B, 'mu_hat': mu_hat, 'f': f})
 
     @property
     def linthompsamp(self):
@@ -106,13 +106,13 @@ class LinThompSamp(BaseBandit):
             context = yield
             action_ids = list(context.keys())
             context_tmp = np.matrix(list(context.values()))
-            b = self._modelstorage.get_model()['B']
-            muhat = self._modelstorage.get_model()['muhat']
+            B = self._modelstorage.get_model()['B']  # pylint: disable=invalid-name
+            mu_hat = self._modelstorage.get_model()['mu_hat']
             v = self.R * np.sqrt(24 / self.epsilon * self.context_dimension *
                                  np.log(1 / self.delta))
             mu = self.random_state.multivariate_normal(
-                np.array(muhat.T)[0], v**2 * np.linalg.inv(b), 1)[0]
-            estimated_reward_tmp = np.dot(context_tmp, np.array(muhat)).tolist()
+                np.array(mu_hat.T)[0], v**2 * np.linalg.inv(B), 1)[0]
+            estimated_reward_tmp = np.dot(context_tmp, np.array(mu_hat)).tolist()
             score_tmp = np.dot(context_tmp, np.array(mu)).tolist()[0]
 
             estimated_reward = {}
@@ -196,15 +196,15 @@ class LinThompSamp(BaseBandit):
         context = self._historystorage.unrewarded_histories[history_id].context
 
         # Update the model
-        b = self._modelstorage.get_model()['B']
+        B = self._modelstorage.get_model()['B']  # pylint: disable=invalid-name
         f = self._modelstorage.get_model()['f']
 
         for action_id, reward_tmp in rewards.items():
             context_tmp = np.matrix(context[action_id])
-            b += np.dot(context_tmp.T, context_tmp)
+            B += np.dot(context_tmp.T, context_tmp)  # pylint: disable=invalid-name
             f += reward_tmp * context_tmp.T
-            muhat = np.dot(np.linalg.inv(b), f)
-        self._modelstorage.save_model({'B': b, 'muhat': muhat, 'f': f})
+            mu_hat = np.dot(np.linalg.inv(B), f)
+        self._modelstorage.save_model({'B': B, 'mu_hat': mu_hat, 'f': f})
 
         # Update the history
         self._historystorage.add_reward(history_id, rewards)
@@ -215,7 +215,7 @@ class LinThompSamp(BaseBandit):
         Parameters
         ----------
         actions : iterable
-            A list of Action objects for recommendation
+            A list of Action oBjects for recommendation
         """
 
         self._actions.extend(actions)

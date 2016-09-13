@@ -5,9 +5,9 @@ algorithm which assume the underlying relationship between rewards and contexts
 is linear. The sampling method is used to balance the exploration and
 exploitation. Please check the reference for more details.
 """
-
 import logging
 import six
+from six.moves import zip
 
 import numpy as np
 
@@ -56,7 +56,7 @@ class LinThompSamp(BaseBandit):
     """
 
     def __init__(self, actions, historystorage, modelstorage,
-                 context_dimension, delta=0.5, r=0.5, epsilon=0.1,
+                 context_dimension, delta=0.5, R=0.5, epsilon=0.1,
                  random_state=None):
         super(LinThompSamp, self).__init__(historystorage, modelstorage,
                                            actions)
@@ -77,12 +77,12 @@ class LinThompSamp(BaseBandit):
             self.delta = delta
 
         # R > 0
-        if not isinstance(r, float):
+        if not isinstance(R, float):
             raise ValueError("R should be float")
-        elif r <= 0:
+        elif R <= 0:
             raise ValueError("R should be positive")
         else:
-            self.R = r
+            self.R = R  # pylint: disable=invalid-name
 
         # 0 < epsilon < 1
         if not isinstance(epsilon, float):
@@ -93,10 +93,10 @@ class LinThompSamp(BaseBandit):
             self.epsilon = epsilon
 
         # model initialization
-        b = np.identity(self.context_dimension)
-        muhat = np.matrix(np.zeros(self.context_dimension)).T
-        f = np.matrix(np.zeros(self.context_dimension)).T
-        self._modelstorage.save_model({'B': b, 'muhat': muhat, 'f': f})
+        B = np.identity(self.context_dimension)  # pylint: disable=invalid-name
+        mu_hat = np.zeros(shape=(self.context_dimension, 1))
+        f = np.zeros(shape=(self.context_dimension, 1))
+        self._modelstorage.save_model({'B': B, 'mu_hat': mu_hat, 'f': f})
 
     @property
     def linthompsamp(self):
@@ -104,27 +104,29 @@ class LinThompSamp(BaseBandit):
 
         while True:
             context = yield
-            action_ids = list(context.keys())
-            context_tmp = np.matrix(list(context.values()))
-            b = self._modelstorage.get_model()['B']
-            muhat = self._modelstorage.get_model()['muhat']
-            v = self.R * np.sqrt(24 / self.epsilon * self.context_dimension *
-                                 np.log(1 / self.delta))
-            mu = self.random_state.multivariate_normal(
-                np.array(muhat.T)[0], v**2 * np.linalg.inv(b), 1)[0]
-            estimated_reward_tmp = np.dot(context_tmp, np.array(muhat)).tolist()
-            score_tmp = np.dot(context_tmp, np.array(mu)).tolist()[0]
+            context_items = six.viewitems(context)
+            action_ids = [item[0] for item in context_items]
+            context_array = np.asarray([item[1] for item in context_items])
+            model = self._modelstorage.get_model()
+            B = model['B']  # pylint: disable=invalid-name
+            mu_hat = model['mu_hat']
+            v = self.R * np.sqrt(24 / self.epsilon
+                                 * self.context_dimension
+                                 * np.log(1 / self.delta))
+            mu_tilde = self.random_state.multivariate_normal(
+                mu_hat.flat, v**2 * np.linalg.inv(B))[..., np.newaxis]
+            estimated_reward_array = context_array.dot(mu_hat)
+            score_array = context_array.dot(mu_tilde)
 
-            estimated_reward = {}
-            uncertainty = {}
-            score = {}
-            for i in range(len(action_ids)):
-                estimated_reward[action_ids[i]] = float(
-                    estimated_reward_tmp[i][0])
-                score[action_ids[i]] = float(score_tmp[i])
-                uncertainty[action_ids[i]] = score[action_ids[i]] \
-                    - estimated_reward[action_ids[i]]
-            yield estimated_reward, uncertainty, score
+            estimated_reward_dict = {}
+            uncertainty_dict = {}
+            score_dict = {}
+            for action_id, estimated_reward, score in zip(
+                    action_ids, estimated_reward_array, score_array):
+                estimated_reward_dict[action_id] = float(estimated_reward)
+                score_dict[action_id] = float(score)
+                uncertainty_dict[action_id] = float(score - estimated_reward)
+            yield estimated_reward_dict, uncertainty_dict, score_dict
 
         raise StopIteration
 
@@ -148,9 +150,9 @@ class LinThompSamp(BaseBandit):
             In each dictionary, it contains {Action object,
             estimated_reward, uncertainty}.
         """
-
-        if context is None:
-            raise ValueError("LinThompSamp requires contexts for all actions!")
+        if not isinstance(context, dict):
+            raise ValueError(
+                "LinThompSamp requires context dict for all actions!")
 
         if self.linthompsamp_ is None:
             self.linthompsamp_ = self.linthompsamp
@@ -165,10 +167,9 @@ class LinThompSamp(BaseBandit):
         action_recommendation = []
         action_recommendation_ids = sorted(score, key=score.get,
                                            reverse=True)[:n_actions]
+
         for action_id in action_recommendation_ids:
-            action_id = int(action_id)
-            action = [action for action in self._actions
-                      if action.action_id == action_id][0]
+            action = self.get_action_with_id(action_id)
             action_recommendation.append({
                 'action': action,
                 'estimated_reward': estimated_reward[action_id],
@@ -176,9 +177,8 @@ class LinThompSamp(BaseBandit):
                 'score': score[action_id],
             })
 
-        history_id = self._historystorage.add_history(context,
-                                                      action_recommendation,
-                                                      reward=None)
+        history_id = self._historystorage.add_history(
+            context, action_recommendation, reward=None)
         return history_id, action_recommendation
 
     def reward(self, history_id, rewards):
@@ -192,19 +192,21 @@ class LinThompSamp(BaseBandit):
         rewards : dictionary
             The dictionary {action_id, reward}, where reward is a float.
         """
-
-        context = self._historystorage.unrewarded_histories[history_id].context
+        context = (self._historystorage
+                   .get_unrewarded_history(history_id)
+                   .context)
 
         # Update the model
-        b = self._modelstorage.get_model()['B']
-        f = self._modelstorage.get_model()['f']
+        model = self._modelstorage.get_model()
+        B = model['B']  # pylint: disable=invalid-name
+        f = model['f']
 
-        for action_id, reward_tmp in rewards.items():
-            context_tmp = np.matrix(context[action_id])
-            b += np.dot(context_tmp.T, context_tmp)
-            f += reward_tmp * context_tmp.T
-            muhat = np.dot(np.linalg.inv(b), f)
-        self._modelstorage.save_model({'B': b, 'muhat': muhat, 'f': f})
+        for action_id, reward in six.viewitems(rewards):
+            context_t = np.reshape(context[action_id], (-1, 1))
+            B += context_t.dot(context_t.T)  # pylint: disable=invalid-name
+            f += reward * context_t
+            mu_hat = np.linalg.inv(B).dot(f)
+        self._modelstorage.save_model({'B': B, 'mu_hat': mu_hat, 'f': f})
 
         # Update the history
         self._historystorage.add_reward(history_id, rewards)
@@ -215,7 +217,6 @@ class LinThompSamp(BaseBandit):
         Parameters
         ----------
         actions : iterable
-            A list of Action objects for recommendation
+            A list of Action oBjects for recommendation
         """
-
         self._actions.extend(actions)

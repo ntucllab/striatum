@@ -27,7 +27,7 @@ def main():
         policy = LinThompSamp(actions,
                               MemoryHistoryStorage(), MemoryModelStorage(),
                               context_dimension=context_dimension,
-                              delta=param, r=0.01, epsilon=0.5,
+                              delta=param, R=0.01, epsilon=0.5,
                               random_state=random_state)
         cum_regret = simulation.evaluate_policy(policy, context1,
                                                 desired_actions1)
@@ -36,7 +36,7 @@ def main():
         policy = LinThompSamp(actions,
                               MemoryHistoryStorage(), MemoryModelStorage(),
                               context_dimension=context_dimension,
-                              delta=0.5, r=param, epsilon=0.5,
+                              delta=0.5, R=param, epsilon=0.5,
                               random_state=random_state)
 
         cum_regret = simulation.evaluate_policy(policy, context1,
@@ -46,7 +46,7 @@ def main():
         policy = LinThompSamp(actions,
                               MemoryHistoryStorage(), MemoryModelStorage(),
                               context_dimension=context_dimension,
-                              delta=0.5, r=0.01, epsilon=param,
+                              delta=0.5, R=0.01, epsilon=param,
                               random_state=random_state)
         cum_regret = simulation.evaluate_policy(policy, context1,
                                                 desired_actions1)
@@ -81,7 +81,7 @@ def main():
     policy = LinThompSamp(actions,
                           MemoryHistoryStorage(), MemoryModelStorage(),
                           context_dimension=context_dimension,
-                          delta=delta_opt, r=r_opt, epsilon=epsilon_opt,
+                          delta=delta_opt, R=r_opt, epsilon=epsilon_opt,
                           random_state=random_state)
 
     for t in range(n_rounds):

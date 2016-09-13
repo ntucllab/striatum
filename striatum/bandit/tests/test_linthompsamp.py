@@ -51,7 +51,7 @@ class TestLinThompSamp(unittest.TestCase):
         history_id, action = policy.get_action(context, 2)
         policy.reward(history_id, {2: 1, 3: 1})
         self.assertTrue((policy._modelstorage._model['B'].shape == (2, 2)) == True)
-        self.assertEqual(len(policy._modelstorage._model['muhat']), 2)
+        self.assertEqual(len(policy._modelstorage._model['mu_hat']), 2)
         self.assertEqual(len(policy._modelstorage._model['f']), 2)
 
     def test_delay_reward(self):

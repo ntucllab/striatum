@@ -14,22 +14,22 @@ class TestLinThompSamp(unittest.TestCase):
         a2 = Action(2)
         a3 = Action(3)
         self.actions = [a1, a2, a3]
-        self.d = 2
+        self.context_dimension = 2
         self.delta = 0.5
         self.R = 0.5
         self.epsilon = 0.1
 
     def test_initialization(self):
         policy = linthompsamp.LinThompSamp(self.actions, self.historystorage,
-                                           self.modelstorage, self.d, self.delta, self.R, self.epsilon)
+                                           self.modelstorage, self.context_dimension, self.delta, self.R, self.epsilon)
         self.assertEqual(self.actions, policy._actions)
-        self.assertEqual(self.d, policy.d)
+        self.assertEqual(self.context_dimension, policy.context_dimension)
         self.assertEqual(self.R, policy.R)
         self.assertEqual(self.epsilon, policy.epsilon)
 
     def test_get_first_action(self):
         policy = linthompsamp.LinThompSamp(self.actions, self.historystorage,
-                                           self.modelstorage, self.d, self.delta, self.R, self.epsilon)
+                                           self.modelstorage, self.context_dimension, self.delta, self.R, self.epsilon)
         context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
         history_id, action = policy.get_action(context, 1)
         self.assertEqual(history_id, 0)
@@ -38,7 +38,7 @@ class TestLinThompSamp(unittest.TestCase):
 
     def test_update_reward(self):
         policy = linthompsamp.LinThompSamp(self.actions, self.historystorage,
-                                           self.modelstorage, self.d, self.delta, self.R, self.epsilon)
+                                           self.modelstorage, self.context_dimension, self.delta, self.R, self.epsilon)
         context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
         history_id, action = policy.get_action(context, 1)
         policy.reward(history_id, {3: 1})
@@ -46,7 +46,7 @@ class TestLinThompSamp(unittest.TestCase):
 
     def test_model_storage(self):
         policy = linthompsamp.LinThompSamp(self.actions, self.historystorage,
-                                           self.modelstorage, self.d, self.delta, self.R, self.epsilon)
+                                           self.modelstorage, self.context_dimension, self.delta, self.R, self.epsilon)
         context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
         history_id, action = policy.get_action(context, 2)
         policy.reward(history_id, {2: 1, 3: 1})
@@ -56,7 +56,7 @@ class TestLinThompSamp(unittest.TestCase):
 
     def test_delay_reward(self):
         policy = linthompsamp.LinThompSamp(self.actions, self.historystorage,
-                                           self.modelstorage, self.d, self.delta, self.R, self.epsilon)
+                                           self.modelstorage, self.context_dimension, self.delta, self.R, self.epsilon)
         context1 = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
         context2 = {1: [0, 0], 2: [3, 3], 3: [6, 6]}
         history_id1, action1 = policy.get_action(context1, 2)
@@ -69,7 +69,7 @@ class TestLinThompSamp(unittest.TestCase):
 
     def test_reward_order_descending(self):
         policy = linthompsamp.LinThompSamp(self.actions, self.historystorage,
-                                           self.modelstorage, self.d, self.delta, self.R, self.epsilon)
+                                           self.modelstorage, self.context_dimension, self.delta, self.R, self.epsilon)
         context1 = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
         context2 = {1: [0, 0], 2: [3, 3], 3: [6, 6]}
         history_id1, action1 = policy.get_action(context1, 2)
@@ -82,7 +82,7 @@ class TestLinThompSamp(unittest.TestCase):
 
     def test_add_action(self):
         policy = linthompsamp.LinThompSamp(self.actions, self.historystorage,
-                                           self.modelstorage, self.d, self.delta, self.R, self.epsilon)
+                                           self.modelstorage, self.context_dimension, self.delta, self.R, self.epsilon)
         context1 = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
         history_id, action = policy.get_action(context1, 2)
         a4 = Action(4)

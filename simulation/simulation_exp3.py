@@ -47,10 +47,9 @@ def simulate_bandit():
             policy.reward(history_id, {action_id: 1})
 
     policy.plot_avg_regret()
-    if args.path_fig if not None:
-        plt.savefig(args.path_fig)
 
-def main(args):
+def main():
+    simulate_bandit()
     plt.show()
 
 if __name__ == '__main__':

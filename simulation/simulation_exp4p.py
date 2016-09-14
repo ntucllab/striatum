@@ -35,7 +35,7 @@ def get_advice(context, action_ids, experts):
     return advice
 
 
-def main():  # pylint: disable=too-many-locals
+def simulate_bandit():
     n_rounds = 1000
     context_dimension = 5
     actions = [Action(i) for i in range(1, 6)]
@@ -83,6 +83,9 @@ def main():  # pylint: disable=too-many-locals
             policy.reward(history_id, {action_id: 1})
 
     policy.plot_avg_regret()
+
+def main():  # pylint: disable=too-many-locals
+    simulate_bandit()
     plt.show()
 
 

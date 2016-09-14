@@ -1,14 +1,14 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 from striatum.storage import history
 from striatum.storage import model
 from striatum.bandit import Exp3
 from striatum.bandit.bandit import Action
 from striatum import simulation
-import numpy as np
 
 
-def main():
+def simulate_bandit():
     n_rounds = 1000
     context_dimension = 5
     actions = [Action(action_id) for action_id in range(1, 6)]
@@ -47,8 +47,10 @@ def main():
             policy.reward(history_id, {action_id: 1})
 
     policy.plot_avg_regret()
-    plt.show()
 
+def main():
+    simulate_bandit()
+    plt.show()
 
 if __name__ == '__main__':
     main()

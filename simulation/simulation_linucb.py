@@ -8,7 +8,7 @@ from striatum.bandit import LinUCB
 from striatum.bandit.bandit import Action
 
 
-def main():
+def simulate_bandit():
     n_rounds = 1000
     context_dimension = 5
     actions = [Action(i) for i in range(5)]
@@ -49,8 +49,10 @@ def main():
             policy.reward(history_id, {action_id: 1})
 
     policy.plot_avg_regret()
-    plt.show()
 
+def main():
+    simulate_bandit()
+    plt.show()
 
 if __name__ == '__main__':
     main()

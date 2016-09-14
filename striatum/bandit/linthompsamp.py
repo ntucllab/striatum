@@ -1,21 +1,23 @@
 """ Thompson Sampling with Linear Payoff
-In This module contains a class that implements Thompson Sampling with Linear Payoff.
-Thompson Sampling with linear payoff is a contexutal multi-armed bandit algorithm which assume the underlying
-relationship between rewards and contexts is linear. The sampling method is used to balance the exploration and
+In This module contains a class that implements Thompson Sampling with Linear
+Payoff. Thompson Sampling with linear payoff is a contexutal multi-armed bandit
+algorithm which assume the underlying relationship between rewards and contexts
+is linear. The sampling method is used to balance the exploration and
 exploitation. Please check the reference for more details.
 """
-
-import numpy as np
 import logging
 import six
+from six.moves import zip
+
+import numpy as np
+
 from striatum.bandit.bandit import BaseBandit
 
 LOGGER = logging.getLogger(__name__)
 
 
-class LinThompSamp (BaseBandit):
-
-    """Thompson sampling with linear payoff.
+class LinThompSamp(BaseBandit):
+    r"""Thompson sampling with linear payoff.
 
     Parameters
     ----------
@@ -29,15 +31,17 @@ class LinThompSamp (BaseBandit):
         The place where we store the model parameters.
 
     delta: float, 0 < delta < 1
-        With probability 1 - delta, LinThompSamp satisfies the theoretical regret bound.
+        With probability 1 - delta, LinThompSamp satisfies the theoretical
+        regret bound.
 
-    r: float, r >= 0
-        Assume that the residual ri(t) - bi(t)^T * muhat is r-sub-gaussian. In this case, r^2 represents
-        the variance for residuals of the linear model bi(t)^T.
+    R: float, R >= 0
+        Assume that the residual  :math:`ri(t) - bi(t)^T \hat{\mu}`
+        is R-sub-gaussian. In this case, R^2 represents the variance for
+        residuals of the linear model :math:`bi(t)^T`.
 
     epsilon: float, 0 < epsilon < 1
-        A  parameter  used  by  the  Thompson Sampling algorithm. If the total trials T is known, we can choose
-        epsilon = 1/ln(T)
+        A  parameter  used  by  the  Thompson Sampling algorithm.
+        If the total trials T is known, we can choose epsilon = 1/ln(T).
 
     Attributes
     ----------
@@ -46,14 +50,23 @@ class LinThompSamp (BaseBandit):
 
     References
     ----------
-    .. [1]  Shipra Agrawal, and Navin Goyal. "Thompson Sampling for Contextual Bandits with Linear Payoffs."
-            Advances in Neural Information Processing Systems 24. 2011.
+    .. [1]  Shipra Agrawal, and Navin Goyal. "Thompson Sampling for Contextual
+            Bandits with Linear Payoffs." Advances in Neural Information
+            Processing Systems 24. 2011.
     """
 
-    def __init__(self, actions, historystorage, modelstorage, d, delta=0.5, r=0.5, epsilon=0.1):
-        super(LinThompSamp, self).__init__(historystorage, modelstorage, actions)
+    def __init__(self, actions, historystorage, modelstorage,
+                 context_dimension, delta=0.5, R=0.5, epsilon=0.1,
+                 random_state=None):
+        super(LinThompSamp, self).__init__(historystorage, modelstorage,
+                                           actions)
+        if random_state is None:
+            random_state = np.random.RandomState()
+        elif not isinstance(random_state, np.random.RandomState):
+            random_state = np.random.RandomState(seed=random_state)
+        self.random_state = random_state
         self.linthompsamp_ = None
-        self.d = d
+        self.context_dimension = context_dimension
 
         # 0 < delta < 1
         if not isinstance(delta, float):
@@ -64,12 +77,12 @@ class LinThompSamp (BaseBandit):
             self.delta = delta
 
         # R > 0
-        if not isinstance(r, float):
+        if not isinstance(R, float):
             raise ValueError("R should be float")
-        elif r <= 0:
+        elif R <= 0:
             raise ValueError("R should be positive")
         else:
-            self.R = r
+            self.R = R  # pylint: disable=invalid-name
 
         # 0 < epsilon < 1
         if not isinstance(epsilon, float):
@@ -80,35 +93,36 @@ class LinThompSamp (BaseBandit):
             self.epsilon = epsilon
 
         # model initialization
-        b = np.identity(self.d)
-        muhat = np.matrix(np.zeros(self.d)).T
-        f = np.matrix(np.zeros(self.d)).T
-        self._modelstorage.save_model({'B': b, 'muhat': muhat, 'f': f})
+        B = np.identity(self.context_dimension)  # pylint: disable=invalid-name
+        mu_hat = np.zeros(shape=(self.context_dimension, 1))
+        f = np.zeros(shape=(self.context_dimension, 1))
+        self._modelstorage.save_model({'B': B, 'mu_hat': mu_hat, 'f': f})
 
-    @property
-    def linthompsamp(self):
+    def _linthompsamp_score(self, context):
+        """Thompson Sampling"""
+        context_items = six.viewitems(context)
+        action_ids = [item[0] for item in context_items]
+        context_array = np.asarray([item[1] for item in context_items])
+        model = self._modelstorage.get_model()
+        B = model['B']  # pylint: disable=invalid-name
+        mu_hat = model['mu_hat']
+        v = self.R * np.sqrt(24 / self.epsilon
+                             * self.context_dimension
+                             * np.log(1 / self.delta))
+        mu_tilde = self.random_state.multivariate_normal(
+            mu_hat.flat, v**2 * np.linalg.inv(B))[..., np.newaxis]
+        estimated_reward_array = context_array.dot(mu_hat)
+        score_array = context_array.dot(mu_tilde)
 
-        while True:
-            context = yield
-            action_ids = list(context.keys())
-            context_tmp = np.matrix(list(context.values()))
-            b = self._modelstorage.get_model()['B']
-            muhat = self._modelstorage.get_model()['muhat']
-            v = self.R * np.sqrt(24 / self.epsilon * self.d * np.log(1 / self.delta))
-            mu = np.random.multivariate_normal(np.array(muhat.T)[0], v**2 * np.linalg.inv(b), 1)[0]
-            estimated_reward_tmp = np.dot(context_tmp, np.array(muhat)).tolist()
-            score_tmp = np.dot(context_tmp, np.array(mu)).tolist()[0]
-
-            estimated_reward = {}
-            uncertainty = {}
-            score = {}
-            for i in range(len(action_ids)):
-                estimated_reward[action_ids[i]] = float(estimated_reward_tmp[i][0])
-                score[action_ids[i]] = float(score_tmp[i])
-                uncertainty[action_ids[i]] = score[action_ids[i]] - estimated_reward[action_ids[i]]
-            yield estimated_reward, uncertainty, score
-
-        raise StopIteration
+        estimated_reward_dict = {}
+        uncertainty_dict = {}
+        score_dict = {}
+        for action_id, estimated_reward, score in zip(
+                action_ids, estimated_reward_array, score_array):
+            estimated_reward_dict[action_id] = float(estimated_reward)
+            score_dict[action_id] = float(score)
+            uncertainty_dict[action_id] = float(score - estimated_reward)
+        return estimated_reward_dict, uncertainty_dict, score_dict
 
     def get_action(self, context, n_actions=1):
         """Return the action to perform
@@ -127,29 +141,30 @@ class LinThompSamp (BaseBandit):
             The history id of the action.
 
         action_recommendation : list of dictionaries
-            In each dictionary, it will contains {Action object, estimated_reward, uncertainty}.
+            In each dictionary, it contains {Action object,
+            estimated_reward, uncertainty}.
         """
+        if not isinstance(context, dict):
+            raise ValueError(
+                "LinThompSamp requires context dict for all actions!")
 
-        if context is None:
-            raise ValueError("LinThompSamp requires contexts for all actions!")
-
-        if self.linthompsamp_ is None:
-            self.linthompsamp_ = self.linthompsamp
-            six.next(self.linthompsamp_)
-            estimated_reward, uncertainty, score = self.linthompsamp_.send(context)
-        else:
-            six.next(self.linthompsamp_)
-            estimated_reward, uncertainty, score = self.linthompsamp_.send(context)
+        estimated_reward, uncertainty, score = self._linthompsamp_score(context)
 
         action_recommendation = []
-        action_recommendation_ids = sorted(score, key=score.get, reverse=True)[:n_actions]
-        for action_id in action_recommendation_ids:
-            action_id = int(action_id)
-            action = [action for action in self._actions if action.action_id == action_id][0]
-            action_recommendation.append({'action': action, 'estimated_reward': estimated_reward[action_id],
-                                          'uncertainty': uncertainty[action_id], 'score': score[action_id]})
+        action_recommendation_ids = sorted(score, key=score.get,
+                                           reverse=True)[:n_actions]
 
-        history_id = self._historystorage.add_history(context, action_recommendation, reward=None)
+        for action_id in action_recommendation_ids:
+            action = self.get_action_with_id(action_id)
+            action_recommendation.append({
+                'action': action,
+                'estimated_reward': estimated_reward[action_id],
+                'uncertainty': uncertainty[action_id],
+                'score': score[action_id],
+            })
+
+        history_id = self._historystorage.add_history(
+            context, action_recommendation, reward=None)
         return history_id, action_recommendation
 
     def reward(self, history_id, rewards):
@@ -163,19 +178,21 @@ class LinThompSamp (BaseBandit):
         rewards : dictionary
             The dictionary {action_id, reward}, where reward is a float.
         """
-
-        context = self._historystorage.unrewarded_histories[history_id].context
+        context = (self._historystorage
+                   .get_unrewarded_history(history_id)
+                   .context)
 
         # Update the model
-        b = self._modelstorage.get_model()['B']
-        f = self._modelstorage.get_model()['f']
+        model = self._modelstorage.get_model()
+        B = model['B']  # pylint: disable=invalid-name
+        f = model['f']
 
-        for action_id, reward_tmp in rewards.items():
-            context_tmp = np.matrix(context[action_id])
-            b += np.dot(context_tmp.T, context_tmp)
-            f += reward_tmp * context_tmp.T
-            muhat = np.dot(np.linalg.inv(b), f)
-        self._modelstorage.save_model({'B': b, 'muhat': muhat, 'f': f})
+        for action_id, reward in six.viewitems(rewards):
+            context_t = np.reshape(context[action_id], (-1, 1))
+            B += context_t.dot(context_t.T)  # pylint: disable=invalid-name
+            f += reward * context_t
+            mu_hat = np.linalg.inv(B).dot(f)
+        self._modelstorage.save_model({'B': B, 'mu_hat': mu_hat, 'f': f})
 
         # Update the history
         self._historystorage.add_reward(history_id, rewards)
@@ -186,8 +203,6 @@ class LinThompSamp (BaseBandit):
         Parameters
         ----------
         actions : iterable
-            A list of Action objects for recommendation
+            A list of Action oBjects for recommendation
         """
-
-        action_ids = [actions[i].action_id for i in range(len(actions))]
         self._actions.extend(actions)

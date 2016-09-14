@@ -3,7 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def simulate_data(n_rounds, n_dimensions, actions, algorithm=None):
+def simulate_data(n_rounds, context_dimension, actions, algorithm=None,
+                  random_state=None):
     """Simulate dataset for the contextual bandit problem.
 
     Parameters
@@ -11,7 +12,7 @@ def simulate_data(n_rounds, n_dimensions, actions, algorithm=None):
     n_rounds: int
         Total number of (context, reward) tuples you want to generate.
 
-    n_dimensions: int
+    context_dimension: int
         Dimension of the context.
 
     actions : list of Action objects
@@ -20,31 +21,44 @@ def simulate_data(n_rounds, n_dimensions, actions, algorithm=None):
     algorithm: string
         The bandit algorithm you want to use.
 
+    random_state: int, np.random.RandomState (default: None)
+        If int, np.random.RandomState will used it as seed. If None, a random
+        seed will be used.
+
     Return
     ---------
     context: dict
-        The dict stores contexts (dict with {action_id: n_dimensions ndarray}) at each iteration.
+        The dict stores contexts (dict with {action_id: context_dimension
+        ndarray}) at each iteration.
 
-    desired_actions:
-        The action which will receive reward 1.
+    desired_actions: dict
+        The action which will receive reward 1 ({history_id: action_id}).
     """
+    if random_state is None:
+        random_state = np.random.RandomState()
+    elif not isinstance(random_state, np.random.RandomState):
+        random_state = np.random.RandomState(seed=random_state)
 
     action_ids = [action.action_id for action in actions]
     context = {}
-    desired_actions = np.empty(shape=n_rounds, dtype=np.int)
+    desired_actions = {}
 
     if algorithm == 'Exp4P':
         for t in range(n_rounds):
-            context[t] = np.random.uniform(0, 1, n_dimensions)
-            for i in range(len(actions)):
-                if i * n_dimensions / len(actions) < sum(context[t]) <= (i + 1) * n_dimensions / len(actions):
-                    desired_actions[t] = action_ids[i]
+            context[t] = random_state.uniform(0, 1, context_dimension)
+            context_sum = context[t].sum()
+            for action_i, action_id in enumerate(action_ids):
+                if (action_i * context_dimension / len(actions)
+                        < context_sum
+                        <= (action_i + 1) * context_dimension / len(actions)):
+                    desired_actions[t] = action_id
 
     else:
         for t in range(n_rounds):
             context[t] = {}
             for action_id in action_ids:
-                context[t][action_id] = np.random.uniform(0, 1, n_dimensions)
+                context[t][action_id] = random_state.uniform(0, 1,
+                                                             context_dimension)
             desired_actions[t] = max(
                 context[t],
                 key=lambda action_id: context[t][action_id].sum())

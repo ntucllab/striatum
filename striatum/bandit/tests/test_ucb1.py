@@ -49,14 +49,14 @@ class Ucb1(unittest.TestCase):
         history_id_2, action_2 = policy.get_action(context=None, n_actions=1)
         policy.reward(history_id, {1: 0})
         self.assertEqual(policy._historystorage.get_history(history_id).reward, {1: 0})
-        self.assertEqual(policy._historystorage.get_history(history_id_2).reward, None)
+        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id_2).reward, None)
 
     def test_reward_order_descending(self):
         policy = ucb1.UCB1(self.actions, self.historystorage, self.modelstorage)
         history_id, action = policy.get_action(context=None, n_actions=1)
         history_id_2, action_2 = policy.get_action(context=None, n_actions=2)
         policy.reward(history_id_2, {1: 0, 2: 0})
-        self.assertEqual(policy._historystorage.get_history(history_id).reward, None)
+        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id).reward, None)
         self.assertEqual(policy._historystorage.get_history(history_id_2).reward, {1: 0, 2: 0})
 
     def test_add_action(self):

@@ -17,11 +17,11 @@ def main():
                         help="the path of simulation result plots to save")
     args = parser.parse_args()
 
-    simulation_exp3.simulate_bandit()
     for sim in [simulation_exp3, simulation_exp4p, simulation_linthompsamp,
                 simulation_linucb, simulation_ucb1]:
+        sim.simulate_bandit()
         plt.savefig(join(args.path, "%s" % sim.__name__))
-        plt.close()
+        plt.clf()
 
 if __name__ == "__main__":
     main()

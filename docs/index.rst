@@ -12,6 +12,7 @@ Contents:
   :maxdepth: 2
 
   api_reference.rst
+  simulations/simulations.rst
 
 * :ref:`genindex`
 * :ref:`modindex`

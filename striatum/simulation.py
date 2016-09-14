@@ -127,4 +127,3 @@ def plot_tuning_curve(tuning_region, ctr_tuning, label):
     axes = plt.gca()
     axes.set_ylim([0, 1])
     plt.title("Parameter Tunning Curve")
-    plt.show()

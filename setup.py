@@ -8,10 +8,16 @@ on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 # read the docs could not compile numpy and c extensions
 if on_rtd:
     setup_requires = []
+    install_requires = []
 else:
-    setup_requires=[
+    setup_requires = [
+        'nose',
+        'coverage',
+    ]
+    install_requires=[
         'numpy',
         'scipy',
+        'matplotlib',
         'scikit-learn',
     ]
 
@@ -24,6 +30,7 @@ setup(
     author_email='b01902066@csie.ntu.edu.tw, r02922163@csie.ntu.edu.tw',
     url='https://github.com/ntucllab/straitum',
     setup_requires=setup_requires,
+    install_requires=install_requires,
     classifiers=[
         'Topic :: Scientific/Engineering',
         'Programming Language :: Python :: 2.7',

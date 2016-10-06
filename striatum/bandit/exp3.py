@@ -8,7 +8,8 @@ import logging
 import numpy as np
 import six
 
-from striatum.bandit.bandit import BaseBandit
+from .bandit import BaseBandit
+from ..utils import get_random_state
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,8 +43,10 @@ class Exp3(BaseBandit):
             multi-armed bandit problem ." SIAM Journal of Computing. 2002.
     """
 
-    def __init__(self, actions, historystorage, modelstorage, gamma):
+    def __init__(self, actions, historystorage, modelstorage, gamma,
+                 random_state=None):
         super(Exp3, self).__init__(historystorage, modelstorage, actions)
+        self.random_state = get_random_state(random_state)
 
         self.exp3_ = None
 
@@ -124,7 +127,7 @@ class Exp3(BaseBandit):
 
         query_vector = np.array([score[act] for act in self.action_ids])
         action_recommendation = []
-        action_recommendation_ids = np.random.choice(
+        action_recommendation_ids = self.random_state.choice(
             self.action_ids, size=n_actions, p=query_vector, replace=False)
 
         for action_id in action_recommendation_ids:

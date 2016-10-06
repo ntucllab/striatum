@@ -2,6 +2,8 @@ from six.moves import range
 import numpy as np
 import matplotlib.pyplot as plt
 
+from .utils import get_random_state
+
 
 def simulate_data(n_rounds, context_dimension, actions, algorithm=None,
                   random_state=None):
@@ -34,10 +36,7 @@ def simulate_data(n_rounds, context_dimension, actions, algorithm=None,
     desired_actions: dict
         The action which will receive reward 1 ({history_id: action_id}).
     """
-    if random_state is None:
-        random_state = np.random.RandomState()
-    elif not isinstance(random_state, np.random.RandomState):
-        random_state = np.random.RandomState(seed=random_state)
+    random_state = get_random_state(random_state)
 
     action_ids = [action.action_id for action in actions]
     context = {}

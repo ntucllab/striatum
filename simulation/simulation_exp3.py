@@ -12,16 +12,18 @@ def main():
     n_rounds = 1000
     context_dimension = 5
     actions = [Action(action_id) for action_id in range(1, 6)]
+    random_state = np.random.RandomState(0)
 
     # Parameter tuning
     tuning_region = np.arange(0.001, 1, 0.03)
     ctr_tuning = np.zeros(shape=len(tuning_region))
     context1, desired_actions1 = simulation.simulate_data(
-        n_rounds, context_dimension, actions, random_state=0)
+        n_rounds, context_dimension, actions, random_state=random_state)
     for gamma_i, gamma in enumerate(tuning_region):
         historystorage = history.MemoryHistoryStorage()
         modelstorage = model.MemoryModelStorage()
-        policy = Exp3(actions, historystorage, modelstorage, gamma)
+        policy = Exp3(actions, historystorage, modelstorage, gamma,
+                      random_state=random_state)
         cum_regret = simulation.evaluate_policy(policy, context1,
                                                 desired_actions1)
         ctr_tuning[gamma_i] = n_rounds - cum_regret[-1]
@@ -33,10 +35,11 @@ def main():
     # Regret Analysis
     n_rounds = 10000
     context2, desired_actions2 = simulation.simulate_data(
-        n_rounds, context_dimension, actions, random_state=1)
+        n_rounds, context_dimension, actions, random_state=random_state)
     historystorage = history.MemoryHistoryStorage()
     modelstorage = model.MemoryModelStorage()
-    policy = Exp3(actions, historystorage, modelstorage, gamma=gamma_opt)
+    policy = Exp3(actions, historystorage, modelstorage, gamma=gamma_opt,
+                  random_state=random_state)
 
     for t in range(n_rounds):
         history_id, action = policy.get_action(context2[t], 1)

@@ -11,7 +11,8 @@ from six.moves import zip
 
 import numpy as np
 
-from striatum.bandit.bandit import BaseBandit
+from .bandit import BaseBandit
+from ..utils import get_random_state
 
 LOGGER = logging.getLogger(__name__)
 
@@ -60,11 +61,7 @@ class LinThompSamp(BaseBandit):
                  random_state=None):
         super(LinThompSamp, self).__init__(historystorage, modelstorage,
                                            actions)
-        if random_state is None:
-            random_state = np.random.RandomState()
-        elif not isinstance(random_state, np.random.RandomState):
-            random_state = np.random.RandomState(seed=random_state)
-        self.random_state = random_state
+        self.random_state = get_random_state(random_state)
         self.linthompsamp_ = None
         self.context_dimension = context_dimension
 

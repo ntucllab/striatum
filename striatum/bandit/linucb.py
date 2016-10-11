@@ -69,7 +69,7 @@ class LinUCB(BaseBandit):
             # linear model b = dot(xt, theta)
             'theta': {},
         }
-        for action_id in self.action_ids:
+        for action_id in self._action_storage.iterids():
             self._init_action_model(model, action_id)
 
         self._model_storage.save_model(model)
@@ -91,7 +91,7 @@ class LinUCB(BaseBandit):
         estimated_reward = {}
         uncertainty = {}
         score = {}
-        for action_id in self.action_ids:
+        for action_id in self._action_storage.iterids():
             action_context = np.reshape(context[action_id], (-1, 1))
             estimated_reward[action_id] = float(
                 theta[action_id].T.dot(action_context))
@@ -133,7 +133,7 @@ class LinUCB(BaseBandit):
                                            reverse=True)[:n_actions]
 
         for action_id in action_recommendation_ids:
-            action = self.get_action_with_id(action_id)
+            action = self._action_storage.get(action_id)
             action_recommendation.append({
                 'action': action,
                 'estimated_reward': estimated_reward[action_id],
@@ -191,10 +191,10 @@ class LinUCB(BaseBandit):
         actions : iterable
             A list of Action objects for recommendation
         """
-        self._actions.extend(actions)
+        new_action_ids = self._action_storage.add(actions)
         model = self._model_storage.get_model()
 
-        for action in actions:
-            self._init_action_model(model, action.action_id)
+        for action_id in new_action_ids:
+            self._init_action_model(model, action_id)
 
         self._model_storage.save_model(model)

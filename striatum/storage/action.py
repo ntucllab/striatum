@@ -50,6 +50,11 @@ class ActionStorage(object):
         Raises
         ------
         KeyError
+
+        Returns
+        -------
+        new_action_ids: list of int
+            The Action ids of the added Actions.
         """
         pass
 
@@ -121,26 +126,35 @@ class MemoryActionStorage(object):
         """
         return deepcopy(self._actions[action_id])
 
-    def add(self, action):
-        r"""Add action
+    def add(self, actions):
+        r"""Add actions
 
         Parameters
         ----------
-        action: Action object
-            The Action object to add.
+        action: list of Action objects
+            The list of Action objects to add.
 
         Raises
         ------
         KeyError
+
+        Returns
+        -------
+        new_action_ids: list of int
+            The Action ids of the added Actions.
         """
-        if action.id is None:
-            action.id = self._next_action_id
-            self._next_action_id += 1
-        elif action.id in self._actions:
-            raise KeyError("Action id {} exists".format(action.id))
-        else:
-            self._next_action_id = max(self._next_action_id, action.id + 1)
-        self._actions[action.id] = action
+        new_action_ids = []
+        for action in actions:
+            if action.id is None:
+                action.id = self._next_action_id
+                self._next_action_id += 1
+            elif action.id in self._actions:
+                raise KeyError("Action id {} exists".format(action.id))
+            else:
+                self._next_action_id = max(self._next_action_id, action.id + 1)
+            self._actions[action.id] = action
+            new_action_ids.append(action.id)
+        return new_action_ids
 
     def update(self, action):
         r"""Update action

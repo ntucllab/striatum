@@ -16,19 +16,17 @@ def main():
     n_rounds = 1000
     context_dimension = 5
     action_storage = MemoryActionStorage()
-    for i in range(5):
-        action_storage.add(Action(i + 1))
+    action_storage.add([Action(i) for i in range(5)])
 
     # Parameter tuning
     tuning_region = np.arange(0, 3, 0.05)
     ctr_tuning = np.empty(shape=len(tuning_region))
     context1, desired_actions1 = simulation.simulate_data(
         n_rounds, context_dimension, action_storage, random_state=0)
-    import ipdb; ipdb.set_trace()
     for alpha_i, alpha in enumerate(tuning_region):
-        policy = LinUCB(actions,
-                        history_storage=MemoryHistoryStorage(),
+        policy = LinUCB(history_storage=MemoryHistoryStorage(),
                         model_storage=MemoryModelStorage(),
+                        action_storage=action_storage,
                         alpha=alpha, context_dimension=context_dimension)
         cum_regret = simulation.evaluate_policy(policy, context1,
                                                 desired_actions1)
@@ -41,10 +39,10 @@ def main():
     # Regret Analysis
     n_rounds = 10000
     context2, desired_actions2 = simulation.simulate_data(
-        n_rounds, context_dimension, actions, random_state=1)
-    policy = LinUCB(actions,
-                    history_storage=MemoryHistoryStorage(),
+        n_rounds, context_dimension, action_storage, random_state=1)
+    policy = LinUCB(history_storage=MemoryHistoryStorage(),
                     model_storage=MemoryModelStorage(),
+                    action_storage=action_storage,
                     alpha=alpha_opt, context_dimension=context_dimension)
 
     for t in range(n_rounds):

@@ -41,7 +41,7 @@ class BaseBandit(object):
         self._action_storage = action_storage
 
     @abstractmethod
-    def get_action(self, context, n_actions=1):
+    def get_action(self, context, n_actions=None):
         """Return the action to perform
 
         Parameters
@@ -49,8 +49,9 @@ class BaseBandit(object):
         context : dictionary
             Contexts {action_id: context} of different actions.
 
-        n_actions: int
-            Number of actions wanted to recommend users.
+        n_actions: int (default: None)
+            Number of actions wanted to recommend users. If None, only return
+            one action.
 
         Returns
         -------

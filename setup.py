@@ -12,6 +12,7 @@ else:
     setup_requires = [
         'nose',
         'coverage',
+        'scikit-learn',
     ]
     install_requires = [
         'six',

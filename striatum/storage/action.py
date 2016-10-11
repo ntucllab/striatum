@@ -4,6 +4,8 @@ Action storage
 from abc import abstractmethod
 from copy import deepcopy
 
+import six
+
 
 class Action(object):
     r"""The action object
@@ -19,6 +21,7 @@ class Action(object):
 
 
 class ActionStorage(object):
+
     @abstractmethod
     def get(self, action_id):
         r"""Get action by action id
@@ -35,8 +38,10 @@ class ActionStorage(object):
         """
         pass
 
+    @abstractmethod
     def add(self, action):
         r"""Add action
+
         Parameters
         ----------
         action: Action object
@@ -48,8 +53,10 @@ class ActionStorage(object):
         """
         pass
 
+    @abstractmethod
     def update(self, action):
         r"""Add action
+
         Parameters
         ----------
         action: Action object
@@ -61,8 +68,10 @@ class ActionStorage(object):
         """
         pass
 
+    @abstractmethod
     def remove(self, action_id):
         r"""Add action
+
         Parameters
         ----------
         action_id: int
@@ -74,11 +83,28 @@ class ActionStorage(object):
         """
         pass
 
+    @abstractmethod
+    def count(self):
+        r"""Count actions
+        """
+        pass
+
+    @abstractmethod
+    def iterids(self):
+        r"""Return iterable of the Action ids.
+
+        Returns
+        -------
+        action_ids: iterable
+            Action ids.
+        """
+
 
 class MemoryActionStorage(object):
+
     def __init__(self):
-        self.actions = {}
-        self.next_action_id = 0
+        self._actions = {}
+        self._next_action_id = 0
 
     def get(self, action_id):
         r"""Get action by action id
@@ -93,10 +119,11 @@ class MemoryActionStorage(object):
         action: Action object
             The Action object that has id action_id.
         """
-        return deepcopy(self.actions[action_id])
+        return deepcopy(self._actions[action_id])
 
     def add(self, action):
         r"""Add action
+
         Parameters
         ----------
         action: Action object
@@ -107,14 +134,17 @@ class MemoryActionStorage(object):
         KeyError
         """
         if action.id is None:
-            action.id = self.next_action_id
-            self.next_action_id += 1
-        elif action.id in self.actions:
+            action.id = self._next_action_id
+            self._next_action_id += 1
+        elif action.id in self._actions:
             raise KeyError("Action id {} exists".format(action.id))
-        self.actions[action.id] = action
+        else:
+            self._next_action_id = max(self._next_action_id, action.id + 1)
+        self._actions[action.id] = action
 
     def update(self, action):
-        r"""Add action
+        r"""Update action
+
         Parameters
         ----------
         action: Action object
@@ -124,10 +154,11 @@ class MemoryActionStorage(object):
         ------
         KeyError
         """
-        self.actions[action.id] = action
+        self._actions[action.id] = action
 
     def remove(self, action_id):
-        r"""Add action
+        r"""Remove action
+
         Parameters
         ----------
         action_id: int
@@ -137,5 +168,27 @@ class MemoryActionStorage(object):
         ------
         KeyError
         """
-        del self.actions[action_id]
+        del self._actions[action_id]
 
+    def count(self):
+        r"""Count actions
+
+        Returns
+        -------
+        count: int
+            Number of Action in the storage.
+        """
+        return len(self._actions)
+
+    def iterids(self):
+        r"""Return iterable of the Action ids.
+
+        Returns
+        -------
+        action_ids: iterable
+            Action ids.
+        """
+        return six.viewkeys(self._actions)
+
+    def __iter__(self):
+        return iter(six.viewvalues(self._actions))

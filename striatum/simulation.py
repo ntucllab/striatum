@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from .utils import get_random_state
 
 
-def simulate_data(n_rounds, context_dimension, actions, algorithm=None,
+def simulate_data(n_rounds, context_dimension, action_storage, algorithm=None,
                   random_state=None):
     """Simulate dataset for the contextual bandit problem.
 
@@ -17,8 +17,8 @@ def simulate_data(n_rounds, context_dimension, actions, algorithm=None,
     context_dimension: int
         Dimension of the context.
 
-    actions : list of Action objects
-        List of actions to be chosen from.
+    action_storage : ActionStorage object
+        The ActionStorage object to store actions.
 
     algorithm: string
         The bandit algorithm you want to use.
@@ -38,7 +38,7 @@ def simulate_data(n_rounds, context_dimension, actions, algorithm=None,
     """
     random_state = get_random_state(random_state)
 
-    action_ids = [action.action_id for action in actions]
+    action_ids = list(action_storage.iterids())
     context = {}
     desired_actions = {}
 
@@ -47,9 +47,10 @@ def simulate_data(n_rounds, context_dimension, actions, algorithm=None,
             context[t] = random_state.uniform(0, 1, context_dimension)
             context_sum = context[t].sum()
             for action_i, action_id in enumerate(action_ids):
-                if (action_i * context_dimension / len(actions)
+                if (action_i * context_dimension / action_storage.count()
                         < context_sum
-                        <= (action_i + 1) * context_dimension / len(actions)):
+                        <= ((action_i + 1) * context_dimension
+                            / action_storage.count())):
                     desired_actions[t] = action_id
 
     else:

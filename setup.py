@@ -2,7 +2,6 @@
 
 import os
 from setuptools import setup
-import sys
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 # read the docs could not compile numpy and c extensions
@@ -14,16 +13,16 @@ else:
         'nose',
         'coverage',
     ]
-    install_requires=[
+    install_requires = [
+        'six',
         'numpy',
         'scipy',
         'matplotlib',
-        'scikit-learn',
     ]
 
 setup(
     name='striatum',
-    version='0.1.1-dev20161006001',
+    version='0.1.1',
     description='Contextual bandit in python',
     long_description='Contextual bandit in python',
     author='Y.-Y. Yang, Y.-A. Lin',

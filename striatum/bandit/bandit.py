@@ -40,6 +40,10 @@ class BaseBandit(object):
         self._model_storage = model_storage
         self._action_storage = action_storage
 
+    @property
+    def history_storage(self):
+        return self._history_storage
+
     @abstractmethod
     def get_action(self, context, n_actions=None):
         """Return the action to perform

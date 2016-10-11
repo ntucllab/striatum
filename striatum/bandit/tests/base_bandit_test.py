@@ -15,7 +15,8 @@ class BaseBanditTest(object):
         self.model_storage = MemoryModelStorage()
         self.history_storage = MemoryHistoryStorage()
         self.action_storage = MemoryActionStorage()
-        self.action_storage.add([Action(i + 1) for i in range(3)])
+        self.actions = [Action(i + 1) for i in range(3)]
+        self.action_storage.add(self.actions)
 
     def test_initialization(self):
         policy = self.policy
@@ -94,3 +95,10 @@ class BaseBanditTest(object):
             policy._history_storage.get_unrewarded_history(history_id1).reward)
         self.assertDictEqual(
             policy._history_storage.get_history(history_id2).reward, {3: 1})
+
+    def test_add_action_change_storage(self):
+        policy = self.policy
+        new_actions = [Action() for i in range(2)]
+        policy.add_action(new_actions)
+        self.assertEqual(set(a.id for a in self.actions + new_actions),
+                         set(self.action_storage.iterids()))

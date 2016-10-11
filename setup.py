@@ -28,7 +28,7 @@ setup(
     long_description='Contextual bandit in python',
     author='Y.-Y. Yang, Y.-A. Lin',
     author_email='b01902066@csie.ntu.edu.tw, r02922163@csie.ntu.edu.tw',
-    url='https://github.com/ntucllab/straitum',
+    url='https://github.com/ntucllab/striatum',
     setup_requires=setup_requires,
     install_requires=install_requires,
     classifiers=[

@@ -7,6 +7,7 @@ from datetime import datetime
 
 class History(object):
     """action/reward history entry"""
+
     def __init__(self, history_id, action_time, context, action,
                  reward_time=None, reward=None):
         """
@@ -32,18 +33,6 @@ class History(object):
 
 class HistoryStorage(object):
     """The object to store the history of context, actions and rewards."""
-    # @property
-    # def histories(self):
-    #     """dictionary of history_id mapping to tuple (timestamp, context,
-    #     action, reward)"""
-    #     return self._histories
-
-    # @property
-    # def unrewarded_histories(self):
-    #     """dictionary of history_id mapping to tuple (timestamp, context,
-    #     action)"""
-    #     return self._unrewared_histories
-
     @abstractmethod
     def get_history(self, history_id):
         """Get the preivous context, action and reward with history_id.
@@ -113,6 +102,7 @@ class HistoryStorage(object):
 
 class MemoryHistoryStorage(HistoryStorage):
     """HistoryStorage that store all data in memory"""
+
     def __init__(self):
         self.histories = {}
         self.unrewarded_histories = {}
@@ -198,4 +188,3 @@ class MemoryHistoryStorage(HistoryStorage):
         history = self.unrewarded_histories.pop(history_id)
         history.update_reward(reward_time, reward)
         self.histories[history.history_id] = history
-

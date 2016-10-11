@@ -20,14 +20,14 @@ class LinUCB(BaseBandit):
 
     Parameters
     ----------
-    actions : list of Action objects
-        List of actions to be chosen from.
+    history_storage : HistoryStorage object
+        The HistoryStorage object to store history context, actions and rewards.
 
-    historystorage: a HistoryStorage object
-        The place where we store the histories of contexts and rewards.
+    model_storage : ModelStorage object
+        The ModelStorage object to store model parameters.
 
-    modelstorage: a ModelStorage object
-        The place where we store the model parameters.
+    action_storage : ActionStorage object
+        The ActionStorage object to store actions.
 
     alpha: float
         The constant determines the width of the upper confidence bound.
@@ -47,9 +47,10 @@ class LinUCB(BaseBandit):
             International Conference on World Wide Web (WWW), 2010.
     """
 
-    def __init__(self, actions, historystorage, modelstorage, alpha,
+    def __init__(self, history_storage, model_storage, action_storage, alpha,
                  context_dimension=1):
-        super(LinUCB, self).__init__(historystorage, modelstorage, actions)
+        super(LinUCB, self).__init__(history_storage, model_storage,
+                                     action_storage)
         self.alpha = alpha
         self.context_dimension = context_dimension
 
@@ -71,7 +72,7 @@ class LinUCB(BaseBandit):
         for action_id in self.action_ids:
             self._init_action_model(model, action_id)
 
-        self._modelstorage.save_model(model)
+        self._model_storage.save_model(model)
 
     def _init_action_model(self, model, action_id):
         model['A'][action_id] = np.identity(self.context_dimension)
@@ -82,7 +83,7 @@ class LinUCB(BaseBandit):
     def _linucb_score(self, context):
         """disjoint LINUCB algorithm.
         """
-        model = self._modelstorage.get_model()
+        model = self._model_storage.get_model()
         A_inv = model['A_inv']  # pylint: disable=invalid-name
         theta = model['theta']
 
@@ -140,7 +141,7 @@ class LinUCB(BaseBandit):
                 'score': score[action_id],
             })
 
-        history_id = self._historystorage.add_history(
+        history_id = self._history_storage.add_history(
             context, action_recommendation, reward=None)
         return history_id, action_recommendation
 
@@ -155,12 +156,12 @@ class LinUCB(BaseBandit):
         rewards : dictionary
             The dictionary {action_id, reward}, where reward is a float.
         """
-        context = (self._historystorage
+        context = (self._history_storage
                    .get_unrewarded_history(history_id)
                    .context)
 
         # Update the model
-        model = self._modelstorage.get_model()
+        model = self._model_storage.get_model()
         A = model['A']  # pylint: disable=invalid-name
         A_inv = model['A_inv']  # pylint: disable=invalid-name
         b = model['b']
@@ -172,7 +173,7 @@ class LinUCB(BaseBandit):
             A_inv[action_id] = np.linalg.inv(A[action_id])
             b[action_id] += reward * action_context
             theta[action_id] = A_inv[action_id].dot(b[action_id])
-        self._modelstorage.save_model({
+        self._model_storage.save_model({
             'A': A,
             'A_inv': A_inv,
             'b': b,
@@ -180,7 +181,7 @@ class LinUCB(BaseBandit):
         })
 
         # Update the history
-        self._historystorage.add_reward(history_id, rewards)
+        self._history_storage.add_reward(history_id, rewards)
 
     def add_action(self, actions):
         """ Add new actions (if needed).
@@ -191,9 +192,9 @@ class LinUCB(BaseBandit):
             A list of Action objects for recommendation
         """
         self._actions.extend(actions)
-        model = self._modelstorage.get_model()
+        model = self._model_storage.get_model()
 
         for action in actions:
             self._init_action_model(model, action.action_id)
 
-        self._modelstorage.save_model(model)
+        self._model_storage.save_model(model)

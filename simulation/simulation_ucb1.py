@@ -1,27 +1,31 @@
 from six.moves import range
 import matplotlib.pyplot as plt
 
-from striatum.storage import MemoryHistoryStorage, MemoryModelStorage
-from striatum.bandit import ucb1
+from striatum.storage import (
+    MemoryHistoryStorage,
+    MemoryModelStorage,
+    MemoryActionStorage,
+    Action,
+)
+from striatum.bandit import UCB1
 from striatum import simulation
-from striatum.bandit.bandit import Action
 
 
 def main():
     context_dimension = 5
-    actions = [Action(action_id) for action_id in range(1, 6)]
+    action_storage = MemoryActionStorage()
+    action_storage.add([Action(i) for i in range(5)])
 
     # Regret Analysis
     n_rounds = 40000
     context, desired_actions = simulation.simulate_data(
-        n_rounds, context_dimension, actions, random_state=0)
-    historystorage = MemoryHistoryStorage()
-    modelstorage = MemoryModelStorage()
-    policy = ucb1.UCB1(actions, historystorage, modelstorage)
+        n_rounds, context_dimension, action_storage, random_state=0)
+    policy = UCB1(MemoryHistoryStorage(), MemoryModelStorage(),
+                  action_storage)
 
     for t in range(n_rounds):
         history_id, action = policy.get_action(context[t], 1)
-        action_id = action[0]['action'].action_id
+        action_id = action[0]['action'].id
         if desired_actions[t] != action_id:
             policy.reward(history_id, {action_id: 0})
         else:

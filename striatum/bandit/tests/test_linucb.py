@@ -6,10 +6,12 @@ import numpy as np
 
 from striatum.bandit import LinUCB
 from striatum.storage import Action
-from .base_bandit_test import BaseBanditTest
+from .base_bandit_test import BaseBanditTest, ChangeableActionSetBanditTest
 
 
-class TestLinUCB(BaseBanditTest, unittest.TestCase):
+class TestLinUCB(ChangeableActionSetBanditTest,
+                 BaseBanditTest,
+                 unittest.TestCase):
     #pylint: disable=protected-access
 
     def setUp(self):

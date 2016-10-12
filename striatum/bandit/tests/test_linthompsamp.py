@@ -2,10 +2,12 @@ import unittest
 
 from striatum.bandit import LinThompSamp
 from striatum.storage import Action
-from .base_bandit_test import BaseBanditTest
+from .base_bandit_test import BaseBanditTest, ChangeableActionSetBanditTest
 
 
-class TestLinThompSamp(BaseBanditTest, unittest.TestCase):
+class TestLinThompSamp(ChangeableActionSetBanditTest,
+                       BaseBanditTest,
+                       unittest.TestCase):
     #pylint: disable=protected-access
 
     def setUp(self):

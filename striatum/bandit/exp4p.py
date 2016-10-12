@@ -199,14 +199,3 @@ class Exp4P(BaseBandit):
 
         # Update the history
         self._historystorage.add_reward(history_id, rewards)
-
-    def add_action(self, actions):
-        """ Add new actions (if needed).
-
-        Parameters
-        ----------
-        actions : iterable
-            A list of Action objects for recommendation
-        """
-
-        self._actions.extend(actions)

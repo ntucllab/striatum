@@ -96,6 +96,9 @@ class BaseBanditTest(object):
         self.assertDictEqual(
             policy._history_storage.get_history(history_id2).reward, {3: 1})
 
+
+class ChangeableActionSetBanditTest(object):
+
     def test_add_action_change_storage(self):
         policy = self.policy
         new_actions = [Action() for i in range(2)]

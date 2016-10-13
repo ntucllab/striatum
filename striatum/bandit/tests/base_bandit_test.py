@@ -24,7 +24,6 @@ class BaseBanditTest(object):
         self.assertEqual(self.history_storage, policy._history_storage)
         self.assertEqual(self.history_storage, policy.history_storage)
         self.assertEqual(self.action_storage, policy._action_storage)
-        self.assertEqual(self.context_dimension, policy.context_dimension)
 
     def test_get_first_action(self):
         policy = self.policy

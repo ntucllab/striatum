@@ -8,7 +8,7 @@ from .base_bandit_test import BaseBanditTest, ChangeableActionSetBanditTest
 class TestLinThompSamp(ChangeableActionSetBanditTest,
                        BaseBanditTest,
                        unittest.TestCase):
-    #pylint: disable=protected-access
+    # pylint: disable=protected-access
 
     def setUp(self):
         super(TestLinThompSamp, self).setUp()
@@ -23,8 +23,10 @@ class TestLinThompSamp(ChangeableActionSetBanditTest,
 
     def test_initialization(self):
         super(TestLinThompSamp, self).test_initialization()
-        self.assertEqual(self.R, self.policy.R)
-        self.assertEqual(self.epsilon, self.policy.epsilon)
+        policy = self.policy
+        self.assertEqual(self.context_dimension, policy.context_dimension)
+        self.assertEqual(self.R, policy.R)
+        self.assertEqual(self.epsilon, policy.epsilon)
 
     def test_model_storage(self):
         policy = self.policy
@@ -43,6 +45,8 @@ class TestLinThompSamp(ChangeableActionSetBanditTest,
         history_id, _ = policy.get_action(context1, 2)
         new_actions = [Action() for i in range(2)]
         policy.add_action(new_actions)
+        self.assertEqual(len(new_actions) + len(self.actions),
+                         policy._action_storage.count())
         policy.reward(history_id, {3: 1})
 
         context2 = {1: [1, 1], 2: [2, 2], 3: [3, 3], 4: [4, 4], 5: [5, 5]}

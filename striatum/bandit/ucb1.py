@@ -130,16 +130,11 @@ class UCB1(BaseBandit):
         model = self._model_storage.get_model()
         total_action_reward = model['total_action_reward']
         action_times = model['action_times']
-        n_rounds = model['n_rounds']
         for action_id, reward in six.viewitems(rewards):
             total_action_reward[action_id] += reward
             action_times[action_id] += 1
-            n_rounds += 1
-        self._model_storage.save_model({
-            'total_action_reward': total_action_reward,
-            'action_times': action_times,
-            'n_rounds': n_rounds
-        })
+            model['n_rounds'] += 1
+        self._model_storage.save_model(model)
         # Update the history
         self._history_storage.add_reward(history_id, rewards)
 
@@ -160,5 +155,6 @@ class UCB1(BaseBandit):
         for action in actions:
             total_action_reward[action.id] = 1.0
             action_times[action.id] = 1
+            model['n_rounds'] += 1
 
         self._model_storage.save_model(model)

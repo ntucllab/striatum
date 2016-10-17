@@ -1,7 +1,5 @@
 import unittest
 
-import numpy as np
-
 from striatum.bandit import UCB1
 from striatum.storage import Action
 from .base_bandit_test import BaseBanditTest, ChangeableActionSetBanditTest

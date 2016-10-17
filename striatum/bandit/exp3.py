@@ -181,12 +181,14 @@ class Exp3(BaseBandit):
         actions : iterable
             A list of Action objects for recommendation
         """
-        action_ids = [actions[i].action_id for i in range(len(actions))]
-        w = self._model_storage.get_model()['w']
-        query_vector = self._model_storage.get_model()['query_vector']
+        self._action_storage.add(actions)
 
-        for action_id in action_ids:
-            query_vector[action_id] = 0
-            w[action_id] = 1.0  # weight vector
+        model = self._model_storage.get_model()
+        w = model['w']
+        query_vector = model['query_vector']
 
-        self._actions.extend(actions)
+        for action in actions:
+            query_vector[action.id] = 0
+            w[action.id] = 1.0  # weight vector
+
+        self._model_storage.save_model(model)

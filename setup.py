@@ -20,11 +20,14 @@ else:
         'matplotlib',
     ]
 
+long_description = ("See `github <https://github.com/ntucllab/striatum>`_ "
+                    "for more information.")
+
 setup(
     name='striatum',
     version='0.1.1',
     description='Contextual bandit in python',
-    long_description='Contextual bandit in python',
+    long_description=long_description,
     author='Y.-Y. Yang, Y.-A. Lin',
     author_email='b01902066@csie.ntu.edu.tw, r02922163@csie.ntu.edu.tw',
     url='https://github.com/ntucllab/striatum',

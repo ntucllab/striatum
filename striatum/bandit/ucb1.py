@@ -1,29 +1,27 @@
 """Upper Confidence Bound 1
-This module contains a class that implements UCB1 algorithm, a famous multi-armed bandit algorithm without context.
+This module contains a class that implements UCB1 algorithm, a famous
+multi-armed bandit algorithm without context.
 """
-
-import logging
+from __future__ import division
 import numpy as np
 import six
-from striatum.bandit.bandit import BaseBandit
 
-LOGGER = logging.getLogger(__name__)
+from striatum.bandit.bandit import BaseBandit
 
 
 class UCB1(BaseBandit):
-
-    """Upper Confidence Bound 1
+    r"""Upper Confidence Bound 1
 
     Parameters
     ----------
-    actions : {array-like, None}
-        Actions (arms) for recommendation
+    history_storage : HistoryStorage object
+        The HistoryStorage object to store history context, actions and rewards.
 
-    historystorage: a :py:mod:'striatum.storage.HistoryStorage' object
-        The object where we store the histories of contexts and rewards.
+    model_storage : ModelStorage object
+        The ModelStorage object to store model parameters.
 
-    modelstorage: a :py:mod:'straitum.storage.ModelStorage' object
-        The object where we store the model parameters.
+    action_storage : ActionStorage object
+        The ActionStorage object to store actions.
 
     Attributes
     ----------
@@ -32,40 +30,49 @@ class UCB1(BaseBandit):
 
     References
     ----------
-    .. [1]  Peter Auer, et al. "Finite-time Analysis of the Multiarmed Bandit Problem."
-            Machine Learning, 47. 2002.
+    .. [1]  Peter Auer, et al. "Finite-time Analysis of the Multiarmed Bandit
+            Problem." Machine Learning, 47. 2002.
     """
 
-    def __init__(self, actions, historystorage, modelstorage):
-        super(UCB1, self).__init__(historystorage, modelstorage, actions)
+    def __init__(self, history_storage, model_storage, action_storage):
+        super(UCB1, self).__init__(history_storage, model_storage,
+                                   action_storage)
         self.ucb1_ = None
-        empirical_reward = {}
+        total_action_reward = {}
         action_times = {}
-        for action_id in self.action_ids:
-            empirical_reward[action_id] = 1.0
-            action_times[action_id] = 1.0
-        total_time = float(len(self._actions))
-        self._modelstorage.save_model({'empirical_reward': empirical_reward,
-                                      'action_times': action_times, 'total_time': total_time})
+        for action_id in self._action_storage.iterids():
+            total_action_reward[action_id] = 1.0
+            action_times[action_id] = 1
+        n_rounds = self._action_storage.count()
+        self._model_storage.save_model({
+            'total_action_reward': total_action_reward,
+            'action_times': action_times,
+            'n_rounds': n_rounds,
+        })
 
     def ucb1(self):
         while True:
-            empirical_reward = self._modelstorage.get_model()['empirical_reward']
-            action_times = self._modelstorage.get_model()['action_times']
-            total_time = self._modelstorage.get_model()['total_time']
+            model = self._model_storage.get_model()
+            total_action_reward = model['total_action_reward']
+            action_times = model['action_times']
+            n_rounds = model['n_rounds']
 
-            estimated_reward = {}
-            uncertainty = {}
-            score = {}
-            for action_id in self.action_ids:
-                estimated_reward[action_id] = empirical_reward[action_id]/action_times[action_id]
-                uncertainty[action_id] = np.sqrt(2*np.log(total_time)/action_times[action_id])
-                score[action_id] = estimated_reward[action_id] + uncertainty[action_id]
-            yield estimated_reward, uncertainty, score
+            estimated_reward_dict = {}
+            uncertainty_dict = {}
+            score_dict = {}
+            for action_id in self._action_storage.iterids():
+                estimated_reward = (total_action_reward[action_id]
+                                    / action_times[action_id])
+                uncertainty = np.sqrt(2 * np.log(n_rounds)
+                                      / action_times[action_id])
+                estimated_reward_dict[action_id] = estimated_reward
+                uncertainty_dict[action_id] = uncertainty
+                score_dict[action_id] = estimated_reward + uncertainty
+            yield estimated_reward_dict, uncertainty_dict, score_dict
 
         raise StopIteration
 
-    def get_action(self, context, n_actions=1):
+    def get_action(self, context=None, n_actions=1):
         """Return the action to perform
 
         Parameters
@@ -82,9 +89,9 @@ class UCB1(BaseBandit):
             The history id of the action.
 
         action : list of dictionaries
-            In each dictionary, it will contains {Action object, estimated_reward, uncertainty}
+            In each dictionary, it will contains {Action object, estimated_
+            reward, uncertainty}
         """
-
         if self.ucb1_ is None:
             self.ucb1_ = self.ucb1()
             estimated_reward, uncertainty, score = six.next(self.ucb1_)
@@ -92,14 +99,19 @@ class UCB1(BaseBandit):
             estimated_reward, uncertainty, score = six.next(self.ucb1_)
 
         action_recommendation = []
-        actions_recommendation_ids = sorted(score, key=score.get, reverse=True)[:n_actions]
+        actions_recommendation_ids = sorted(score, key=score.get,
+                                            reverse=True)[:n_actions]
         for action_id in actions_recommendation_ids:
-            action_id = int(action_id)
-            action = [action for action in self._actions if action.action_id == action_id][0]
-            action_recommendation.append({'action': action, 'estimated_reward': estimated_reward[action_id],
-                                     'uncertainty': uncertainty[action_id], 'score': score[action_id]})
+            action = self._action_storage.get(action_id)
+            action_recommendation.append({
+                'action': action,
+                'estimated_reward': estimated_reward[action_id],
+                'uncertainty': uncertainty[action_id],
+                'score': score[action_id],
+            })
 
-        history_id = self._historystorage.add_history(context, action_recommendation, reward=None)
+        history_id = self._history_storage.add_history(
+            context, action_recommendation, reward=None)
         return history_id, action_recommendation
 
     def reward(self, history_id, rewards):
@@ -115,17 +127,16 @@ class UCB1(BaseBandit):
         """
 
         # Update the model
-        empirical_reward = self._modelstorage.get_model()['empirical_reward']
-        action_times = self._modelstorage.get_model()['action_times']
-        total_time = self._modelstorage.get_model()['total_time']
-        for action_id, reward_tmp in rewards.items():
-            empirical_reward[action_id] += reward_tmp
-            action_times[action_id] += 1.0
-            total_time += 1.0
-            self._modelstorage.save_model({'empirical_reward': empirical_reward,
-                                           'action_times': action_times, 'total_time': total_time})
+        model = self._model_storage.get_model()
+        total_action_reward = model['total_action_reward']
+        action_times = model['action_times']
+        for action_id, reward in six.viewitems(rewards):
+            total_action_reward[action_id] += reward
+            action_times[action_id] += 1
+            model['n_rounds'] += 1
+        self._model_storage.save_model(model)
         # Update the history
-        self._historystorage.add_reward(history_id, rewards)
+        self._history_storage.add_reward(history_id, rewards)
 
     def add_action(self, actions):
         """ Add new actions (if needed).
@@ -135,16 +146,15 @@ class UCB1(BaseBandit):
         actions : iterable
             A list of Action objects for recommendation
         """
-        action_ids = [actions[i].action_id for i in range(len(actions))]
-        self._actions.extend(actions)
+        self._action_storage.add(actions)
 
-        empirical_reward = self._modelstorage.get_model()['empirical_reward']
-        action_times = self._modelstorage.get_model()['action_times']
-        total_time = self._modelstorage.get_model()['total_time']
+        model = self._model_storage.get_model()
+        total_action_reward = model['total_action_reward']
+        action_times = model['action_times']
 
-        for action_id in self.action_ids:
-            empirical_reward[action_id] = 1.0
-            action_times[action_id] = 1.0
+        for action in actions:
+            total_action_reward[action.id] = 1.0
+            action_times[action.id] = 1
+            model['n_rounds'] += 1
 
-        self._modelstorage.save_model({'empirical_reward': empirical_reward,
-                                       'action_times': action_times, 'total_time': total_time})
+        self._model_storage.save_model(model)

@@ -1,85 +1,50 @@
-"""Unit test for Exp3
-"""
-
 import unittest
 
-from striatum.bandit import exp3
-from striatum.bandit.bandit import Action
-from striatum.storage import history, model
+from striatum.bandit import Exp3
+from striatum.storage import Action
+from .base_bandit_test import BaseBanditTest, ChangeableActionSetBanditTest
 
 
-class TestExp3(unittest.TestCase):
+class TestExp3(ChangeableActionSetBanditTest,
+               BaseBanditTest,
+               unittest.TestCase):
+    # pylint: disable=protected-access
+
     def setUp(self):
-        self.modelstorage = model.MemoryModelStorage()
-        self.historystorage = history.MemoryHistoryStorage()
-        a1 = Action(1)
-        a2 = Action(2)
-        a3 = Action(3)
-        a4 = Action(4)
-        a5 = Action(5)
-        self.actions = [a1, a2, a3, a4, a5]
+        super(TestExp3, self).setUp()
         self.gamma = 0.5
+        self.policy = Exp3(self.history_storage, self.model_storage,
+                           self.action_storage, self.gamma)
 
     def test_initialization(self):
-        policy = exp3.Exp3(self.actions, self.historystorage,
-                           self.modelstorage, self.gamma)
-        self.assertEqual(self.actions, policy.actions)
-        self.assertEqual(0.5, policy.gamma)
-
-    def test_get_first_action(self):
-        policy = exp3.Exp3(self.actions, self.historystorage,
-                           self.modelstorage, self.gamma)
-        history_id, action = policy.get_action(context=None, n_actions=1)
-        self.assertEqual(history_id, 0)
-        self.assertIn(action[0]['action'], self.actions)
-
-    def test_update_reward(self):
-        policy = exp3.Exp3(self.actions, self.historystorage,
-                           self.modelstorage, self.gamma)
-        history_id, _ = policy.get_action(context=None, n_actions=1)
-        policy.reward(history_id, {1: 1.0})
-        self.assertEqual(policy._historystorage.get_history(history_id).reward,
-                         {1: 1.0})
+        super(TestExp3, self).test_initialization()
+        policy = self.policy
+        self.assertEqual(self.gamma, policy.gamma)
 
     def test_model_storage(self):
-        policy = exp3.Exp3(self.actions, self.historystorage,
-                           self.modelstorage, self.gamma)
-        history_id, _ = policy.get_action(context=None, n_actions=1)
-        policy.reward(history_id, {1: 1.0})
-        self.assertEqual(len(policy._modelstorage._model['w']), 5)
-        self.assertEqual(len(policy._modelstorage._model['query_vector']), 5)
-
-    def test_delay_reward(self):
-        policy = exp3.Exp3(self.actions, self.historystorage,
-                           self.modelstorage, self.gamma)
-        history_id1, action1 = policy.get_action(context=None, n_actions=1)
-        history_id2, action2 = policy.get_action(context=None, n_actions=1)
-        policy.reward(history_id1, {1: 1.0})
-        self.assertEqual(policy._historystorage.get_history(history_id1).reward, {1: 1.0})
-        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id2).reward, None)
-
-    def test_reward_order_descending(self):
-        policy = exp3.Exp3(self.actions, self.historystorage,
-                           self.modelstorage, self.gamma)
-        history_id1, _ = policy.get_action(context=None, n_actions=1)
-        history_id2, _ = policy.get_action(context=None, n_actions=1)
-        policy.reward(history_id2, {1: 1.0, 2: 0.0})
-        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id1).reward,
-                         None)
-        self.assertEqual(policy._historystorage.get_history(history_id2).reward,
-                         {1: 1.0, 2: 0.0})
+        policy = self.policy
+        history_id, action = policy.get_action(context=None, n_actions=1)
+        policy.reward(history_id, {action[0]['action'].id: 1.0})
+        model = policy._model_storage.get_model()
+        self.assertEqual(len(model['w']), len(self.actions))
+        self.assertEqual(len(model['query_vector']), len(self.actions))
+        self.assertGreater(model['w'][action[0]['action'].id], 1.)
 
     def test_add_action(self):
-        policy = exp3.Exp3(self.actions, self.historystorage,
-                           self.modelstorage, self.gamma)
-        history_id, _ = policy.get_action(context=None, n_actions=1)
-        a6 = Action(6)
-        a7 = Action(7)
-        policy.add_action([a6, a7])
+        policy = self.policy
+        history_id, _ = policy.get_action(context=None, n_actions=2)
+        new_actions = [Action() for i in range(2)]
+        policy.add_action(new_actions)
+        self.assertEqual(len(new_actions) + len(self.actions),
+                         policy._action_storage.count())
         policy.reward(history_id, {3: 1})
-        self.assertEqual(len(policy._actions), 7)
-        self.assertEqual(policy.action_ids, [1, 2, 3, 4, 5, 6, 7])
+        model = policy._model_storage.get_model()
+        for action in new_actions:
+            self.assertEqual(model['w'][action.id], 1.0)
 
-
-if __name__ == '__main__':
-    unittest.main()
+        history_id2, actions = policy.get_action(context=None, n_actions=4)
+        self.assertEqual(len(actions), 4)
+        policy.reward(history_id2, {new_actions[0].id: 4, new_actions[1].id: 5})
+        model = policy._model_storage.get_model()
+        for action in new_actions:
+            self.assertGreater(model['w'][action.id], 1.0)

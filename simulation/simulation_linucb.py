@@ -3,25 +3,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from striatum import simulation
-from striatum.storage import MemoryHistoryStorage, MemoryModelStorage
+from striatum.storage import (
+    MemoryHistoryStorage,
+    MemoryModelStorage,
+    MemoryActionStorage,
+    Action,
+)
 from striatum.bandit import LinUCB
-from striatum.bandit.bandit import Action
 
 
 def main():
     n_rounds = 1000
     context_dimension = 5
-    actions = [Action(i) for i in range(5)]
+    action_storage = MemoryActionStorage()
+    action_storage.add([Action(i) for i in range(5)])
 
     # Parameter tuning
     tuning_region = np.arange(0, 3, 0.05)
     ctr_tuning = np.empty(shape=len(tuning_region))
     context1, desired_actions1 = simulation.simulate_data(
-        n_rounds, context_dimension, actions, random_state=0)
+        n_rounds, context_dimension, action_storage, random_state=0)
     for alpha_i, alpha in enumerate(tuning_region):
-        policy = LinUCB(actions,
-                        historystorage=MemoryHistoryStorage(),
-                        modelstorage=MemoryModelStorage(),
+        policy = LinUCB(history_storage=MemoryHistoryStorage(),
+                        model_storage=MemoryModelStorage(),
+                        action_storage=action_storage,
                         alpha=alpha, context_dimension=context_dimension)
         cum_regret = simulation.evaluate_policy(policy, context1,
                                                 desired_actions1)
@@ -34,15 +39,15 @@ def main():
     # Regret Analysis
     n_rounds = 10000
     context2, desired_actions2 = simulation.simulate_data(
-        n_rounds, context_dimension, actions, random_state=1)
-    policy = LinUCB(actions,
-                    historystorage=MemoryHistoryStorage(),
-                    modelstorage=MemoryModelStorage(),
+        n_rounds, context_dimension, action_storage, random_state=1)
+    policy = LinUCB(history_storage=MemoryHistoryStorage(),
+                    model_storage=MemoryModelStorage(),
+                    action_storage=action_storage,
                     alpha=alpha_opt, context_dimension=context_dimension)
 
     for t in range(n_rounds):
         history_id, action = policy.get_action(context2[t], 1)
-        action_id = action[0]['action'].action_id
+        action_id = action[0]['action'].id
         if desired_actions2[t] != action_id:
             policy.reward(history_id, {action_id: 0})
         else:

@@ -14,16 +14,17 @@ def calculate_cum_reward(policy):
 
         Return
         ---------
-        cum_reward: dictionary
-            The dictionary stores {history_id: cumulative reward} .
+        cum_reward: dict
+            The dict stores {history_id: cumulative reward} .
 
-        cum_n_actions: dictionary
-            The dictionary stores {history_id: cumulative number of recommended actions} .
+        cum_n_actions: dict
+            The dict stores
+            {history_id: cumulative number of recommended actions}.
     """
     cum_reward = {-1: 0.0}
     cum_n_actions = {-1: 0}
-    for i in range(policy.historystorage.n_histories):
-        reward = policy.historystorage.get_history(i).reward
+    for i in range(policy.history_storage.n_histories):
+        reward = policy.history_storage.get_history(i).reward
         cum_n_actions[i] = cum_n_actions[i - 1] + len(reward)
         cum_reward[i] = cum_reward[i - 1] + sum(six.viewvalues(reward))
     return cum_reward, cum_n_actions
@@ -40,12 +41,12 @@ def calculate_avg_reward(policy):
 
         Return
         ---------
-        avg_reward: dictionary
-            The dictionary stores {history_id: average reward} .
+        avg_reward: dict
+            The dict stores {history_id: average reward} .
     """
     cum_reward, cum_n_actions = calculate_cum_reward(policy)
     avg_reward = {}
-    for i in range(policy.historystorage.n_histories):
+    for i in range(policy.history_storage.n_histories):
         avg_reward[i] = cum_reward[i] / cum_n_actions[i]
     return avg_reward
 
@@ -61,7 +62,8 @@ def plot_avg_reward(policy):
     """
 
     avg_reward = calculate_avg_reward(policy)
-    plt.plot(avg_reward.keys(), avg_reward.values(), 'r-', label="average reward")
+    plt.plot(avg_reward.keys(), avg_reward.values(), 'r-',
+             label="average reward")
     plt.xlabel('time')
     plt.ylabel('avg reward')
     plt.legend()

@@ -1,74 +1,51 @@
 import unittest
-import sys
-sys.path.append("..")
-from striatum.storage import history as history
-from striatum.storage import model as model
-from striatum.bandit import ucb1
-from striatum.bandit.bandit import Action
+
+from striatum.bandit import UCB1
+from striatum.storage import Action
+from .base_bandit_test import BaseBanditTest, ChangeableActionSetBanditTest
 
 
-class Ucb1(unittest.TestCase):
+class TestUCB1(ChangeableActionSetBanditTest,
+               BaseBanditTest,
+               unittest.TestCase):
+    # pylint: disable=protected-access
+
     def setUp(self):
-        self.modelstorage = model.MemoryModelStorage()
-        self.historystorage = history.MemoryHistoryStorage()
-        a1 = Action(1)
-        a2 = Action(2)
-        a3 = Action(3)
-        a4 = Action(4)
-        a5 = Action(5)
-        self.actions = [a1, a2, a3, a4, a5]
-        self.alpha = 1.00
-
-    def test_initialization(self):
-        policy = ucb1.UCB1(self.actions, self.historystorage, self.modelstorage)
-        self.assertEqual(self.actions, policy._actions)
-
-    def test_get_first_action(self):
-        policy = ucb1.UCB1(self.actions, self.historystorage, self.modelstorage)
-        history_id, action = policy.get_action(context=None, n_actions=1)
-        self.assertEqual(history_id, 0)
-        self.assertIn(action[0]['action'], self.actions)
-
-    def test_update_reward(self):
-        policy = ucb1.UCB1(self.actions, self.historystorage, self.modelstorage)
-        history_id, action = policy.get_action(context=None, n_actions=1)
-        policy.reward(history_id, {1: 0})
-        self.assertEqual(policy._historystorage.get_history(history_id).reward, {1: 0})
+        super(TestUCB1, self).setUp()
+        self.policy = UCB1(
+            self.history_storage, self.model_storage, self.action_storage)
 
     def test_model_storage(self):
-        policy = ucb1.UCB1(self.actions, self.historystorage, self.modelstorage)
+        policy = self.policy
         history_id, action = policy.get_action(context=None, n_actions=1)
-        policy.reward(history_id, {action[0]['action'].action_id: 1.0})
-        self.assertEqual(policy._modelstorage._model['empirical_reward'][action[0]['action'].action_id], 2)
-        self.assertEqual(policy._modelstorage._model['action_times'][action[0]['action'].action_id], 2.0)
-        self.assertEqual(policy._modelstorage._model['total_time'], 6.0)
-
-    def test_delay_reward(self):
-        policy = ucb1.UCB1(self.actions, self.historystorage, self.modelstorage)
-        history_id, action = policy.get_action(context=None, n_actions=1)
-        history_id_2, action_2 = policy.get_action(context=None, n_actions=1)
-        policy.reward(history_id, {1: 0})
-        self.assertEqual(policy._historystorage.get_history(history_id).reward, {1: 0})
-        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id_2).reward, None)
-
-    def test_reward_order_descending(self):
-        policy = ucb1.UCB1(self.actions, self.historystorage, self.modelstorage)
-        history_id, action = policy.get_action(context=None, n_actions=1)
-        history_id_2, action_2 = policy.get_action(context=None, n_actions=2)
-        policy.reward(history_id_2, {1: 0, 2: 0})
-        self.assertEqual(policy._historystorage.get_unrewarded_history(history_id).reward, None)
-        self.assertEqual(policy._historystorage.get_history(history_id_2).reward, {1: 0, 2: 0})
+        policy.reward(history_id, {action[0]['action'].id: 1.0})
+        model = policy._model_storage.get_model()
+        self.assertEqual(model['total_action_reward'][action[0]['action'].id],
+                         2.)
+        self.assertEqual(model['action_times'][action[0]['action'].id], 2)
+        self.assertEqual(model['n_rounds'], len(self.actions) + 1)
 
     def test_add_action(self):
-        policy = ucb1.UCB1(self.actions, self.historystorage, self.modelstorage)
-        history_id, action = policy.get_action(context=None, n_actions=1)
-        a6 = Action(6)
-        a7 = Action(7)
-        policy.add_action([a6, a7])
+        policy = self.policy
+        history_id, _ = policy.get_action(context=None, n_actions=2)
+        new_actions = [Action() for i in range(2)]
+        policy.add_action(new_actions)
+        self.assertEqual(len(new_actions) + len(self.actions),
+                         policy._action_storage.count())
         policy.reward(history_id, {3: 1})
-        self.assertEqual(len(policy._actions), 7)
-        self.assertEqual(policy.action_ids, [1, 2, 3, 4, 5, 6, 7])
+        model = policy._model_storage.get_model()
+        for action in new_actions:
+            self.assertEqual(model['total_action_reward'][action.id], 1.0)
+            self.assertEqual(model['action_times'][action.id], 1)
+            self.assertEqual(model['n_rounds'],
+                             len(self.actions) + len(new_actions) + 1)
 
-
-if __name__ == '__main__':
-    unittest.main()
+        history_id2, actions = policy.get_action(context=None, n_actions=4)
+        self.assertEqual(len(actions), 4)
+        policy.reward(history_id2, {new_actions[0].id: 4, new_actions[1].id: 5})
+        model = policy._model_storage.get_model()
+        for action in new_actions:
+            self.assertNotEqual(model['total_action_reward'][action.id], 1.0)
+            self.assertEqual(model['action_times'][action.id], 2)
+            self.assertEqual(model['n_rounds'],
+                             len(self.actions) + len(new_actions) + 1 + 2)

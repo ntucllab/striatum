@@ -25,7 +25,7 @@ long_description = ("See `github <https://github.com/ntucllab/striatum>`_ "
 
 setup(
     name='striatum',
-    version='0.2.0',
+    version='0.2.1',
     description='Contextual bandit in python',
     long_description=long_description,
     author='Y.-Y. Yang, Y.-A. Lin',
@@ -42,11 +42,13 @@ setup(
     packages=[
         'striatum',
         'striatum.bandit',
-        'striatum.storage'
+        'striatum.storage',
+        'striatum.utils',
     ],
     package_dir={
         'striatum': 'striatum',
         'striatum.bandit': 'striatum/bandit',
-        'striatum.storage': 'striatum/storage'
+        'striatum.storage': 'striatum/storage',
+        'striatum.utils': 'striatum/utils',
     },
 )

@@ -140,14 +140,12 @@ class LinUCB(BaseBandit):
                 'score': score[action_recommendation_id],
             }
         else:
-            action_recommendation = []  # pylint: disable=redefined-variable-type
             action_recommendation_ids = sorted(score, key=score.get,
                                                reverse=True)[:n_actions]
-
+            action_recommendation = []  # pylint: disable=redefined-variable-type
             for action_id in action_recommendation_ids:
-                action = self._action_storage.get(action_id)
                 action_recommendation.append({
-                    'action': action,
+                    'action': self._action_storage.get(action_id),
                     'estimated_reward': estimated_reward[action_id],
                     'uncertainty': uncertainty[action_id],
                     'score': score[action_id],

@@ -137,9 +137,8 @@ class Exp3(BaseBandit):
         else:
             action_recommendation = []  # pylint: disable=redefined-variable-type
             for action_id in action_recommendation_ids:
-                action = self._action_storage.get(action_id)
                 action_recommendation.append({
-                    'action': action,
+                    'action': self._action_storage.get(action_id),
                     'estimated_reward': estimated_reward[action_id],
                     'uncertainty': uncertainty[action_id],
                     'score': score[action_id],

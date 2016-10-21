@@ -10,8 +10,7 @@ from striatum.storage import (
 from striatum.bandit import UCB1
 from striatum import simulation
 
-
-def main():
+def simulate_bandit():
     context_dimension = 5
     action_storage = MemoryActionStorage()
     action_storage.add([Action(i) for i in range(5)])
@@ -32,8 +31,10 @@ def main():
             policy.reward(history_id, {action_id: 1})
 
     policy.plot_avg_regret()
-    plt.show()
 
+def main():
+    simulate_bandit()
+    plt.show()
 
 if __name__ == '__main__':
     main()

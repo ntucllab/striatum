@@ -120,7 +120,7 @@ class LinThompSamp(BaseBandit):
             uncertainty_dict[action_id] = float(score - estimated_reward)
         return estimated_reward_dict, uncertainty_dict, score_dict
 
-    def get_action(self, context, n_actions=1):
+    def get_action(self, context, n_actions=None):
         """Return the action to perform
 
         Parameters

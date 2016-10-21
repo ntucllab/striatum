@@ -42,8 +42,8 @@ class Exp3(BaseBandit):
             multi-armed bandit problem ." SIAM Journal of Computing. 2002.
     """
 
-    def __init__(self, history_storage, model_storage, action_storage, gamma,
-                 random_state=None):
+    def __init__(self, history_storage, model_storage, action_storage,
+                 gamma=0.3, random_state=None):
         super(Exp3, self).__init__(history_storage, model_storage,
                                    action_storage)
         self.random_state = get_random_state(random_state)

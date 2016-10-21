@@ -57,7 +57,7 @@ class LinThompSamp(BaseBandit):
     """
 
     def __init__(self, history_storage, model_storage, action_storage,
-                 context_dimension, delta=0.5, R=0.5, epsilon=0.1,
+                 context_dimension=128, delta=0.5, R=0.01, epsilon=0.5,
                  random_state=None):
         super(LinThompSamp, self).__init__(history_storage, model_storage,
                                            action_storage)

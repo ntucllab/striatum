@@ -27,7 +27,7 @@ def main():
         policy = LinUCB(history_storage=MemoryHistoryStorage(),
                         model_storage=MemoryModelStorage(),
                         action_storage=action_storage,
-                        alpha=alpha, context_dimension=context_dimension)
+                        context_dimension=context_dimension, alpha=alpha)
         cum_regret = simulation.evaluate_policy(policy, context1,
                                                 desired_actions1)
         ctr_tuning[alpha_i] = n_rounds - cum_regret[-1]
@@ -43,7 +43,7 @@ def main():
     policy = LinUCB(history_storage=MemoryHistoryStorage(),
                     model_storage=MemoryModelStorage(),
                     action_storage=action_storage,
-                    alpha=alpha_opt, context_dimension=context_dimension)
+                    context_dimension=context_dimension, alpha=alpha_opt)
 
     for t in range(n_rounds):
         history_id, action = policy.get_action(context2[t], 1)

@@ -69,7 +69,7 @@ class UCB1(BaseBandit):
             score_dict[action_id] = estimated_reward + uncertainty
         return estimated_reward_dict, uncertainty_dict, score_dict
 
-    def get_action(self, context=None, n_actions=1):
+    def get_action(self, context=None, n_actions=None):
         """Return the action to perform
 
         Parameters
@@ -77,8 +77,9 @@ class UCB1(BaseBandit):
         context : {array-like, None}
             The context of current state, None if no context available.
 
-        n_actions: int
-            Number of actions wanted to recommend users.
+        n_actions: int (default: None)
+            Number of actions wanted to recommend users. If None, only return
+            one action. If -1, get all actions.
 
         Returns
         -------
@@ -90,18 +91,28 @@ class UCB1(BaseBandit):
             reward, uncertainty}
         """
         estimated_reward, uncertainty, score = self._ucb1_score()
+        if n_actions == -1:
+            n_actions = self._action_storage.count()
 
-        action_recommendation = []
-        actions_recommendation_ids = sorted(score, key=score.get,
-                                            reverse=True)[:n_actions]
-        for action_id in actions_recommendation_ids:
-            action = self._action_storage.get(action_id)
-            action_recommendation.append({
-                'action': action,
-                'estimated_reward': estimated_reward[action_id],
-                'uncertainty': uncertainty[action_id],
-                'score': score[action_id],
-            })
+        if n_actions is None:
+            action_recommendation_id = max(score, key=score.get)
+            action_recommendation = {
+                'action': self._action_storage.get(action_recommendation_id),
+                'estimated_reward': estimated_reward[action_recommendation_id],
+                'uncertainty': uncertainty[action_recommendation_id],
+                'score': score[action_recommendation_id],
+            }
+        else:
+            action_recommendation_ids = sorted(score, key=score.get,
+                                               reverse=True)[:n_actions]
+            action_recommendation = []  # pylint: disable=redefined-variable-type
+            for action_id in action_recommendation_ids:
+                action_recommendation.append({
+                    'action': self._action_storage.get(action_id),
+                    'estimated_reward': estimated_reward[action_id],
+                    'uncertainty': uncertainty[action_id],
+                    'score': score[action_id],
+                })
 
         history_id = self._history_storage.add_history(
             context, action_recommendation, reward=None)

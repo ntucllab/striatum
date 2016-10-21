@@ -96,7 +96,7 @@ class Exp3(BaseBandit):
 
         return estimated_reward, uncertainty, score
 
-    def get_action(self, context=None, n_actions=1):
+    def get_action(self, context=None, n_actions=None):
         """Return the action to perform
 
         Parameters
@@ -104,8 +104,9 @@ class Exp3(BaseBandit):
         context : {array-like, None}
             The context of current state, None if no context available.
 
-        n_actions: int
-            Number of actions wanted to recommend users.
+        n_actions: int (default: None)
+            Number of actions wanted to recommend users. If None, only return
+            one action. If -1, get all actions.
 
         Returns
         -------
@@ -117,22 +118,31 @@ class Exp3(BaseBandit):
             estimated_reward, uncertainty}
         """
         estimated_reward, uncertainty, score = self._exp3_score()
+        if n_actions == -1:
+            n_actions = self._action_storage.count()
 
         action_ids = list(six.viewkeys(estimated_reward))
         query_vector = np.asarray([estimated_reward[action_id]
                                    for action_id in action_ids])
-        action_recommendation = []
         action_recommendation_ids = self.random_state.choice(
             action_ids, size=n_actions, p=query_vector, replace=False)
 
-        for action_id in action_recommendation_ids:
-            action = self._action_storage.get(action_id)
-            action_recommendation.append({
-                'action': action,
-                'estimated_reward': estimated_reward[action_id],
-                'uncertainty': uncertainty[action_id],
-                'score': score[action_id],
-            })
+        if n_actions is None:
+            action_recommendation = {
+                'action': self._action_storage.get(action_recommendation_ids),
+                'estimated_reward': estimated_reward[action_recommendation_ids],
+                'uncertainty': uncertainty[action_recommendation_ids],
+                'score': score[action_recommendation_ids],
+            }
+        else:
+            action_recommendation = []  # pylint: disable=redefined-variable-type
+            for action_id in action_recommendation_ids:
+                action_recommendation.append({
+                    'action': self._action_storage.get(action_id),
+                    'estimated_reward': estimated_reward[action_id],
+                    'uncertainty': uncertainty[action_id],
+                    'score': score[action_id],
+                })
 
         history_id = self._history_storage.add_history(
             context, action_recommendation, reward=None)

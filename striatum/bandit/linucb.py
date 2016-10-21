@@ -47,8 +47,8 @@ class LinUCB(BaseBandit):
             International Conference on World Wide Web (WWW), 2010.
     """
 
-    def __init__(self, history_storage, model_storage, action_storage, alpha,
-                 context_dimension=1):
+    def __init__(self, history_storage, model_storage, action_storage,
+                 context_dimension=128, alpha=0.5):
         super(LinUCB, self).__init__(history_storage, model_storage,
                                      action_storage)
         self.alpha = alpha

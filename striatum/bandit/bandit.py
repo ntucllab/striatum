@@ -55,7 +55,7 @@ class BaseBandit(object):
 
         n_actions: int (default: None)
             Number of actions wanted to recommend users. If None, only return
-            one action.
+            one action. If -1, get all actions.
 
         Returns
         -------

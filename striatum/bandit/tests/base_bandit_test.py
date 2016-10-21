@@ -36,6 +36,29 @@ class BaseBanditTest(object):
             policy._history_storage.get_unrewarded_history(history_id).context,
             context)
 
+    def test_get_action_with_n_actions_none(self):
+        policy = self.policy
+        context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
+        history_id, action = policy.get_action(context, None)
+        self.assertEqual(history_id, 0)
+        self.assertIsInstance(action, dict)
+        self.assertIn(action['action'].id, self.action_storage.iterids())
+        self.assertEqual(
+            policy._history_storage.get_unrewarded_history(history_id).context,
+            context)
+
+    def test_get_all_action(self):
+        policy = self.policy
+        context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
+        history_id, actions = policy.get_action(context, -1)
+        self.assertEqual(history_id, 0)
+        self.assertEqual(len(actions), len(self.actions))
+        for action in actions:
+            self.assertIn(action['action'].id, self.action_storage.iterids())
+        self.assertEqual(
+            policy._history_storage.get_unrewarded_history(history_id).context,
+            context)
+
     def test_get_multiple_action(self):
         policy = self.policy
         n_actions = 2

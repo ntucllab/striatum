@@ -70,37 +70,33 @@ class Exp3(BaseBandit):
             w[action_id] = 1.
         self._model_storage.save_model({'query_vector': query_vector, 'w': w})
 
-    def exp3(self):
-        """The generator which implements the main part of Exp3.
+    def _exp3_score(self):
+        """Exp3 algorithm.
         """
+        w = self._model_storage.get_model()['w']
+        w_sum = sum(six.viewvalues(w))
 
-        while True:
-            w = self._model_storage.get_model()['w']
-            w_sum = sum(six.viewvalues(w))
+        query_vector = {}
+        n_actions = self._action_storage.count()
+        for action_id in self._action_storage.iterids():
+            query_vector[action_id] = ((1 - self.gamma) * w[action_id]
+                                       / w_sum
+                                       + self.gamma / n_actions)
 
-            query_vector = {}
-            n_actions = self._action_storage.count()
-            for action_id in self._action_storage.iterids():
-                query_vector[action_id] = ((1 - self.gamma) * w[action_id]
-                                           / w_sum
-                                           + self.gamma / n_actions)
+        self._model_storage.save_model(
+            {'query_vector': query_vector, 'w': w})
 
-            self._model_storage.save_model(
-                {'query_vector': query_vector, 'w': w})
+        estimated_reward = {}
+        uncertainty = {}
+        score = {}
+        for action_id, prob in six.viewitems(query_vector):
+            estimated_reward[action_id] = prob
+            uncertainty[action_id] = 0
+            score[action_id] = prob
 
-            estimated_reward = {}
-            uncertainty = {}
-            score = {}
-            for action_id, prob in six.viewitems(query_vector):
-                estimated_reward[action_id] = prob
-                uncertainty[action_id] = 0
-                score[action_id] = prob
+        return estimated_reward, uncertainty, score
 
-            yield estimated_reward, uncertainty, score
-
-        raise StopIteration
-
-    def get_action(self, context, n_actions=1):
+    def get_action(self, context=None, n_actions=1):
         """Return the action to perform
 
         Parameters
@@ -120,12 +116,7 @@ class Exp3(BaseBandit):
             In each dictionary, it will contains {Action object,
             estimated_reward, uncertainty}
         """
-
-        if self.exp3_ is None:
-            self.exp3_ = self.exp3()
-            estimated_reward, uncertainty, score = six.next(self.exp3_)
-        else:
-            estimated_reward, uncertainty, score = six.next(self.exp3_)
+        estimated_reward, uncertainty, score = self._exp3_score()
 
         action_ids = list(six.viewkeys(estimated_reward))
         query_vector = np.asarray([estimated_reward[action_id]

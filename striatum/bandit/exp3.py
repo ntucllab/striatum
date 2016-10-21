@@ -116,7 +116,6 @@ class Exp3(BaseBandit):
             In each dictionary, it will contains {Action object,
             estimated_reward, uncertainty}
         """
-
         estimated_reward, uncertainty, score = self._exp3_score()
 
         action_ids = list(six.viewkeys(estimated_reward))

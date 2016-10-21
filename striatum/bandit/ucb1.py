@@ -50,27 +50,24 @@ class UCB1(BaseBandit):
             'n_rounds': n_rounds,
         })
 
-    def ucb1(self):
-        while True:
-            model = self._model_storage.get_model()
-            total_action_reward = model['total_action_reward']
-            action_times = model['action_times']
-            n_rounds = model['n_rounds']
+    def _ucb1_score(self):
+        model = self._model_storage.get_model()
+        total_action_reward = model['total_action_reward']
+        action_times = model['action_times']
+        n_rounds = model['n_rounds']
 
-            estimated_reward_dict = {}
-            uncertainty_dict = {}
-            score_dict = {}
-            for action_id in self._action_storage.iterids():
-                estimated_reward = (total_action_reward[action_id]
-                                    / action_times[action_id])
-                uncertainty = np.sqrt(2 * np.log(n_rounds)
-                                      / action_times[action_id])
-                estimated_reward_dict[action_id] = estimated_reward
-                uncertainty_dict[action_id] = uncertainty
-                score_dict[action_id] = estimated_reward + uncertainty
-            yield estimated_reward_dict, uncertainty_dict, score_dict
-
-        raise StopIteration
+        estimated_reward_dict = {}
+        uncertainty_dict = {}
+        score_dict = {}
+        for action_id in self._action_storage.iterids():
+            estimated_reward = (total_action_reward[action_id]
+                                / action_times[action_id])
+            uncertainty = np.sqrt(2 * np.log(n_rounds)
+                                  / action_times[action_id])
+            estimated_reward_dict[action_id] = estimated_reward
+            uncertainty_dict[action_id] = uncertainty
+            score_dict[action_id] = estimated_reward + uncertainty
+        return estimated_reward_dict, uncertainty_dict, score_dict
 
     def get_action(self, context=None, n_actions=1):
         """Return the action to perform
@@ -92,11 +89,7 @@ class UCB1(BaseBandit):
             In each dictionary, it will contains {Action object, estimated_
             reward, uncertainty}
         """
-        if self.ucb1_ is None:
-            self.ucb1_ = self.ucb1()
-            estimated_reward, uncertainty, score = six.next(self.ucb1_)
-        else:
-            estimated_reward, uncertainty, score = six.next(self.ucb1_)
+        estimated_reward, uncertainty, score = self._ucb1_score()
 
         action_recommendation = []
         actions_recommendation_ids = sorted(score, key=score.get,

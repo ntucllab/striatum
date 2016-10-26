@@ -22,7 +22,7 @@ def main():
     tuning_region = np.arange(0.001, 1, 0.03)
     ctr_tuning = np.zeros(shape=len(tuning_region))
     context1, desired_actions1 = simulation.simulate_data(
-        n_rounds, context_dimension, action_storage, random_state=random_state)
+        n_rounds, context_dimension, action_storage, random_state=0)
     for gamma_i, gamma in enumerate(tuning_region):
         policy = Exp3(MemoryHistoryStorage(), MemoryModelStorage(),
                       action_storage, gamma, random_state=random_state)
@@ -37,7 +37,7 @@ def main():
     # Regret Analysis
     n_rounds = 10000
     context2, desired_actions2 = simulation.simulate_data(
-        n_rounds, context_dimension, action_storage, random_state=random_state)
+        n_rounds, context_dimension, action_storage, random_state=1)
     policy = Exp3(MemoryHistoryStorage(), MemoryModelStorage(),
                   action_storage, gamma=gamma_opt, random_state=random_state)
 

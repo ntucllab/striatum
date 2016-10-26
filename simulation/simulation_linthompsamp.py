@@ -26,7 +26,7 @@ def main():
     ctr_epsilon = np.zeros(shape=len(tuning_region))
 
     context1, desired_actions1 = simulation.simulate_data(
-        n_rounds, context_dimension, action_storage, random_state=random_state)
+        n_rounds, context_dimension, action_storage, random_state=0)
 
     for param_i, param in enumerate(tuning_region):
         policy = LinThompSamp(MemoryHistoryStorage(), MemoryModelStorage(),
@@ -82,7 +82,7 @@ def main():
     # Regret Analysis
     n_rounds = 10000
     context2, desired_actions2 = simulation.simulate_data(
-        n_rounds, context_dimension, action_storage, random_state=random_state)
+        n_rounds, context_dimension, action_storage, random_state=1)
     policy = LinThompSamp(MemoryHistoryStorage(), MemoryModelStorage(),
                           action_storage,
                           context_dimension=context_dimension,

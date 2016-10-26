@@ -17,9 +17,9 @@ def main():
     action_storage.add([Action(i) for i in range(5)])
 
     # Regret Analysis
-    n_rounds = 40000
+    n_rounds = 10000
     context, desired_actions = simulation.simulate_data(
-        n_rounds, context_dimension, action_storage, random_state=0)
+        n_rounds, context_dimension, action_storage, random_state=1)
     policy = UCB1(MemoryHistoryStorage(), MemoryModelStorage(),
                   action_storage)
 

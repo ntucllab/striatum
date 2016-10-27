@@ -62,8 +62,8 @@ class BaseBandit(object):
         history_id : int
             The history id of the action.
 
-        action_recommendation : list of dictionaries
-            Each dictionary contains
+        recommendations : list of dict
+            Each dict contains
             {Action object, estimated_reward, uncertainty}.
         """
         pass

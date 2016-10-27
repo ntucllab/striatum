@@ -196,7 +196,7 @@ class MemoryHistoryStorage(HistoryStorage):
         Raise
         -----
         """
-        reward_time = datetime.now()
+        rewarded_at = datetime.now()
         history = self.unrewarded_histories.pop(history_id)
-        history.update_reward(reward_time, rewards)
+        history.update_reward(rewards, rewarded_at)
         self.histories[history.history_id] = history

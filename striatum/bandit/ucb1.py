@@ -86,9 +86,9 @@ class UCB1(BaseBandit):
         history_id : int
             The history id of the action.
 
-        action : list of dictionaries
-            In each dictionary, it will contains {Action object, estimated_
-            reward, uncertainty}
+        recommendations : list of dict
+            Each dict contains
+            {Action object, estimated_reward, uncertainty}.
         """
         estimated_reward, uncertainty, score = self._ucb1_score()
         if n_actions == -1:
@@ -103,10 +103,10 @@ class UCB1(BaseBandit):
                 'score': score[recommendation_id],
             }
         else:
-            action_recommendation_ids = sorted(score, key=score.get,
-                                               reverse=True)[:n_actions]
+            recommendation_ids = sorted(score, key=score.get,
+                                        reverse=True)[:n_actions]
             recommendations = []  # pylint: disable=redefined-variable-type
-            for action_id in action_recommendation_ids:
+            for action_id in recommendation_ids:
                 recommendations.append({
                     'action': self._action_storage.get(action_id),
                     'estimated_reward': estimated_reward[action_id],

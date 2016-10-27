@@ -44,7 +44,7 @@ class HistoryStorage(object):
     """
     @abstractmethod
     def get_history(self, history_id):
-        """Get the preivous context, recommendations and rewards with
+        """Get the previous context, recommendations and rewards with
         history_id.
 
         Parameters
@@ -54,7 +54,7 @@ class HistoryStorage(object):
 
         Returns
         -------
-        history: History object
+        history: History
 
         Raise
         -----
@@ -74,7 +74,7 @@ class HistoryStorage(object):
 
         Returns
         -------
-        history: History object
+        history: History
 
         Raise
         -----
@@ -122,25 +122,7 @@ class MemoryHistoryStorage(HistoryStorage):
         self.n_histories = 0
 
     def get_history(self, history_id):
-        """Get the previous context, action and reward with history_id.
-
-        Parameters
-        ----------
-        history_id : int
-            The history id of the history record to retrieve.
-
-        Returns
-        -------
-        history: History object
-
-        Raise
-        -----
-        KeyError
-        """
-        return self.histories[history_id]
-
-    def get_unrewarded_history(self, history_id):
-        """Get the previous unrewarded context, action and reward with
+        """Get the previous context, recommendations and rewards with
         history_id.
 
         Parameters
@@ -150,7 +132,26 @@ class MemoryHistoryStorage(HistoryStorage):
 
         Returns
         -------
-        history: History object
+        history: History
+
+        Raise
+        -----
+        KeyError
+        """
+        return self.histories[history_id]
+
+    def get_unrewarded_history(self, history_id):
+        """Get the previous unrewarded context, recommendations and rewards with
+        history_id.
+
+        Parameters
+        ----------
+        history_id : int
+            The history id of the history record to retrieve.
+
+        Returns
+        -------
+        history: History
 
         Raise
         -----
@@ -158,46 +159,44 @@ class MemoryHistoryStorage(HistoryStorage):
         """
         return self.unrewarded_histories[history_id]
 
-    def add_history(self, context, action, reward=None):
+    def add_history(self, context, recommendations, rewards=None):
         """Add a history record.
 
         Parameters
         ----------
-        context : {array-like, None}
-        action : Action object
-        reward : {float, None}, optional (default: None)
+        context : {dict of list of float, None}
+        recommendations : {Recommendation, list of Recommendation}
+        rewards : {float, dict of float, None}
 
         Raise
         -----
         """
-        action_time = datetime.now()
+        created_at = datetime.now()
         history_id = self.n_histories
-        if reward is None:
-            history = History(history_id, action_time, context, action)
+        if rewards is None:
+            history = History(history_id, context, recommendations, created_at)
             self.unrewarded_histories[history_id] = history
         else:
-            reward_time = action_time
-            history = History(history_id, action_time, context, action,
-                              reward_time, reward)
+            rewarded_at = created_at
+            history = History(history_id, context, recommendations, created_at,
+                              rewards, rewarded_at)
             self.histories[history_id] = history
         self.n_histories += 1
         return history_id
 
-    def add_reward(self, history_id, reward):
+    def add_reward(self, history_id, rewards):
         """Add reward to a history record.
 
         Parameters
         ----------
         history_id : int
             The history id of the history record to retrieve.
-
-        reward : float
+        rewards : {float, dict of float, None}
 
         Raise
         -----
-        KeyError
         """
         reward_time = datetime.now()
         history = self.unrewarded_histories.pop(history_id)
-        history.update_reward(reward_time, reward)
+        history.update_reward(reward_time, rewards)
         self.histories[history.history_id] = history

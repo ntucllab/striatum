@@ -105,7 +105,7 @@ class ActionStorage(object):
         """
 
 
-class MemoryActionStorage(object):
+class MemoryActionStorage(ActionStorage):
 
     def __init__(self):
         self._actions = {}

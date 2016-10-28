@@ -28,10 +28,11 @@ class BaseBanditTest(object):
     def test_get_first_action(self):
         policy = self.policy
         context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
-        history_id, action = policy.get_action(context, 1)
+        history_id, recommendations = policy.get_action(context, 1)
         self.assertEqual(history_id, 0)
-        self.assertEqual(len(action), 1)
-        self.assertIn(action[0]['action'].id, self.action_storage.iterids())
+        self.assertEqual(len(recommendations), 1)
+        self.assertIn(recommendations[0]['action'].id,
+                      self.action_storage.iterids())
         self.assertEqual(
             policy._history_storage.get_unrewarded_history(history_id).context,
             context)
@@ -39,10 +40,11 @@ class BaseBanditTest(object):
     def test_get_action_with_n_actions_none(self):
         policy = self.policy
         context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
-        history_id, action = policy.get_action(context, None)
+        history_id, recommendations = policy.get_action(context, None)
         self.assertEqual(history_id, 0)
-        self.assertIsInstance(action, dict)
-        self.assertIn(action['action'].id, self.action_storage.iterids())
+        self.assertIsInstance(recommendations, dict)
+        self.assertIn(recommendations['action'].id,
+                      self.action_storage.iterids())
         self.assertEqual(
             policy._history_storage.get_unrewarded_history(history_id).context,
             context)
@@ -50,11 +52,11 @@ class BaseBanditTest(object):
     def test_get_all_action(self):
         policy = self.policy
         context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
-        history_id, actions = policy.get_action(context, -1)
+        history_id, recommendations = policy.get_action(context, -1)
         self.assertEqual(history_id, 0)
-        self.assertEqual(len(actions), len(self.actions))
-        for action in actions:
-            self.assertIn(action['action'].id, self.action_storage.iterids())
+        self.assertEqual(len(recommendations), len(self.actions))
+        for rec in recommendations:
+            self.assertIn(rec['action'].id, self.action_storage.iterids())
         self.assertEqual(
             policy._history_storage.get_unrewarded_history(history_id).context,
             context)
@@ -63,11 +65,11 @@ class BaseBanditTest(object):
         policy = self.policy
         n_actions = 2
         context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
-        history_id, actions = policy.get_action(context, n_actions)
+        history_id, recommendations = policy.get_action(context, n_actions)
         self.assertEqual(history_id, 0)
-        self.assertEqual(len(actions), n_actions)
-        for action in actions:
-            self.assertIn(action['action'].id, self.action_storage.iterids())
+        self.assertEqual(len(recommendations), n_actions)
+        for rec in recommendations:
+            self.assertIn(rec['action'].id, self.action_storage.iterids())
         self.assertEqual(
             policy._history_storage.get_unrewarded_history(history_id).context,
             context)

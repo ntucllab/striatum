@@ -23,11 +23,12 @@ class TestExp3(ChangeableActionSetBanditTest,
 
     def test_model_storage(self):
         policy = self.policy
-        history_id, action = policy.get_action(context=None, n_actions=1)
-        policy.reward(history_id, {action[0]['action'].id: 1.0})
+        history_id, recommendations = policy.get_action(context=None,
+                                                        n_actions=1)
+        policy.reward(history_id, {recommendations[0]['action'].id: 1.0})
         model = policy._model_storage.get_model()
         self.assertEqual(len(model['w']), len(self.actions))
-        self.assertGreater(model['w'][action[0]['action'].id], 1.)
+        self.assertGreater(model['w'][recommendations[0]['action'].id], 1.)
 
     def test_add_action(self):
         policy = self.policy

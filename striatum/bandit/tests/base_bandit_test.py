@@ -78,7 +78,7 @@ class BaseBanditTest(object):
         history_id, _ = policy.get_action(context, 1)
         policy.reward(history_id, {3: 1})
         self.assertEqual(
-            policy._history_storage.get_history(history_id).reward,
+            policy._history_storage.get_history(history_id).rewards,
             {3: 1})
 
     def test_delay_reward(self):
@@ -96,10 +96,10 @@ class BaseBanditTest(object):
             policy._history_storage.get_unrewarded_history(history_id2).context,
             context2)
         self.assertDictEqual(
-            policy._history_storage.get_history(history_id1).reward,
+            policy._history_storage.get_history(history_id1).rewards,
             {2: 1, 3: 1})
         self.assertIsNone(
-            policy._history_storage.get_unrewarded_history(history_id2).reward)
+            policy._history_storage.get_unrewarded_history(history_id2).rewards)
 
     def test_reward_order_descending(self):
         policy = self.policy
@@ -114,9 +114,9 @@ class BaseBanditTest(object):
         self.assertDictEqual(
             policy._history_storage.get_history(history_id2).context, context2)
         self.assertIsNone(
-            policy._history_storage.get_unrewarded_history(history_id1).reward)
+            policy._history_storage.get_unrewarded_history(history_id1).rewards)
         self.assertDictEqual(
-            policy._history_storage.get_history(history_id2).reward, {3: 1})
+            policy._history_storage.get_history(history_id2).rewards, {3: 1})
 
 
 class ChangeableActionSetBanditTest(object):

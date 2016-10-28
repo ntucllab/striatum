@@ -6,51 +6,45 @@ from datetime import datetime
 
 
 class History(object):
-    """action/reward history entry"""
+    """action/reward history entry.
 
-    def __init__(self, history_id, action_time, context, action,
-                 reward_time=None, reward=None):
-        """
-        history_id : int
-        action_time : datetime
-        context : {array-like, None}
-        action : Action object
-        reward_time : datetime
-        reward : {float, None}
-        """
+    Parameters
+    ----------
+    history_id : int
+    context : {dict of list of float, None}
+    recommendations : {Recommendation, list of Recommendation}
+    created_at : datetime
+    rewards : {float, dict of float, None}
+    rewarded_at : {datetime, None}
+    """
+
+    def __init__(self, history_id, context, recommendations, created_at,
+                 rewards=None, rewarded_at=None):
         self.history_id = history_id
-        self.action_time = action_time
         self.context = context
-        self.action = action
-        self.reward_time = reward_time
-        self.reward = reward
+        self.recommendations = recommendations
+        self.created_at = created_at
+        self.rewards = rewards
+        self.rewarded_at = rewarded_at
 
-    def update_reward(self, reward_time, reward):
-        """update reward_time and reward"""
-        self.reward_time = reward_time
-        self.reward = reward
-
-
-class HistoryStorage(object):
-    """The object to store the history of context, actions and rewards."""
-    @abstractmethod
-    def get_history(self, history_id):
-        """Get the preivous context, action and reward with history_id.
+    def update_reward(self, rewards, rewarded_at):
+        """Update reward_time and rewards.
 
         Parameters
         ----------
-        history_id : int
-            The history id of the history record to retrieve.
-
-        Returns
-        -------
-        history: History object
+        rewards : {float, dict of float, None}
+        rewarded_at : {datetime, None}
         """
-        pass
+        self.rewards = rewards
+        self.rewarded_at = rewarded_at
 
+
+class HistoryStorage(object):
+    """The object to store the history of context, recommendations and rewards.
+    """
     @abstractmethod
-    def get_unrewarded_history(self, history_id):
-        """Get the previous unrewarded context, action and reward with
+    def get_history(self, history_id):
+        """Get the previous context, recommendations and rewards with
         history_id.
 
         Parameters
@@ -60,7 +54,7 @@ class HistoryStorage(object):
 
         Returns
         -------
-        history: History object
+        history: History
 
         Raise
         -----
@@ -69,14 +63,34 @@ class HistoryStorage(object):
         pass
 
     @abstractmethod
-    def add_history(self, context, action, reward=None):
+    def get_unrewarded_history(self, history_id):
+        """Get the previous unrewarded context, recommendations and rewards with
+        history_id.
+
+        Parameters
+        ----------
+        history_id : int
+            The history id of the history record to retrieve.
+
+        Returns
+        -------
+        history: History
+
+        Raise
+        -----
+        KeyError
+        """
+        pass
+
+    @abstractmethod
+    def add_history(self, context, recommendations, rewards=None):
         """Add a history record.
 
         Parameters
         ----------
-        context : {array-like, None}
-        action : Action object
-        reward : {float, None}, optional (default: None)
+        context : {dict of list of float, None}
+        recommendations : {Recommendation, list of Recommendation}
+        rewards : {float, dict of float, None}
 
         Raise
         -----
@@ -84,15 +98,14 @@ class HistoryStorage(object):
         pass
 
     @abstractmethod
-    def add_reward(self, history_id, reward):
+    def add_reward(self, history_id, rewards):
         """Add reward to a history record.
 
         Parameters
         ----------
         history_id : int
             The history id of the history record to retrieve.
-
-        reward : float
+        rewards : {float, dict of float, None}
 
         Raise
         -----
@@ -109,25 +122,7 @@ class MemoryHistoryStorage(HistoryStorage):
         self.n_histories = 0
 
     def get_history(self, history_id):
-        """Get the previous context, action and reward with history_id.
-
-        Parameters
-        ----------
-        history_id : int
-            The history id of the history record to retrieve.
-
-        Returns
-        -------
-        history: History object
-
-        Raise
-        -----
-        KeyError
-        """
-        return self.histories[history_id]
-
-    def get_unrewarded_history(self, history_id):
-        """Get the previous unrewarded context, action and reward with
+        """Get the previous context, recommendations and rewards with
         history_id.
 
         Parameters
@@ -137,7 +132,26 @@ class MemoryHistoryStorage(HistoryStorage):
 
         Returns
         -------
-        history: History object
+        history: History
+
+        Raise
+        -----
+        KeyError
+        """
+        return self.histories[history_id]
+
+    def get_unrewarded_history(self, history_id):
+        """Get the previous unrewarded context, recommendations and rewards with
+        history_id.
+
+        Parameters
+        ----------
+        history_id : int
+            The history id of the history record to retrieve.
+
+        Returns
+        -------
+        history: History
 
         Raise
         -----
@@ -145,46 +159,44 @@ class MemoryHistoryStorage(HistoryStorage):
         """
         return self.unrewarded_histories[history_id]
 
-    def add_history(self, context, action, reward=None):
+    def add_history(self, context, recommendations, rewards=None):
         """Add a history record.
 
         Parameters
         ----------
-        context : {array-like, None}
-        action : Action object
-        reward : {float, None}, optional (default: None)
+        context : {dict of list of float, None}
+        recommendations : {Recommendation, list of Recommendation}
+        rewards : {float, dict of float, None}
 
         Raise
         -----
         """
-        action_time = datetime.now()
+        created_at = datetime.now()
         history_id = self.n_histories
-        if reward is None:
-            history = History(history_id, action_time, context, action)
+        if rewards is None:
+            history = History(history_id, context, recommendations, created_at)
             self.unrewarded_histories[history_id] = history
         else:
-            reward_time = action_time
-            history = History(history_id, action_time, context, action,
-                              reward_time, reward)
+            rewarded_at = created_at
+            history = History(history_id, context, recommendations, created_at,
+                              rewards, rewarded_at)
             self.histories[history_id] = history
         self.n_histories += 1
         return history_id
 
-    def add_reward(self, history_id, reward):
+    def add_reward(self, history_id, rewards):
         """Add reward to a history record.
 
         Parameters
         ----------
         history_id : int
             The history id of the history record to retrieve.
-
-        reward : float
+        rewards : {float, dict of float, None}
 
         Raise
         -----
-        KeyError
         """
-        reward_time = datetime.now()
+        rewarded_at = datetime.now()
         history = self.unrewarded_histories.pop(history_id)
-        history.update_reward(reward_time, reward)
+        history.update_reward(rewards, rewarded_at)
         self.histories[history.history_id] = history

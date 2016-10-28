@@ -113,9 +113,9 @@ class Exp3(BaseBandit):
         history_id : int
             The history id of the action.
 
-        action_recommendation : list of dictionaries
-            In each dictionary, it will contains {Action object,
-            estimated_reward, uncertainty}
+        recommendations : list of dict
+            Each dict contains
+            {Action object, estimated_reward, uncertainty}.
         """
         estimated_reward, uncertainty, score = self._exp3_score()
         if n_actions == -1:
@@ -124,29 +124,28 @@ class Exp3(BaseBandit):
         action_ids = list(six.viewkeys(estimated_reward))
         query_vector = np.asarray([estimated_reward[action_id]
                                    for action_id in action_ids])
-        action_recommendation_ids = self.random_state.choice(
+        recommendation_ids = self.random_state.choice(
             action_ids, size=n_actions, p=query_vector, replace=False)
 
         if n_actions is None:
-            action_recommendation = {
-                'action': self._action_storage.get(action_recommendation_ids),
-                'estimated_reward': estimated_reward[action_recommendation_ids],
-                'uncertainty': uncertainty[action_recommendation_ids],
-                'score': score[action_recommendation_ids],
+            recommendations = {
+                'action': self._action_storage.get(recommendation_ids),
+                'estimated_reward': estimated_reward[recommendation_ids],
+                'uncertainty': uncertainty[recommendation_ids],
+                'score': score[recommendation_ids],
             }
         else:
-            action_recommendation = []  # pylint: disable=redefined-variable-type
-            for action_id in action_recommendation_ids:
-                action_recommendation.append({
+            recommendations = []  # pylint: disable=redefined-variable-type
+            for action_id in recommendation_ids:
+                recommendations.append({
                     'action': self._action_storage.get(action_id),
                     'estimated_reward': estimated_reward[action_id],
                     'uncertainty': uncertainty[action_id],
                     'score': score[action_id],
                 })
 
-        history_id = self._history_storage.add_history(
-            context, action_recommendation, reward=None)
-        return history_id, action_recommendation
+        history_id = self._history_storage.add_history(context, recommendations)
+        return history_id, recommendations
 
     def reward(self, history_id, rewards):
         """Reward the previous action with reward.

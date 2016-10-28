@@ -86,37 +86,36 @@ class UCB1(BaseBandit):
         history_id : int
             The history id of the action.
 
-        action : list of dictionaries
-            In each dictionary, it will contains {Action object, estimated_
-            reward, uncertainty}
+        recommendations : list of dict
+            Each dict contains
+            {Action object, estimated_reward, uncertainty}.
         """
         estimated_reward, uncertainty, score = self._ucb1_score()
         if n_actions == -1:
             n_actions = self._action_storage.count()
 
         if n_actions is None:
-            action_recommendation_id = max(score, key=score.get)
-            action_recommendation = {
-                'action': self._action_storage.get(action_recommendation_id),
-                'estimated_reward': estimated_reward[action_recommendation_id],
-                'uncertainty': uncertainty[action_recommendation_id],
-                'score': score[action_recommendation_id],
+            recommendation_id = max(score, key=score.get)
+            recommendations = {
+                'action': self._action_storage.get(recommendation_id),
+                'estimated_reward': estimated_reward[recommendation_id],
+                'uncertainty': uncertainty[recommendation_id],
+                'score': score[recommendation_id],
             }
         else:
-            action_recommendation_ids = sorted(score, key=score.get,
-                                               reverse=True)[:n_actions]
-            action_recommendation = []  # pylint: disable=redefined-variable-type
-            for action_id in action_recommendation_ids:
-                action_recommendation.append({
+            recommendation_ids = sorted(score, key=score.get,
+                                        reverse=True)[:n_actions]
+            recommendations = []  # pylint: disable=redefined-variable-type
+            for action_id in recommendation_ids:
+                recommendations.append({
                     'action': self._action_storage.get(action_id),
                     'estimated_reward': estimated_reward[action_id],
                     'uncertainty': uncertainty[action_id],
                     'score': score[action_id],
                 })
 
-        history_id = self._history_storage.add_history(
-            context, action_recommendation, reward=None)
-        return history_id, action_recommendation
+        history_id = self._history_storage.add_history(context, recommendations)
+        return history_id, recommendations
 
     def reward(self, history_id, rewards):
         """Reward the previous action with reward.

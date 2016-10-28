@@ -9,7 +9,7 @@ from striatum.storage import (
 
 
 class BaseBanditTest(object):
-    #pylint: disable=protected-access
+    # pylint: disable=protected-access
 
     def setUp(self):  # pylint: disable=invalid-name
         self.model_storage = MemoryModelStorage()
@@ -75,21 +75,26 @@ class BaseBanditTest(object):
     def test_update_reward(self):
         policy = self.policy
         context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
-        history_id, _ = policy.get_action(context, 1)
-        policy.reward(history_id, {3: 1})
+        history_id, recommendations = policy.get_action(context, 1)
+        rewards = {recommendations[0]['action'].id: 1.}
+        policy.reward(history_id, rewards)
         self.assertEqual(
-            policy._history_storage.get_history(history_id).rewards,
-            {3: 1})
+            policy._history_storage.get_history(history_id).rewards, rewards)
 
     def test_delay_reward(self):
         policy = self.policy
         context1 = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
         context2 = {1: [0, 0], 2: [3, 3], 3: [6, 6]}
-        history_id1, actions1 = policy.get_action(context1, 2)
-        self.assertEqual(len(actions1), 2)
-        history_id2, actions2 = policy.get_action(context2, 1)
-        self.assertEqual(len(actions2), 1)
-        policy.reward(history_id1, {2: 1, 3: 1})
+        history_id1, recommendations1 = policy.get_action(context1, 2)
+        self.assertEqual(len(recommendations1), 2)
+        history_id2, recommendations2 = policy.get_action(context2, 1)
+        self.assertEqual(len(recommendations2), 1)
+
+        rewards = {
+            recommendations1[0]['action'].id: 0.,
+            recommendations1[1]['action'].id: 1.,
+        }
+        policy.reward(history_id1, rewards)
         self.assertDictEqual(
             policy._history_storage.get_history(history_id1).context, context1)
         self.assertDictEqual(
@@ -97,7 +102,7 @@ class BaseBanditTest(object):
             context2)
         self.assertDictEqual(
             policy._history_storage.get_history(history_id1).rewards,
-            {2: 1, 3: 1})
+            rewards)
         self.assertIsNone(
             policy._history_storage.get_unrewarded_history(history_id2).rewards)
 
@@ -106,8 +111,9 @@ class BaseBanditTest(object):
         context1 = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
         context2 = {1: [0, 0], 2: [3, 3], 3: [6, 6]}
         history_id1, _ = policy.get_action(context1, 2)
-        history_id2, _ = policy.get_action(context2, 1)
-        policy.reward(history_id2, {3: 1})
+        history_id2, recommendations2 = policy.get_action(context2)
+        rewards = {recommendations2['action'].id: 1.}
+        policy.reward(history_id2, rewards)
         self.assertDictEqual(
             policy._history_storage.get_unrewarded_history(history_id1).context,
             context1)
@@ -116,7 +122,7 @@ class BaseBanditTest(object):
         self.assertIsNone(
             policy._history_storage.get_unrewarded_history(history_id1).rewards)
         self.assertDictEqual(
-            policy._history_storage.get_history(history_id2).rewards, {3: 1})
+            policy._history_storage.get_history(history_id2).rewards, rewards)
 
 
 class ChangeableActionSetBanditTest(object):

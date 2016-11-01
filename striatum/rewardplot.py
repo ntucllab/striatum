@@ -24,7 +24,7 @@ def calculate_cum_reward(policy):
     cum_reward = {-1: 0.0}
     cum_n_actions = {-1: 0}
     for i in range(policy.history_storage.n_histories):
-        reward = policy.history_storage.get_history(i).reward
+        reward = policy.history_storage.get_history(i).rewards
         cum_n_actions[i] = cum_n_actions[i - 1] + len(reward)
         cum_reward[i] = cum_reward[i - 1] + sum(six.viewvalues(reward))
     return cum_reward, cum_n_actions

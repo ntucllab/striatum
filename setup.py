@@ -25,11 +25,11 @@ long_description = ("See `github <https://github.com/ntucllab/striatum>`_ "
 
 setup(
     name='striatum',
-    version='0.2.1',
+    version='0.2.2',
     description='Contextual bandit in python',
     long_description=long_description,
-    author='Y.-Y. Yang, Y.-A. Lin',
-    author_email='b01902066@csie.ntu.edu.tw, r02922163@csie.ntu.edu.tw',
+    author='Y.-A. Lin, Y.-Y. Yang',
+    author_email='r02922163@csie.ntu.edu.tw, b01902066@csie.ntu.edu.tw',
     url='https://github.com/ntucllab/striatum',
     setup_requires=setup_requires,
     install_requires=install_requires,

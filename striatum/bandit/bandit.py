@@ -22,17 +22,8 @@ class BaseBandit(object):
 
     Attributes
     ----------
-    \_history_storage : HistoryStorage object
+    history_storage : HistoryStorage object
         The HistoryStorage object to store history context, actions and rewards.
-
-    \_model_storage : ModelStorage object
-        The ModelStorage object to store model parameters.
-
-    \_action_storage : ActionStorage object
-        The ActionStorage object to store actions.
-
-    \_action_ids: list of integers
-        List of all action_id's.
     """
 
     def __init__(self, history_storage, model_storage, action_storage):

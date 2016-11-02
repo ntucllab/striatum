@@ -31,11 +31,6 @@ class Exp3(BaseBandit):
         The parameter used to control the minimum chosen probability for each
         action.
 
-    Attributes
-    ----------
-    exp3\_ : 'exp3' object instance
-        The contextual bandit algorithm instances
-
     References
     ----------
     .. [1]  Peter Auer, Nicolo Cesa-Bianchi, et al. "The non-stochastic
@@ -47,8 +42,6 @@ class Exp3(BaseBandit):
         super(Exp3, self).__init__(history_storage, model_storage,
                                    action_storage)
         self.random_state = get_random_state(random_state)
-
-        self.exp3_ = None
 
         # gamma in (0,1]
         if not isinstance(gamma, float):

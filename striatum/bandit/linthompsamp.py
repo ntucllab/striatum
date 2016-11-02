@@ -44,11 +44,6 @@ class LinThompSamp(BaseBandit):
         A  parameter  used  by  the  Thompson Sampling algorithm.
         If the total trials T is known, we can choose epsilon = 1/ln(T).
 
-    Attributes
-    ----------
-    linthomp\_ : 'linthomp' object instance
-        The contextual bandit algorithm instances
-
     References
     ----------
     .. [1]  Shipra Agrawal, and Navin Goyal. "Thompson Sampling for Contextual

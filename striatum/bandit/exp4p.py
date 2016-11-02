@@ -35,11 +35,6 @@ class Exp4P(BaseBandit):
     p_min: float, 0 < p_min < 1/k
         The minimum probability to choose each action.
 
-    Attributes
-    ----------
-    exp4p\_ : 'exp4p' object instance
-        The contextual bandit algorithm instances
-
     References
     ----------
     .. [1]  Beygelzimer, Alina, et al. "Contextual bandit algorithms with
@@ -53,7 +48,6 @@ class Exp4P(BaseBandit):
         self.n_total = 0
         # number of actions (i.e. K in the paper)
         self.n_actions = len(self._actions)
-        self.exp4p_ = None
         self.max_rounds = max_rounds
 
         # delta > 0

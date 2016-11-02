@@ -23,11 +23,6 @@ class UCB1(BaseBandit):
     action_storage : ActionStorage object
         The ActionStorage object to store actions.
 
-    Attributes
-    ----------
-    ucb1\_ : 'ucb1' object instance
-        The multi-armed bandit algorithm instances.
-
     References
     ----------
     .. [1]  Peter Auer, et al. "Finite-time Analysis of the Multiarmed Bandit
@@ -37,7 +32,6 @@ class UCB1(BaseBandit):
     def __init__(self, history_storage, model_storage, action_storage):
         super(UCB1, self).__init__(history_storage, model_storage,
                                    action_storage)
-        self.ucb1_ = None
         total_action_reward = {}
         action_times = {}
         for action_id in self._action_storage.iterids():

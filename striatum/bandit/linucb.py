@@ -35,11 +35,6 @@ class LinUCB(BaseBandit):
     context_dimension: int
         The dimension of the context.
 
-    Attributes
-    ----------
-    linucb\_ : 'linucb' object instance
-        The contextual bandit algorithm instances.
-
     References
     ----------
     .. [1]  Lihong Li, et al. "A Contextual-Bandit Approach to Personalized

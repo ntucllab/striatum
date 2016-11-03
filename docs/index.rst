@@ -12,6 +12,7 @@ Contents:
   :maxdepth: 2
 
   api_reference.rst
+  auto_examples/index
 
 * :ref:`genindex`
 * :ref:`modindex`

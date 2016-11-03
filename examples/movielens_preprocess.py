@@ -1,4 +1,9 @@
+# -*- coding: utf-8 -*-
 """
+==============================
+prerpocess MovieLens dataset
+==============================
+
 In this script, we pre-process the MovieLens 10M Dataset to get the right format of contextual bandit
 algorithms. This data set is released by GroupLens at 1/2009. Please fist download the dataset from
 http://grouplens.org/datasets/movielens/, then unzipped the file 'ml-1m.zip' to the examples folder.

@@ -35,6 +35,10 @@ class LinUCB(BaseBandit):
     context_dimension: int
         The dimension of the context.
 
+    recommendation_cls : class (default: None)
+        The class used to initiate the recommendations. If None, then use
+        default Recommendation class.
+
     References
     ----------
     .. [1]  Lihong Li, et al. "A Contextual-Bandit Approach to Personalized
@@ -43,9 +47,9 @@ class LinUCB(BaseBandit):
     """
 
     def __init__(self, history_storage, model_storage, action_storage,
-                 context_dimension=128, alpha=0.5):
+                 recommendation_cls=None, context_dimension=128, alpha=0.5):
         super(LinUCB, self).__init__(history_storage, model_storage,
-                                     action_storage)
+                                     action_storage, recommendation_cls)
         self.alpha = alpha
         self.context_dimension = context_dimension
 

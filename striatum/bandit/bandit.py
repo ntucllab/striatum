@@ -4,6 +4,7 @@ Bandit interfaces
 from abc import abstractmethod
 
 from striatum import rewardplot as rplt
+from ..storage import Recommendation
 
 
 class BaseBandit(object):
@@ -20,16 +21,25 @@ class BaseBandit(object):
     action_storage : ActionStorage object
         The ActionStorage object to store actions.
 
+    recommendation_cls : class (default: None)
+        The class used to initiate the recommendations. If None, then use
+        default Recommendation class.
+
     Attributes
     ----------
     history_storage : HistoryStorage object
         The HistoryStorage object to store history context, actions and rewards.
     """
 
-    def __init__(self, history_storage, model_storage, action_storage):
+    def __init__(self, history_storage, model_storage, action_storage,
+                 recommendation_cls=None):
         self._history_storage = history_storage
         self._model_storage = model_storage
         self._action_storage = action_storage
+        if recommendation_cls is None:
+            self._recommendation_cls = Recommendation
+        else:
+            self._recommendation_cls = recommendation_cls
 
     @property
     def history_storage(self):

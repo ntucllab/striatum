@@ -20,7 +20,8 @@ class TestLinUCB(ChangeableActionSetBanditTest,
         self.alpha = 1.
         self.policy = LinUCB(
             self.history_storage, self.model_storage,
-            self.action_storage, self.context_dimension, self.alpha)
+            self.action_storage, context_dimension=self.context_dimension,
+            alpha=self.alpha)
 
     def test_initialization(self):
         super(TestLinUCB, self).test_initialization()

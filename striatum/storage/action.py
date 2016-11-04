@@ -21,6 +21,7 @@ class Action(object):
 
 
 class ActionStorage(object):
+    """The object to store the actions."""
 
     @abstractmethod
     def get(self, action_id):
@@ -106,6 +107,7 @@ class ActionStorage(object):
 
 
 class MemoryActionStorage(ActionStorage):
+    """The object to store the actions using memory."""
 
     def __init__(self):
         self._actions = {}

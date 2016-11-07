@@ -132,23 +132,23 @@ class LinUCB(BaseBandit):
 
         if n_actions is None:
             recommendation_id = max(score, key=score.get)
-            recommendations = {
-                'action': self._action_storage.get(recommendation_id),
-                'estimated_reward': estimated_reward[recommendation_id],
-                'uncertainty': uncertainty[recommendation_id],
-                'score': score[recommendation_id],
-            }
+            recommendations = self._recommendation_cls(
+                action=self._action_storage.get(recommendation_id),
+                estimated_reward=estimated_reward[recommendation_id],
+                uncertainty=uncertainty[recommendation_id],
+                score=score[recommendation_id],
+            )
         else:
             recommendation_ids = sorted(score, key=score.get,
                                         reverse=True)[:n_actions]
             recommendations = []  # pylint: disable=redefined-variable-type
             for action_id in recommendation_ids:
-                recommendations.append({
-                    'action': self._action_storage.get(action_id),
-                    'estimated_reward': estimated_reward[action_id],
-                    'uncertainty': uncertainty[action_id],
-                    'score': score[action_id],
-                })
+                recommendations.append(self._recommendation_cls(
+                    action=self._action_storage.get(action_id),
+                    estimated_reward=estimated_reward[action_id],
+                    uncertainty=uncertainty[action_id],
+                    score=score[action_id],
+                ))
 
         history_id = self._history_storage.add_history(context, recommendations)
         return history_id, recommendations

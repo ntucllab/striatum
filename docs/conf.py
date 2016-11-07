@@ -48,8 +48,16 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
+    'sphinx_gallery.gen_gallery',
     'numpydoc',
 ]
+
+sphinx_gallery_conf = {
+    # path to your examples scripts
+    'examples_dirs' : '../examples',
+    # path where to save gallery generated examples
+    'gallery_dirs'  : 'auto_examples'
+}
 
 # Napoleon settings
 napoleon_numpy_docstring = True

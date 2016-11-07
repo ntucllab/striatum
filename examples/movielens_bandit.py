@@ -1,4 +1,9 @@
+# -*- coding: utf-8 -*-
 """
+==============================
+Contextual bandit on MovieLens
+==============================
+
 The script uses real-world data to conduct contextual bandit experiments. Here we use
 MovieLens 10M Dataset, which is released by GroupLens at 1/2009. Please fist pre-process
 datasets (use "movielens_preprocess.py"), and then you can run this example.

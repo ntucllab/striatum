@@ -26,6 +26,16 @@ class BaseBanditTest(object):
         self.assertEqual(self.history_storage, policy.history_storage)
         self.assertEqual(self.action_storage, policy._action_storage)
 
+    def test_get_action_with_empty_storage(self):
+        policy = self.policy_with_empty_action_storage
+        context = {}
+        history_id, recommendations = policy.get_action(context, 1)
+        self.assertEqual(history_id, 0)
+        self.assertEqual(len(recommendations), 0)
+        self.assertDictEqual(
+            policy._history_storage.get_unrewarded_history(history_id).context,
+            context)
+
     def test_get_first_action(self):
         policy = self.policy
         context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
@@ -129,6 +139,7 @@ class BaseBanditTest(object):
 
 
 class ChangeableActionSetBanditTest(object):
+    # pylint: disable=protected-access
 
     def test_add_action_change_storage(self):
         policy = self.policy
@@ -136,3 +147,10 @@ class ChangeableActionSetBanditTest(object):
         policy.add_action(new_actions)
         self.assertEqual(set(a.id for a in self.actions + new_actions),
                          set(self.action_storage.iterids()))
+
+    def test_add_action_from_empty_change_storage(self):
+        policy = self.policy_with_empty_action_storage
+        new_actions = [Action() for i in range(2)]
+        policy.add_action(new_actions)
+        self.assertEqual(set(a.id for a in new_actions),
+                         set(policy._action_storage.iterids()))

@@ -5,7 +5,12 @@ import unittest
 import numpy as np
 
 from striatum.bandit import LinUCB
-from striatum.storage import Action
+from striatum.storage import (
+    MemoryHistoryStorage,
+    MemoryModelStorage,
+    MemoryActionStorage,
+    Action,
+)
 from .base_bandit_test import BaseBanditTest, ChangeableActionSetBanditTest
 
 
@@ -22,6 +27,9 @@ class TestLinUCB(ChangeableActionSetBanditTest,
             self.history_storage, self.model_storage,
             self.action_storage, context_dimension=self.context_dimension,
             alpha=self.alpha)
+        self.policy_with_empty_action_storage = LinUCB(
+            MemoryHistoryStorage(), MemoryModelStorage(), MemoryActionStorage(),
+            context_dimension=self.context_dimension, alpha=self.alpha)
 
     def test_initialization(self):
         super(TestLinUCB, self).test_initialization()

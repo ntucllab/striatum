@@ -1,7 +1,12 @@
 import unittest
 
 from striatum.bandit import LinThompSamp
-from striatum.storage import Action
+from striatum.storage import (
+    MemoryHistoryStorage,
+    MemoryModelStorage,
+    MemoryActionStorage,
+    Action,
+)
 from .base_bandit_test import BaseBanditTest, ChangeableActionSetBanditTest
 
 
@@ -19,6 +24,10 @@ class TestLinThompSamp(ChangeableActionSetBanditTest,
         self.policy = LinThompSamp(
             self.history_storage, self.model_storage,
             self.action_storage, context_dimension=self.context_dimension,
+            delta=self.delta, R=self.R, epsilon=self.epsilon)
+        self.policy_with_empty_action_storage = LinThompSamp(
+            MemoryHistoryStorage(), MemoryModelStorage(), MemoryActionStorage(),
+            context_dimension=self.context_dimension,
             delta=self.delta, R=self.R, epsilon=self.epsilon)
 
     def test_initialization(self):

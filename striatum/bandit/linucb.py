@@ -123,6 +123,10 @@ class LinUCB(BaseBandit):
             Each dict contains
             {Action object, estimated_reward, uncertainty}.
         """
+        if self._action_storage.count() == 0:
+            return self._get_action_with_empty_action_storage(context,
+                                                              n_actions)
+
         if not isinstance(context, dict):
             raise ValueError("LinUCB requires context dict for all actions!")
         if n_actions == -1:

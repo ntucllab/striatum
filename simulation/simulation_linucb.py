@@ -46,8 +46,8 @@ def main():
                     context_dimension=context_dimension, alpha=alpha_opt)
 
     for t in range(n_rounds):
-        history_id, action = policy.get_action(context2[t], 1)
-        action_id = action[0]['action'].id
+        history_id, recommendation = policy.get_action(context2[t])
+        action_id = recommendation.action.id
         if desired_actions2[t] != action_id:
             policy.reward(history_id, {action_id: 0})
         else:

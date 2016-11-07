@@ -23,7 +23,7 @@ def simulate_data(n_rounds, context_dimension, action_storage, algorithm=None,
     algorithm: string
         The bandit algorithm you want to use.
 
-    random_state: int, np.random.RandomState (default: None)
+    random_state: {int, np.random.RandomState} (default: None)
         If int, np.random.RandomState will used it as seed. If None, a random
         seed will be used.
 
@@ -88,8 +88,8 @@ def evaluate_policy(policy, context, desired_actions):
     n_rounds = len(desired_actions)
     cum_regret = np.empty(shape=n_rounds)
     for t in range(n_rounds):
-        history_id, action = policy.get_action(context[t], 1)
-        action_id = action[0]['action'].id
+        history_id, recommendation = policy.get_action(context[t])
+        action_id = recommendation.action.id
         if desired_actions[t] != action_id:
             policy.reward(history_id, {action_id: 0})
             if t == 0:

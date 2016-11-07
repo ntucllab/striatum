@@ -18,8 +18,8 @@ class TestLinThompSamp(ChangeableActionSetBanditTest,
         self.epsilon = 0.1
         self.policy = LinThompSamp(
             self.history_storage, self.model_storage,
-            self.action_storage, self.context_dimension,
-            self.delta, self.R, self.epsilon)
+            self.action_storage, context_dimension=self.context_dimension,
+            delta=self.delta, R=self.R, epsilon=self.epsilon)
 
     def test_initialization(self):
         super(TestLinThompSamp, self).test_initialization()
@@ -50,6 +50,6 @@ class TestLinThompSamp(ChangeableActionSetBanditTest,
         policy.reward(history_id, {3: 1})
 
         context2 = {1: [1, 1], 2: [2, 2], 3: [3, 3], 4: [4, 4], 5: [5, 5]}
-        history_id2, actions = policy.get_action(context2, 4)
-        self.assertEqual(len(actions), 4)
+        history_id2, recommendations = policy.get_action(context2, 4)
+        self.assertEqual(len(recommendations), 4)
         policy.reward(history_id2, {new_actions[0].id: 4, new_actions[1].id: 5})

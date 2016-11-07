@@ -114,7 +114,7 @@ class HistoryStorage(object):
 
 
 class MemoryHistoryStorage(HistoryStorage):
-    """HistoryStorage that store all data in memory"""
+    """HistoryStorage that store History objects in memory."""
 
     def __init__(self):
         self.histories = {}

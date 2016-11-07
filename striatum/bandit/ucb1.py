@@ -23,15 +23,20 @@ class UCB1(BaseBandit):
     action_storage : ActionStorage object
         The ActionStorage object to store actions.
 
+    recommendation_cls : class (default: None)
+        The class used to initiate the recommendations. If None, then use
+        default Recommendation class.
+
     References
     ----------
     .. [1]  Peter Auer, et al. "Finite-time Analysis of the Multiarmed Bandit
             Problem." Machine Learning, 47. 2002.
     """
 
-    def __init__(self, history_storage, model_storage, action_storage):
+    def __init__(self, history_storage, model_storage, action_storage,
+                 recommendation_cls=None):
         super(UCB1, self).__init__(history_storage, model_storage,
-                                   action_storage)
+                                   action_storage, recommendation_cls)
         total_action_reward = {}
         action_times = {}
         for action_id in self._action_storage.iterids():
@@ -90,23 +95,23 @@ class UCB1(BaseBandit):
 
         if n_actions is None:
             recommendation_id = max(score, key=score.get)
-            recommendations = {
-                'action': self._action_storage.get(recommendation_id),
-                'estimated_reward': estimated_reward[recommendation_id],
-                'uncertainty': uncertainty[recommendation_id],
-                'score': score[recommendation_id],
-            }
+            recommendations = self._recommendation_cls(
+                action=self._action_storage.get(recommendation_id),
+                estimated_reward=estimated_reward[recommendation_id],
+                uncertainty=uncertainty[recommendation_id],
+                score=score[recommendation_id],
+            )
         else:
             recommendation_ids = sorted(score, key=score.get,
                                         reverse=True)[:n_actions]
             recommendations = []  # pylint: disable=redefined-variable-type
             for action_id in recommendation_ids:
-                recommendations.append({
-                    'action': self._action_storage.get(action_id),
-                    'estimated_reward': estimated_reward[action_id],
-                    'uncertainty': uncertainty[action_id],
-                    'score': score[action_id],
-                })
+                recommendations.append(self._recommendation_cls(
+                    action=self._action_storage.get(action_id),
+                    estimated_reward=estimated_reward[action_id],
+                    uncertainty=uncertainty[action_id],
+                    score=score[action_id],
+                ))
 
         history_id = self._history_storage.add_history(context, recommendations)
         return history_id, recommendations

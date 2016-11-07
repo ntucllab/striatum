@@ -5,6 +5,7 @@ from striatum.storage import (
     MemoryModelStorage,
     MemoryActionStorage,
     Action,
+    Recommendation,
 )
 
 
@@ -31,7 +32,7 @@ class BaseBanditTest(object):
         history_id, recommendations = policy.get_action(context, 1)
         self.assertEqual(history_id, 0)
         self.assertEqual(len(recommendations), 1)
-        self.assertIn(recommendations[0]['action'].id,
+        self.assertIn(recommendations[0].action.id,
                       self.action_storage.iterids())
         self.assertEqual(
             policy._history_storage.get_unrewarded_history(history_id).context,
@@ -42,8 +43,8 @@ class BaseBanditTest(object):
         context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
         history_id, recommendations = policy.get_action(context, None)
         self.assertEqual(history_id, 0)
-        self.assertIsInstance(recommendations, dict)
-        self.assertIn(recommendations['action'].id,
+        self.assertIsInstance(recommendations, Recommendation)
+        self.assertIn(recommendations.action.id,
                       self.action_storage.iterids())
         self.assertEqual(
             policy._history_storage.get_unrewarded_history(history_id).context,
@@ -56,7 +57,7 @@ class BaseBanditTest(object):
         self.assertEqual(history_id, 0)
         self.assertEqual(len(recommendations), len(self.actions))
         for rec in recommendations:
-            self.assertIn(rec['action'].id, self.action_storage.iterids())
+            self.assertIn(rec.action.id, self.action_storage.iterids())
         self.assertEqual(
             policy._history_storage.get_unrewarded_history(history_id).context,
             context)
@@ -69,7 +70,7 @@ class BaseBanditTest(object):
         self.assertEqual(history_id, 0)
         self.assertEqual(len(recommendations), n_actions)
         for rec in recommendations:
-            self.assertIn(rec['action'].id, self.action_storage.iterids())
+            self.assertIn(rec.action.id, self.action_storage.iterids())
         self.assertEqual(
             policy._history_storage.get_unrewarded_history(history_id).context,
             context)
@@ -78,7 +79,7 @@ class BaseBanditTest(object):
         policy = self.policy
         context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}
         history_id, recommendations = policy.get_action(context, 1)
-        rewards = {recommendations[0]['action'].id: 1.}
+        rewards = {recommendations[0].action.id: 1.}
         policy.reward(history_id, rewards)
         self.assertEqual(
             policy._history_storage.get_history(history_id).rewards, rewards)
@@ -93,8 +94,8 @@ class BaseBanditTest(object):
         self.assertEqual(len(recommendations2), 1)
 
         rewards = {
-            recommendations1[0]['action'].id: 0.,
-            recommendations1[1]['action'].id: 1.,
+            recommendations1[0].action.id: 0.,
+            recommendations1[1].action.id: 1.,
         }
         policy.reward(history_id1, rewards)
         self.assertDictEqual(
@@ -114,7 +115,7 @@ class BaseBanditTest(object):
         context2 = {1: [0, 0], 2: [3, 3], 3: [6, 6]}
         history_id1, _ = policy.get_action(context1, 2)
         history_id2, recommendations2 = policy.get_action(context2)
-        rewards = {recommendations2['action'].id: 1.}
+        rewards = {recommendations2.action.id: 1.}
         policy.reward(history_id2, rewards)
         self.assertDictEqual(
             policy._history_storage.get_unrewarded_history(history_id1).context,

@@ -17,12 +17,14 @@ class TestUCB1(ChangeableActionSetBanditTest,
 
     def test_model_storage(self):
         policy = self.policy
-        history_id, action = policy.get_action(context=None, n_actions=1)
-        policy.reward(history_id, {action[0]['action'].id: 1.0})
+        history_id, recommendations = policy.get_action(context=None,
+                                                        n_actions=1)
+        policy.reward(history_id, {recommendations[0].action.id: 1.0})
         model = policy._model_storage.get_model()
-        self.assertEqual(model['total_action_reward'][action[0]['action'].id],
+        self.assertEqual(model['total_action_reward'][recommendations[0]
+                                                      .action.id],
                          2.)
-        self.assertEqual(model['action_times'][action[0]['action'].id], 2)
+        self.assertEqual(model['action_times'][recommendations[0].action.id], 2)
         self.assertEqual(model['n_rounds'], len(self.actions) + 1)
 
     def test_add_action(self):
@@ -40,8 +42,9 @@ class TestUCB1(ChangeableActionSetBanditTest,
             self.assertEqual(model['n_rounds'],
                              len(self.actions) + len(new_actions) + 1)
 
-        history_id2, actions = policy.get_action(context=None, n_actions=4)
-        self.assertEqual(len(actions), 4)
+        history_id2, recommendations = policy.get_action(context=None,
+                                                         n_actions=4)
+        self.assertEqual(len(recommendations), 4)
         policy.reward(history_id2, {new_actions[0].id: 4, new_actions[1].id: 5})
         model = policy._model_storage.get_model()
         for action in new_actions:

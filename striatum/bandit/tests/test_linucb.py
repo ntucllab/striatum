@@ -20,7 +20,8 @@ class TestLinUCB(ChangeableActionSetBanditTest,
         self.alpha = 1.
         self.policy = LinUCB(
             self.history_storage, self.model_storage,
-            self.action_storage, self.context_dimension, self.alpha)
+            self.action_storage, context_dimension=self.context_dimension,
+            alpha=self.alpha)
 
     def test_initialization(self):
         super(TestLinUCB, self).test_initialization()
@@ -51,8 +52,8 @@ class TestLinUCB(ChangeableActionSetBanditTest,
                              == np.identity(self.context_dimension)).all())
 
         context2 = {1: [1, 1], 2: [2, 2], 3: [3, 3], 4: [4, 4], 5: [5, 5]}
-        history_id2, actions = policy.get_action(context2, 4)
-        self.assertEqual(len(actions), 4)
+        history_id2, recommendations = policy.get_action(context2, 4)
+        self.assertEqual(len(recommendations), 4)
         policy.reward(history_id2, {new_actions[0].id: 4, new_actions[1].id: 5})
         model = policy._model_storage.get_model()
         for action in new_actions:

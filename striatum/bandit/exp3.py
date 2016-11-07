@@ -107,6 +107,10 @@ class Exp3(BaseBandit):
             Each dict contains
             {Action object, estimated_reward, uncertainty}.
         """
+        if self._action_storage.count() == 0:
+            return self._get_action_with_empty_action_storage(context,
+                                                              n_actions)
+
         probs = self._exp3_probs()
         if n_actions == -1:
             n_actions = self._action_storage.count()

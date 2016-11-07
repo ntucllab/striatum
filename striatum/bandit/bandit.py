@@ -69,6 +69,15 @@ class BaseBandit(object):
         """
         pass
 
+    def _get_action_with_empty_action_storage(self, context, n_actions):
+        if n_actions is None:
+            recommendations = None
+        else:
+            recommendations = []
+        history_id = self._history_storage.add_history(context,
+                                                       recommendations)
+        return history_id, recommendations
+
     @abstractmethod
     def reward(self, history_id, rewards):
         """Reward the previous action with reward.

@@ -89,6 +89,10 @@ class UCB1(BaseBandit):
             Each dict contains
             {Action object, estimated_reward, uncertainty}.
         """
+        if self._action_storage.count() == 0:
+            return self._get_action_with_empty_action_storage(context,
+                                                              n_actions)
+
         estimated_reward, uncertainty, score = self._ucb1_score()
         if n_actions == -1:
             n_actions = self._action_storage.count()

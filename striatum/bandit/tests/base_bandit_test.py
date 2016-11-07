@@ -139,6 +139,7 @@ class BaseBanditTest(object):
 
 
 class ChangeableActionSetBanditTest(object):
+    # pylint: disable=protected-access
 
     def test_add_action_change_storage(self):
         policy = self.policy
@@ -146,3 +147,10 @@ class ChangeableActionSetBanditTest(object):
         policy.add_action(new_actions)
         self.assertEqual(set(a.id for a in self.actions + new_actions),
                          set(self.action_storage.iterids()))
+
+    def test_add_action_from_empty_change_storage(self):
+        policy = self.policy_with_empty_action_storage
+        new_actions = [Action() for i in range(2)]
+        policy.add_action(new_actions)
+        self.assertEqual(set(a.id for a in new_actions),
+                         set(policy._action_storage.iterids()))

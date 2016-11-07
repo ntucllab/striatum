@@ -1,7 +1,12 @@
 import unittest
 
 from striatum.bandit import Exp3
-from striatum.storage import Action
+from striatum.storage import (
+    MemoryHistoryStorage,
+    MemoryModelStorage,
+    MemoryActionStorage,
+    Action,
+)
 from .base_bandit_test import BaseBanditTest, ChangeableActionSetBanditTest
 
 
@@ -15,6 +20,9 @@ class TestExp3(ChangeableActionSetBanditTest,
         self.gamma = 0.5
         self.policy = Exp3(self.history_storage, self.model_storage,
                            self.action_storage, gamma=self.gamma)
+        self.policy_with_empty_action_storage = Exp3(
+            MemoryHistoryStorage(), MemoryModelStorage(), MemoryActionStorage(),
+            gamma=self.gamma)
 
     def test_initialization(self):
         super(TestExp3, self).test_initialization()

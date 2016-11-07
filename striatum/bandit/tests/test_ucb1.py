@@ -1,7 +1,12 @@
 import unittest
 
 from striatum.bandit import UCB1
-from striatum.storage import Action
+from striatum.storage import (
+    MemoryHistoryStorage,
+    MemoryModelStorage,
+    MemoryActionStorage,
+    Action,
+)
 from .base_bandit_test import BaseBanditTest, ChangeableActionSetBanditTest
 
 
@@ -14,6 +19,8 @@ class TestUCB1(ChangeableActionSetBanditTest,
         super(TestUCB1, self).setUp()
         self.policy = UCB1(
             self.history_storage, self.model_storage, self.action_storage)
+        self.policy_with_empty_action_storage = UCB1(
+            MemoryHistoryStorage(), MemoryModelStorage(), MemoryActionStorage())
 
     def test_model_storage(self):
         policy = self.policy

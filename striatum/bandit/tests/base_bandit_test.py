@@ -26,6 +26,16 @@ class BaseBanditTest(object):
         self.assertEqual(self.history_storage, policy.history_storage)
         self.assertEqual(self.action_storage, policy._action_storage)
 
+    def test_get_action_with_empty_storage(self):
+        policy = self.policy_with_empty_action_storage
+        context = {}
+        history_id, recommendations = policy.get_action(context, 1)
+        self.assertEqual(history_id, 0)
+        self.assertEqual(len(recommendations), 0)
+        self.assertDictEqual(
+            policy._history_storage.get_unrewarded_history(history_id).context,
+            context)
+
     def test_get_first_action(self):
         policy = self.policy
         context = {1: [1, 1], 2: [2, 2], 3: [3, 3]}

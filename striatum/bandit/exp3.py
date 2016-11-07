@@ -27,9 +27,17 @@ class Exp3(BaseBandit):
     action_storage : ActionStorage object
         The ActionStorage object to store actions.
 
+    recommendation_cls : class (default: None)
+        The class used to initiate the recommendations. If None, then use
+        default Recommendation class.
+
     gamma: float, 0 < gamma <= 1
         The parameter used to control the minimum chosen probability for each
         action.
+
+    random_state: {int, np.random.RandomState} (default: None)
+        If int, np.random.RandomState will used it as seed. If None, a random
+        seed will be used.
 
     References
     ----------
@@ -38,9 +46,9 @@ class Exp3(BaseBandit):
     """
 
     def __init__(self, history_storage, model_storage, action_storage,
-                 gamma=0.3, random_state=None):
+                 recommendation_cls=None, gamma=0.3, random_state=None):
         super(Exp3, self).__init__(history_storage, model_storage,
-                                   action_storage)
+                                   action_storage, recommendation_cls)
         self.random_state = get_random_state(random_state)
 
         # gamma in (0,1]
@@ -110,21 +118,21 @@ class Exp3(BaseBandit):
             action_ids, size=n_actions, p=prob_array, replace=False)
 
         if n_actions is None:
-            recommendations = {
-                'action': self._action_storage.get(recommendation_ids),
-                'estimated_reward': probs[recommendation_ids],
-                'uncertainty': probs[recommendation_ids],
-                'score': probs[recommendation_ids],
-            }
+            recommendations = self._recommendation_cls(
+                action=self._action_storage.get(recommendation_ids),
+                estimated_reward=probs[recommendation_ids],
+                uncertainty=probs[recommendation_ids],
+                score=probs[recommendation_ids],
+            )
         else:
             recommendations = []  # pylint: disable=redefined-variable-type
             for action_id in recommendation_ids:
-                recommendations.append({
-                    'action': self._action_storage.get(action_id),
-                    'estimated_reward': probs[action_id],
-                    'uncertainty': probs[action_id],
-                    'score': probs[action_id],
-                })
+                recommendations.append(self._recommendation_cls(
+                    action=self._action_storage.get(action_id),
+                    estimated_reward=probs[action_id],
+                    uncertainty=probs[action_id],
+                    score=probs[action_id],
+                ))
 
         history_id = self._history_storage.add_history(context, recommendations)
         return history_id, recommendations
@@ -147,9 +155,9 @@ class Exp3(BaseBandit):
             recommendations = history.recommendations
         else:
             recommendations = [history.recommendations]
-        probs = {rec['action'].id: rec['estimated_reward']
+        probs = {rec.action.id: rec.estimated_reward
                  for rec in recommendations
-                 if rec['action'].id in rewards}
+                 if rec.action.id in rewards}
 
         # Update the model
         for action_id, reward in rewards.items():

@@ -29,15 +29,15 @@ class LinUCB(BaseBandit):
     action_storage : ActionStorage object
         The ActionStorage object to store actions.
 
-    alpha: float
-        The constant determines the width of the upper confidence bound.
+    recommendation_cls : class (default: None)
+        The class used to initiate the recommendations. If None, then use
+        default Recommendation class.
 
     context_dimension: int
         The dimension of the context.
 
-    recommendation_cls : class (default: None)
-        The class used to initiate the recommendations. If None, then use
-        default Recommendation class.
+    alpha: float
+        The constant determines the width of the upper confidence bound.
 
     References
     ----------

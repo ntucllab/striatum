@@ -23,7 +23,7 @@ def simulate_data(n_rounds, context_dimension, action_storage, algorithm=None,
     algorithm: string
         The bandit algorithm you want to use.
 
-    random_state: int, np.random.RandomState (default: None)
+    random_state: {int, np.random.RandomState} (default: None)
         If int, np.random.RandomState will used it as seed. If None, a random
         seed will be used.
 

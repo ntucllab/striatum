@@ -14,7 +14,7 @@ class TestExp3(ChangeableActionSetBanditTest,
         super(TestExp3, self).setUp()
         self.gamma = 0.5
         self.policy = Exp3(self.history_storage, self.model_storage,
-                           self.action_storage, self.gamma)
+                           self.action_storage, gamma=self.gamma)
 
     def test_initialization(self):
         super(TestExp3, self).test_initialization()
@@ -25,10 +25,10 @@ class TestExp3(ChangeableActionSetBanditTest,
         policy = self.policy
         history_id, recommendations = policy.get_action(context=None,
                                                         n_actions=1)
-        policy.reward(history_id, {recommendations[0]['action'].id: 1.0})
+        policy.reward(history_id, {recommendations[0].action.id: 1.0})
         model = policy._model_storage.get_model()
         self.assertEqual(len(model['w']), len(self.actions))
-        self.assertGreater(model['w'][recommendations[0]['action'].id], 1.)
+        self.assertGreater(model['w'][recommendations[0].action.id], 1.)
 
     def test_add_action(self):
         policy = self.policy
@@ -38,7 +38,7 @@ class TestExp3(ChangeableActionSetBanditTest,
         policy.add_action(new_actions)
         self.assertEqual(len(new_actions) + len(self.actions),
                          policy._action_storage.count())
-        policy.reward(history_id, {recommendations[0]['action'].id: 1.})
+        policy.reward(history_id, {recommendations[0].action.id: 1.})
         model = policy._model_storage.get_model()
         for action in new_actions:
             self.assertEqual(model['w'][action.id], 1.0)

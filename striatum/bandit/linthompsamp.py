@@ -31,6 +31,10 @@ class LinThompSamp(BaseBandit):
     action_storage : ActionStorage object
         The ActionStorage object to store actions.
 
+    recommendation_cls : class (default: None)
+        The class used to initiate the recommendations. If None, then use
+        default Recommendation class.
+
     delta: float, 0 < delta < 1
         With probability 1 - delta, LinThompSamp satisfies the theoretical
         regret bound.
@@ -44,6 +48,10 @@ class LinThompSamp(BaseBandit):
         A  parameter  used  by  the  Thompson Sampling algorithm.
         If the total trials T is known, we can choose epsilon = 1/ln(T).
 
+    random_state: {int, np.random.RandomState} (default: None)
+        If int, np.random.RandomState will used it as seed. If None, a random
+        seed will be used.
+
     References
     ----------
     .. [1]  Shipra Agrawal, and Navin Goyal. "Thompson Sampling for Contextual
@@ -52,10 +60,10 @@ class LinThompSamp(BaseBandit):
     """
 
     def __init__(self, history_storage, model_storage, action_storage,
-                 context_dimension=128, delta=0.5, R=0.01, epsilon=0.5,
-                 random_state=None):
+                 recommendation_cls=None, context_dimension=128, delta=0.5,
+                 R=0.01, epsilon=0.5, random_state=None):
         super(LinThompSamp, self).__init__(history_storage, model_storage,
-                                           action_storage)
+                                           action_storage, recommendation_cls)
         self.random_state = get_random_state(random_state)
         self.context_dimension = context_dimension
 
@@ -146,23 +154,23 @@ class LinThompSamp(BaseBandit):
 
         if n_actions is None:
             recommendation_id = max(score, key=score.get)
-            recommendations = {
-                'action': self._action_storage.get(recommendation_id),
-                'estimated_reward': estimated_reward[recommendation_id],
-                'uncertainty': uncertainty[recommendation_id],
-                'score': score[recommendation_id],
-            }
+            recommendations = self._recommendation_cls(
+                action=self._action_storage.get(recommendation_id),
+                estimated_reward=estimated_reward[recommendation_id],
+                uncertainty=uncertainty[recommendation_id],
+                score=score[recommendation_id],
+            )
         else:
             recommendation_ids = sorted(score, key=score.get,
                                         reverse=True)[:n_actions]
             recommendations = []  # pylint: disable=redefined-variable-type
             for action_id in recommendation_ids:
-                recommendations.append({
-                    'action': self._action_storage.get(action_id),
-                    'estimated_reward': estimated_reward[action_id],
-                    'uncertainty': uncertainty[action_id],
-                    'score': score[action_id],
-                })
+                recommendations.append(self._recommendation_cls(
+                    action=self._action_storage.get(action_id),
+                    estimated_reward=estimated_reward[action_id],
+                    uncertainty=uncertainty[action_id],
+                    score=score[action_id],
+                ))
 
         history_id = self._history_storage.add_history(context, recommendations)
         return history_id, recommendations

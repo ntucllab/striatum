@@ -137,6 +137,15 @@ class BaseBanditTest(object):
         self.assertDictEqual(
             policy._history_storage.get_history(history_id2).rewards, rewards)
 
+    def test_update_action(self):
+        action = self.actions[1]
+        action.action_type = "text"
+        action.action_text = "hello"
+        self.policy.update_action(action)
+        updated_action = self.action_storage.get(action.id)
+        self.assertEqual(updated_action.action_type, action.action_type)
+        self.assertEqual(updated_action.action_text, action.action_text)
+
 
 class ChangeableActionSetBanditTest(object):
     # pylint: disable=protected-access

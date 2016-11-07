@@ -99,9 +99,19 @@ class BaseBandit(object):
         Parameters
         ----------
         actions : iterable
-            A list of Action objects for recommendation
+            A list of Action objects for recommendation.
         """
         pass
+
+    def update_action(self, action):
+        """ Add new actions (if needed).
+
+        Parameters
+        ----------
+        action : Action
+            The Action object to update.
+        """
+        self._action_storage.update(action)
 
     def calculate_cum_reward(self):
         """Calculate cumulative reward with respect to time.

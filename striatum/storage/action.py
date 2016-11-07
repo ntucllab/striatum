@@ -16,8 +16,10 @@ class Action(object):
         The index of this action.
     """
 
-    def __init__(self, action_id=None):
+    def __init__(self, action_id=None, action_type=None, action_text=None):
         self.id = action_id
+        self.type = action_type
+        self.text = action_text
 
 
 class ActionStorage(object):

@@ -99,7 +99,28 @@ class BaseBandit(object):
         Parameters
         ----------
         actions : iterable
-            A list of Action objects for recommendation
+            A list of Action objects for recommendation.
+        """
+        pass
+
+    def update_action(self, action):
+        """Update action.
+
+        Parameters
+        ----------
+        action : Action
+            The Action object to update.
+        """
+        self._action_storage.update(action)
+
+    @abstractmethod
+    def remove_action(self, action_id):
+        """Remove action by id.
+
+        Parameters
+        ----------
+        action_id : int
+            The id of the action to remove.
         """
         pass
 

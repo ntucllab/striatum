@@ -218,3 +218,13 @@ class LinThompSamp(BaseBandit):
             A list of Action oBjects for recommendation
         """
         self._action_storage.add(actions)
+
+    def remove_action(self, action_id):
+        """Remove action by id.
+
+        Parameters
+        ----------
+        action_id : int
+            The id of the action to remove.
+        """
+        self._action_storage.remove(action_id)

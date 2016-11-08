@@ -62,14 +62,8 @@ class Exp3(BaseBandit):
             self.gamma = gamma
 
         # Initialize the model storage
-        query_vector = {}
-        w = {}
-        for action_id in self._action_storage.iterids():
-            # probability distribution for action recommendation)
-            query_vector[action_id] = 0.
-            # weight vector
-            w[action_id] = 1.
-        self._model_storage.save_model({'query_vector': query_vector, 'w': w})
+        w = {action_id: 1. for action_id in self._action_storage.iterids()}
+        self._model_storage.save_model({'w': w})
 
     def _exp3_probs(self):
         """Exp3 algorithm.
@@ -189,3 +183,16 @@ class Exp3(BaseBandit):
             w[action.id] = 1.0  # weight vector
 
         self._model_storage.save_model({'w': w})
+
+    def remove_action(self, action_id):
+        """Remove action by id.
+
+        Parameters
+        ----------
+        action_id : int
+            The id of the action to remove.
+        """
+        w = self._model_storage.get_model()['w']
+        del w[action_id]
+        self._model_storage.save_model({'w': w})
+        self._action_storage.remove(action_id)

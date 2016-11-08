@@ -164,3 +164,18 @@ class UCB1(BaseBandit):
             model['n_rounds'] += 1
 
         self._model_storage.save_model(model)
+
+    def remove_action(self, action_id):
+        """Remove action by id.
+
+        Parameters
+        ----------
+        action_id : int
+            The id of the action to remove.
+        """
+        model = self._model_storage.get_model()
+        model['n_rounds'] -= model['action_times'][action_id]
+        del model['total_action_reward'][action_id]
+        del model['action_times'][action_id]
+        self._model_storage.save_model(model)
+        self._action_storage.remove(action_id)

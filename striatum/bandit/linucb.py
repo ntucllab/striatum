@@ -210,3 +210,19 @@ class LinUCB(BaseBandit):
             self._init_action_model(model, action_id)
 
         self._model_storage.save_model(model)
+
+    def remove_action(self, action_id):
+        """Remove action by id.
+
+        Parameters
+        ----------
+        action_id : int
+            The id of the action to remove.
+        """
+        model = self._model_storage.get_model()
+        del model['A'][action_id]
+        del model['A_inv'][action_id]
+        del model['b'][action_id]
+        del model['theta'][action_id]
+        self._model_storage.save_model(model)
+        self._action_storage.remove(action_id)

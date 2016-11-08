@@ -104,7 +104,7 @@ class BaseBandit(object):
         pass
 
     def update_action(self, action):
-        """ Add new actions (if needed).
+        """Update action.
 
         Parameters
         ----------
@@ -112,6 +112,17 @@ class BaseBandit(object):
             The Action object to update.
         """
         self._action_storage.update(action)
+
+    @abstractmethod
+    def remove_action(self, action_id):
+        """Remove action by id.
+
+        Parameters
+        ----------
+        action_id : int
+            The id of the action to remove.
+        """
+        pass
 
     def calculate_cum_reward(self):
         """Calculate cumulative reward with respect to time.

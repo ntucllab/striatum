@@ -163,3 +163,29 @@ class ChangeableActionSetBanditTest(object):
         policy.add_action(new_actions)
         self.assertEqual(set(a.id for a in new_actions),
                          set(policy._action_storage.iterids()))
+
+    def test_remove_action_change_storage(self):
+        policy = self.policy
+        removed_action = self.actions[1]
+        policy.remove_action(removed_action.id)
+        new_action_ids = set(a.id for a in self.actions
+                             if a.id != removed_action.id)
+        self.assertEqual(new_action_ids,
+                         set(self.action_storage.iterids()))
+
+    def test_remove_and_get_action_and_reward(self):
+        policy = self.policy
+        removed_action = self.actions[1]
+        policy.remove_action(removed_action.id)
+
+        context = {1: [1, 1], 3: [3, 3]}
+        history_id, recommendations = policy.get_action(context, 1)
+        self.assertEqual(history_id, 0)
+        self.assertEqual(len(recommendations), 1)
+        self.assertIn(recommendations[0].action.id,
+                      self.action_storage.iterids())
+
+        rewards = {recommendations[0].action.id: 1.}
+        policy.reward(history_id, rewards)
+        self.assertEqual(
+            policy._history_storage.get_history(history_id).rewards, rewards)

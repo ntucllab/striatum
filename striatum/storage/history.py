@@ -46,6 +46,19 @@ class History(object):
                 pass
         self.rewarded_at = rewarded_at
 
+    @property
+    def rewards(self):
+        if not hasattr(self.recommendations, '__iter__'):
+            recommendations = (self.recommendations,)
+        else:
+            recommendations = self.recommendations
+        rewards = {}
+        for rec in recommendations:
+            if rec.reward is None:
+                continue
+            rewards[rec.action.id] = rec.reward
+        return rewards
+
 
 class HistoryStorage(object):
     """The object to store the history of context, recommendations and rewards.

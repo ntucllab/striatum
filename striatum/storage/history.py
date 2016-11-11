@@ -19,12 +19,11 @@ class History(object):
     """
 
     def __init__(self, history_id, context, recommendations, created_at,
-                 rewards=None, rewarded_at=None):
+                 rewarded_at=None):
         self.history_id = history_id
         self.context = context
         self.recommendations = recommendations
         self.created_at = created_at
-        self.rewards = rewards
         self.rewarded_at = rewarded_at
 
     def update_reward(self, rewards, rewarded_at):
@@ -35,7 +34,16 @@ class History(object):
         rewards : {float, dict of float, None}
         rewarded_at : {datetime, None}
         """
-        self.rewards = rewards
+        if not hasattr(self.recommendations, '__iter__'):
+            recommendations = (self.recommendations,)
+        else:
+            recommendations = self.recommendations
+
+        for rec in recommendations:
+            try:
+                rec.reward = rewards[rec.action.id]
+            except KeyError:
+                pass
         self.rewarded_at = rewarded_at
 
 

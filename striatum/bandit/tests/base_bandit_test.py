@@ -9,6 +9,18 @@ from striatum.storage import (
 )
 
 
+def recommendations_to_rewards(recommendations):
+    if not hasattr(recommendations, '__iter__'):
+        recommendations = (recommendations,)
+    rewards = {}
+    for rec in recommendations:
+        if rec.reward is None:
+            continue
+        rewards[rec.action.id] = rec.reward
+    return rewards
+
+
+
 class BaseBanditTest(object):
     # pylint: disable=protected-access
 
@@ -91,8 +103,9 @@ class BaseBanditTest(object):
         history_id, recommendations = policy.get_action(context, 1)
         rewards = {recommendations[0].action.id: 1.}
         policy.reward(history_id, rewards)
-        self.assertEqual(
-            policy._history_storage.get_history(history_id).rewards, rewards)
+        history_rewards = recommendations_to_rewards(
+            policy._history_storage.get_history(history_id).recommendations)
+        self.assertEqual(history_rewards, rewards)
 
     def test_delay_reward(self):
         policy = self.policy
@@ -113,11 +126,13 @@ class BaseBanditTest(object):
         self.assertDictEqual(
             policy._history_storage.get_unrewarded_history(history_id2).context,
             context2)
-        self.assertDictEqual(
-            policy._history_storage.get_history(history_id1).rewards,
-            rewards)
-        self.assertIsNone(
-            policy._history_storage.get_unrewarded_history(history_id2).rewards)
+        history_rewards1 = recommendations_to_rewards(
+            policy._history_storage.get_history(history_id1).recommendations)
+        self.assertDictEqual(history_rewards1, rewards)
+        history_rewards2 = recommendations_to_rewards(
+            policy._history_storage.get_unrewarded_history(history_id2)
+            .recommendations)
+        self.assertDictEqual(history_rewards2, {})
 
     def test_reward_order_descending(self):
         policy = self.policy
@@ -132,10 +147,13 @@ class BaseBanditTest(object):
             context1)
         self.assertDictEqual(
             policy._history_storage.get_history(history_id2).context, context2)
-        self.assertIsNone(
-            policy._history_storage.get_unrewarded_history(history_id1).rewards)
-        self.assertDictEqual(
-            policy._history_storage.get_history(history_id2).rewards, rewards)
+        history_rewards1 = recommendations_to_rewards(
+            policy._history_storage.get_unrewarded_history(history_id1)
+            .recommendations)
+        self.assertDictEqual(history_rewards1, {})
+        history_rewards2 = recommendations_to_rewards(
+            policy._history_storage.get_history(history_id2).recommendations)
+        self.assertDictEqual(history_rewards2, rewards)
 
     def test_update_action(self):
         action = self.actions[1]
@@ -187,5 +205,6 @@ class ChangeableActionSetBanditTest(object):
 
         rewards = {recommendations[0].action.id: 1.}
         policy.reward(history_id, rewards)
-        self.assertEqual(
-            policy._history_storage.get_history(history_id).rewards, rewards)
+        history_rewards = recommendations_to_rewards(
+            policy._history_storage.get_history(history_id).recommendations)
+        self.assertEqual(history_rewards, rewards)

@@ -25,7 +25,7 @@ long_description = ("See `github <https://github.com/ntucllab/striatum>`_ "
 
 setup(
     name='striatum',
-    version='0.2.3',
+    version='0.2.5',
     description='Contextual bandit in python',
     long_description=long_description,
     author='Y.-A. Lin, Y.-Y. Yang',

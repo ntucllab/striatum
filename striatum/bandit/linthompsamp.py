@@ -109,7 +109,7 @@ class LinThompSamp(BaseBandit):
                              * self.context_dimension
                              * np.log(1 / self.delta))
         mu_tilde = self.random_state.multivariate_normal(
-            mu_hat.flat, v**2 * np.linalg.inv(B))[..., np.newaxis]
+            mu_hat.flat, v**2 * np.linalg.pinv(B))[..., np.newaxis]
         estimated_reward_array = context_array.dot(mu_hat)
         score_array = context_array.dot(mu_tilde)
 
@@ -203,7 +203,7 @@ class LinThompSamp(BaseBandit):
             context_t = np.reshape(context[action_id], (-1, 1))
             B += context_t.dot(context_t.T)  # pylint: disable=invalid-name
             f += reward * context_t
-            mu_hat = np.linalg.inv(B).dot(f)
+            mu_hat = np.linalg.pinv(B).dot(f)
         self._model_storage.save_model({'B': B, 'mu_hat': mu_hat, 'f': f})
 
         # Update the history

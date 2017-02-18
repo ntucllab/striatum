@@ -198,12 +198,13 @@ class LinThompSamp(BaseBandit):
         model = self._model_storage.get_model()
         B = model['B']  # pylint: disable=invalid-name
         f = model['f']
-
+        
+        # this for loop can be parallelized
         for action_id, reward in six.viewitems(rewards):
             context_t = np.reshape(context[action_id], (-1, 1))
             B += context_t.dot(context_t.T)  # pylint: disable=invalid-name
             f += reward * context_t
-            mu_hat = np.linalg.pinv(B).dot(f)
+        mu_hat = np.linalg.pinv(B).dot(f)
         self._model_storage.save_model({'B': B, 'mu_hat': mu_hat, 'f': f})
 
         # Update the history

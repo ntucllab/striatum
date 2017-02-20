@@ -93,9 +93,11 @@ class LinThompSamp(BaseBandit):
 
         # model initialization
         B = np.identity(self.context_dimension)  # pylint: disable=invalid-name
+        U, D, V = np.linalg.svd(B, full_matrices=False)
         mu_hat = np.zeros(shape=(self.context_dimension, 1))
         f = np.zeros(shape=(self.context_dimension, 1))
-        self._model_storage.save_model({'B': B, 'mu_hat': mu_hat, 'f': f})
+        self._model_storage.save_model({'B': B, 'U': U, 'D':D,
+                                        'mu_hat': mu_hat, 'f': f})
 
     def _linthompsamp_score(self, context):
         """Thompson Sampling"""
@@ -104,12 +106,16 @@ class LinThompSamp(BaseBandit):
                                     for action_id in action_ids])
         model = self._model_storage.get_model()
         B = model['B']  # pylint: disable=invalid-name
+        U = model['U']
+        D = model['D']
         mu_hat = model['mu_hat']
         v = self.R * np.sqrt(24 / self.epsilon
                              * self.context_dimension
                              * np.log(1 / self.delta))
-        mu_tilde = self.random_state.multivariate_normal(
-            mu_hat.flat, v**2 * np.linalg.pinv(B))[..., np.newaxis]
+        x = np.random.normal(0.0, 1.0, size=len(D))
+        mu_tilde = (np.diag(v * np.sqrt(1.0 / D)).dot(U).dot(x) 
+                    + mu_hat.flat)[..., np.newaxis]
+
         estimated_reward_array = context_array.dot(mu_hat)
         score_array = context_array.dot(mu_tilde)
 
@@ -154,7 +160,9 @@ class LinThompSamp(BaseBandit):
         if n_actions == -1:
             n_actions = self._action_storage.count()
 
+
         estimated_reward, uncertainty, score = self._linthompsamp_score(context)
+
 
         if n_actions is None:
             recommendation_id = max(score, key=score.get)
@@ -204,8 +212,10 @@ class LinThompSamp(BaseBandit):
             context_t = np.reshape(context[action_id], (-1, 1))
             B += context_t.dot(context_t.T)  # pylint: disable=invalid-name
             f += reward * context_t
-        mu_hat = np.linalg.pinv(B).dot(f)
-        self._model_storage.save_model({'B': B, 'mu_hat': mu_hat, 'f': f})
+        U, D, V = np.linalg.svd(B, full_matrices=False)
+        mu_hat = U.dot(np.diag(1.0 / D).dot(V)).dot(f) 
+        self._model_storage.save_model({'B': B, 'U': U, 'D': D,
+                                        'mu_hat': mu_hat, 'f': f})
 
         # Update the history
         self._history_storage.add_reward(history_id, rewards)

@@ -21,6 +21,8 @@ class TestLinThompSamp(ChangeableActionSetBanditTest,
         self.delta = 0.5
         self.R = 0.5  # pylint: disable=invalid-name
         self.epsilon = 0.1
+        self.use_sparse_svd = True
+        self.sparse_svd_k = 5
         self.policy = LinThompSamp(
             self.history_storage, self.model_storage,
             self.action_storage, context_dimension=self.context_dimension,
@@ -29,6 +31,11 @@ class TestLinThompSamp(ChangeableActionSetBanditTest,
             MemoryHistoryStorage(), MemoryModelStorage(), MemoryActionStorage(),
             context_dimension=self.context_dimension,
             delta=self.delta, R=self.R, epsilon=self.epsilon)
+        self.policy_sparse = LinThompSamp(
+            self.history_storage, self.model_storage,
+            self.action_storage, context_dimension=self.context_dimension,
+            delta=self.delta, R=self.R, epsilon=self.epsilon,
+            use_sparse_svd=self.use_sparse_svd, sparse_svd_k=self.sparse_svd_k)
 
     def test_initialization(self):
         super(TestLinThompSamp, self).test_initialization()
@@ -36,6 +43,15 @@ class TestLinThompSamp(ChangeableActionSetBanditTest,
         self.assertEqual(self.context_dimension, policy.context_dimension)
         self.assertEqual(self.R, policy.R)
         self.assertEqual(self.epsilon, policy.epsilon)
+
+    def test_initialization_sparse(self):
+        super(TestLinThompSamp, self).test_initialization()
+        policy = self.policy_sparse
+        self.assertEqual(self.context_dimension, policy.context_dimension)
+        self.assertEqual(self.R, policy.R)
+        self.assertEqual(self.epsilon, policy.epsilon)
+        self.assertEqual(self.use_sparse_svd, policy.use_sparse_svd)
+        self.assertEqual(self.sparse_svd_k, policy.sparse_svd_k)
 
     def test_model_storage(self):
         policy = self.policy

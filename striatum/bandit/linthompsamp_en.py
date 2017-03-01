@@ -1,3 +1,6 @@
+"""Thompson Sampling with Linear Payoff Solumilken Version
+"""
+
 """ Thompson Sampling with Linear Payoff
 In This module contains a class that implements Thompson Sampling with Linear
 Payoff. Thompson Sampling with linear payoff is a contexutal multi-armed bandit
@@ -10,8 +13,6 @@ import six
 from six.moves import zip
 
 import numpy as np
-import scipy.sparse as sps
-import scipy.sparse.linalg as spslg
 
 from .bandit import BaseBandit
 from ..utils import get_random_state
@@ -63,13 +64,10 @@ class LinThompSamp(BaseBandit):
 
     def __init__(self, history_storage, model_storage, action_storage,
                  recommendation_cls=None, context_dimension=128, delta=0.5,
-                 R=0.01, epsilon=0.5, random_state=None,
-                 use_sparse_svd=False, sparse_svd_k=6):
+                 R=0.01, epsilon=0.5, random_state=None):
         super(LinThompSamp, self).__init__(history_storage, model_storage,
                                            action_storage, recommendation_cls)
         self.random_state = get_random_state(random_state)
-        self.use_sparse_svd = use_sparse_svd
-        self.sparse_svd_k = sparse_svd_k
         self.context_dimension = context_dimension
 
         # 0 < delta < 1
@@ -97,30 +95,27 @@ class LinThompSamp(BaseBandit):
             self.epsilon = epsilon
 
         # model initialization
-        B = np.identity(self.context_dimension)  # pylint: disable=invalid-name
-        U, D, V = np.linalg.svd(B, full_matrices=False)
+        invB = np.identity(self.context_dimension)  # pylint: disable=invalid-name
         mu_hat = np.zeros(shape=(self.context_dimension, 1))
         f = np.zeros(shape=(self.context_dimension, 1))
-        self._model_storage.save_model({'B': B, 'U': U, 'D':D,
-                                        'mu_hat': mu_hat, 'f': f})
+        self._model_storage.save_model({'invB': invB, 'mu_hat': mu_hat, 'f': f})
 
     def _linthompsamp_score(self, context):
         """Thompson Sampling"""
         action_ids = list(six.viewkeys(context))
         context_array = np.asarray([context[action_id]
                                     for action_id in action_ids])
+
+        # context_array = np.asarray(list(six.viewvalues(context)))
+
         model = self._model_storage.get_model()
-        B = model['B']  # pylint: disable=invalid-name
-        U = model['U']
-        D = model['D']
+        invB = model['invB']  # pylint: disable=invalid-name
         mu_hat = model['mu_hat']
         v = self.R * np.sqrt(24 / self.epsilon
                              * self.context_dimension
-                             * np.log(1 / self.delta))
-        x = np.random.normal(0.0, 1.0, size=len(D))
-        mu_tilde = (np.diag(v * np.sqrt(1.0 / D)).dot(U.T).T.dot(x.T)
-                    + mu_hat.flat)[..., np.newaxis]
-
+                             * np.log(1 / self.delta))                     ###############  1
+        mu_tilde = self.random_state.multivariate_normal(
+            mu_hat.flat, v**2 * invB)[..., np.newaxis]
         estimated_reward_array = context_array.dot(mu_hat)
         score_array = context_array.dot(mu_tilde)
 
@@ -207,24 +202,20 @@ class LinThompSamp(BaseBandit):
 
         # Update the model
         model = self._model_storage.get_model()
-        B = model['B']  # pylint: disable=invalid-name
-        f = model['f']
+        invB = model['invB']  # pylint: disable=invalid-name
+        f = model['f']        # pylint: disable=invalid-name
 
-        # this for loop can be parallelized
         for action_id, reward in six.viewitems(rewards):
             context_t = np.reshape(context[action_id], (-1, 1))
-            B += context_t.dot(context_t.T)  # pylint: disable=invalid-name
+            invB_context_t = invB.dot(context_t)   # pylint: disable=C0103
+            invertible_checkpoint = 1 + (context_t.T).dot(invB_context_t)[0][0]
+            if abs(invertible_checkpoint) < 1e-5:
+                invertible_checkpoint = \
+                    np.sign(invertible_checkpoint) * (abs(invertible_checkpoint) + 1e+5)
+            invB += -(invB_context_t.dot(invB_context_t.T)) / invertible_checkpoint
             f += reward * context_t
-        if self.use_sparse_svd:
-            B_sps = sps.csr_matrix(B)
-            U, D, V = spslg.svds(B_sps, k=self.sparse_svd_k)
-        else:
-            U, D, V = np.linalg.svd(B, full_matrices=False)
-        mu_hat = U.dot(np.diag(1.0 / D).dot(V))
-        mu_hat = mu_hat.dot(f)
-        self._model_storage.save_model({'B': B, 'U': U, 'D': D,
-                                        'mu_hat': mu_hat, 'f': f})
-
+        mu_hat = invB.dot(f)
+        self._model_storage.save_model({'invB': invB, 'mu_hat': mu_hat, 'f': f})
         # Update the history
         self._history_storage.add_reward(history_id, rewards)
 

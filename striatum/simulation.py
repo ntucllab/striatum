@@ -1,4 +1,6 @@
 from six.moves import range
+import random
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -6,7 +8,7 @@ from .utils import get_random_state
 
 
 def simulate_data(n_rounds, context_dimension, action_storage, algorithm=None,
-                  random_state=None):
+                  random_state=None, sparse=False):
     """Simulate dataset for the contextual bandit problem.
 
     Parameters
@@ -57,7 +59,16 @@ def simulate_data(n_rounds, context_dimension, action_storage, algorithm=None,
         for t in range(n_rounds):
             context[t] = {}
             for action_id in action_ids:
-                context[t][action_id] = random_state.uniform(0, 1,
+                if sparse:
+                    context[t][action_id] = np.zeros(context_dimension)
+                    desired = np.random.choice(
+                        context_dimension,
+                        random.randint(1, context_dimension // 10),
+                        replace=False
+                    )
+                    context[t][action_id][desired] = 1
+                else:
+                    context[t][action_id] = random_state.uniform(0, 1,
                                                              context_dimension)
             desired_actions[t] = max(
                 context[t],

@@ -14,7 +14,7 @@ from striatum import simulation
 
 def main():
     n_rounds = 1000
-    context_dimension = 5
+    context_dimension = 30
     action_storage = MemoryActionStorage()
     action_storage.add([Action(i) for i in range(5)])
     random_state = np.random.RandomState(0)
@@ -26,14 +26,14 @@ def main():
     ctr_epsilon = np.zeros(shape=len(tuning_region))
 
     context1, desired_actions1 = simulation.simulate_data(
-        n_rounds, context_dimension, action_storage, random_state=0)
+        n_rounds, context_dimension, action_storage, random_state=0, sparse=True)
 
     for param_i, param in enumerate(tuning_region):
         policy = LinThompSamp(MemoryHistoryStorage(), MemoryModelStorage(),
                               action_storage,
                               context_dimension=context_dimension,
                               delta=param, R=0.01, epsilon=0.5,
-                              random_state=random_state)
+                              random_state=random_state, use_sparse_svd=True)
         cum_regret = simulation.evaluate_policy(policy, context1,
                                                 desired_actions1)
         ctr_delta[param_i] = n_rounds - cum_regret[-1]
@@ -42,7 +42,7 @@ def main():
                               action_storage,
                               context_dimension=context_dimension,
                               delta=0.5, R=param, epsilon=0.5,
-                              random_state=random_state)
+                              random_state=random_state, use_sparse_svd=True)
 
         cum_regret = simulation.evaluate_policy(policy, context1,
                                                 desired_actions1)
@@ -52,7 +52,7 @@ def main():
                               action_storage,
                               context_dimension=context_dimension,
                               delta=0.5, R=0.01, epsilon=param,
-                              random_state=random_state)
+                              random_state=random_state, use_sparse_svd=True)
         cum_regret = simulation.evaluate_policy(policy, context1,
                                                 desired_actions1)
         ctr_epsilon[param_i] = n_rounds - cum_regret[-1]
@@ -87,7 +87,7 @@ def main():
                           action_storage,
                           context_dimension=context_dimension,
                           delta=delta_opt, R=r_opt, epsilon=epsilon_opt,
-                          random_state=random_state)
+                          random_state=random_state, use_sparse_svd=True)
 
     for t in range(n_rounds):
         history_id, recommendation = policy.get_action(context2[t])

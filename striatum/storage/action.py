@@ -115,7 +115,7 @@ class MemoryActionStorage(ActionStorage):
         self._actions = {}
         self._next_action_id = 0
 
-    def get(self, action_id):
+    def get(self, action_id, return_copy=True):
         r"""Get action by action id
 
         Parameters
@@ -123,12 +123,17 @@ class MemoryActionStorage(ActionStorage):
         action_id: int
             The id of the action.
 
+        return_copy: bool
+            Return copy of context or not.
+
         Returns
         -------
         action: Action object
             The Action object that has id action_id.
         """
-        return deepcopy(self._actions[action_id])
+        if return_copy:
+            return deepcopy(self._actions[action_id])
+        return self._actions[action_id]
 
     def add(self, actions):
         r"""Add actions

@@ -14,6 +14,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Exp3(BaseBandit):
+
     r"""Exp3 algorithm.
 
     Parameters

@@ -36,6 +36,14 @@ striatum.bandit.linucb module
     :undoc-members:
     :show-inheritance:
 
+striatum.bandit.hyblinucb module
+-----------------------------
+
+.. automodule:: striatum.bandit.hyblinucb
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 striatum.bandit.ucb1 module
 ---------------------------
 

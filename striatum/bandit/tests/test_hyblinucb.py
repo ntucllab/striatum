@@ -35,7 +35,6 @@ class TestHybLinUCB(ChangeableActionSetBanditTest, BaseBanditTest, unittest.Test
         self.assertEqual(self.shared_context_dimension, policy.shared_context_dimension)
         self.assertEqual(self.unshared_context_dimension, policy.unshared_context_dimension)
         self.assertEqual(self.alpha, policy.alpha)
-        self.assertEqual(self.n_jobs, policy.n_jobs)
 
     def test_model_storage(self):
         model = self.policy._model_storage.get_model()

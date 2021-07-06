@@ -14,12 +14,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from buzzni.ai.reco.mab.storage import history
 from buzzni.ai.reco.mab.storage import model
+from buzzni.ai.reco.mab.storage import Action
 from buzzni.ai.reco.mab.bandit import ucb1
 from buzzni.ai.reco.mab.bandit import linucb
 from buzzni.ai.reco.mab.bandit import linthompsamp
 from buzzni.ai.reco.mab.bandit import exp4p
 from buzzni.ai.reco.mab.bandit import exp3
-from buzzni.ai.reco.mab.bandit.bandit import Action
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier

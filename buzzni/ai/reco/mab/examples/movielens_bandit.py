@@ -23,6 +23,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
 
+from tqdm import tqdm
 
 def get_data():
     streaming_batch = pd.read_csv('streaming_batch.csv', sep='\t', engine='c')
@@ -64,17 +65,17 @@ def policy_generation(bandit, actionstorage):
     modelstorage = model.MemoryModelStorage()
 
     if bandit == 'Exp4P':
-        policy = exp4p.Exp4P(action_storage=actionstorage,
-                             history_storage=historystorage,
-                             model_storage=modelstorage,
-                             delta=0.5,
-                             pmin=None)
+        policy = exp4p.Exp4P(actions=actionstorage,
+                             historystorage=historystorage,
+                             modelstorage=modelstorage,
+                             delta=0.1,
+                             p_min=None)
 
     elif bandit == 'LinUCB':
         policy = linucb.LinUCB(action_storage=actionstorage,
                                history_storage=historystorage,
                                model_storage=modelstorage,
-                               alpha=0.3,
+                               alpha=0.5,
                                context_dimension=18)
 
     elif bandit == 'LinThompSamp':
@@ -82,9 +83,9 @@ def policy_generation(bandit, actionstorage):
                                            history_storage=historystorage,
                                            model_storage=modelstorage,
                                            context_dimension=18,
-                                           delta=0.61,
+                                           delta=0.5,
                                            R=0.01,
-                                           epsilon=0.71)
+                                           epsilon=0.5)
 
     elif bandit == 'UCB1':
         policy = ucb1.UCB1(action_storage=actionstorage,
@@ -95,7 +96,7 @@ def policy_generation(bandit, actionstorage):
         policy = exp3.Exp3(action_storage=actionstorage,
                            history_storage=historystorage,
                            model_storage=modelstorage,
-                           gamma=0.2)
+                           gamma=0.3)
 
     elif bandit == 'random':
         policy = 0
@@ -108,7 +109,7 @@ def policy_evaluation(policy, bandit, streaming_batch, user_feature, reward_list
     seq_error = np.zeros(shape=(times, 1))
     actions_id = [action_id for action_id in actionstorage.iterids()]
     if bandit in ['LinUCB', 'LinThompSamp', 'UCB1', 'Exp3']:
-        for t in range(times):
+        for t in tqdm(range(times), desc=f'{bandit}'):
             feature = np.array(user_feature[user_feature.index == int(streaming_batch.iloc[t, 0])])[0]
             full_context = {}
             for action_id in actions_id:
@@ -129,7 +130,7 @@ def policy_evaluation(policy, bandit, streaming_batch, user_feature, reward_list
                     seq_error[t] = seq_error[t - 1]
 
     elif bandit == 'Exp4P':
-        for t in range(times):
+        for t in tqdm(range(times), desc=f'{bandit}'):
             feature = user_feature[user_feature.index == int(streaming_batch.iloc[t, 0])]
             experts = train_expert(action_context)
             advice = {}
@@ -154,8 +155,8 @@ def policy_evaluation(policy, bandit, streaming_batch, user_feature, reward_list
                     seq_error[t] = seq_error[t - 1]
 
     elif bandit == 'random':
-        for t in range(times):
-            action = actions_id[np.random.randint(0, len(actions)-1)]
+        for t in tqdm(range(times), desc=f'{bandit}'):
+            action = np.random.choice(list(actionstorage.iterids()))
             watched_list = reward_list[reward_list['user_id'] == int(streaming_batch.iloc[t, 0])]
 
             if action not in list(watched_list['movie_id']):
@@ -182,7 +183,7 @@ def main():
     streaming_batch_small = streaming_batch.iloc[0:10000]
 
     # conduct regret analyses
-    experiment_bandit = ['LinUCB', 'LinThompSamp', 'Exp4P', 'UCB1', 'Exp3', 'random']
+    experiment_bandit = ['LinUCB', 'LinThompSamp', 'UCB1', 'Exp3', 'random']
     regret = {}
     col = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
     i = 0

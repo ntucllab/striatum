@@ -1,14 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from striatum.storage import (
+from buzzni.ai.reco.mab.storage import (
     MemoryHistoryStorage,
     MemoryModelStorage,
     MemoryActionStorage,
     Action,
 )
-from striatum.bandit import Exp3
-from striatum import simulation
+from buzzni.ai.reco.mab.bandit import Exp3
+from buzzni.ai.reco.mab import simulation
 
 
 def main():

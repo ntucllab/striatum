@@ -2,14 +2,14 @@ from six.moves import range
 import numpy as np
 import matplotlib.pyplot as plt
 
-from striatum import simulation
-from striatum.storage import (
+from buzzni.ai.reco.mab import simulation
+from buzzni.ai.reco.mab.storage import (
     MemoryHistoryStorage,
     MemoryModelStorage,
     MemoryActionStorage,
     Action,
 )
-from striatum.bandit import LinUCB
+from buzzni.ai.reco.mab.bandit import LinUCB
 
 
 def main():

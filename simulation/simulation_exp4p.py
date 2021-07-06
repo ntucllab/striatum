@@ -6,10 +6,10 @@ from sklearn.multiclass import OneVsRestClassifier
 import numpy as np
 import matplotlib.pyplot as plt
 
-from striatum.storage import MemoryHistoryStorage, MemoryModelStorage
-from striatum.bandit import Exp4P
-from striatum.bandit.bandit import Action
-from striatum import simulation
+from buzzni.ai.reco.mab.storage import MemoryHistoryStorage, MemoryModelStorage
+from buzzni.ai.reco.mab.bandit import Exp4P
+from buzzni.ai.reco.mab.storage import Action
+from buzzni.ai.reco.mab import simulation
 
 
 def train_expert(history_context, history_action):

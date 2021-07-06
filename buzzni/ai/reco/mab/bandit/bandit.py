@@ -3,8 +3,8 @@ Bandit interfaces
 """
 from abc import abstractmethod
 
-from striatum import rewardplot as rplt
-from ..storage import Recommendation
+from buzzni.ai.reco.mab import rewardplot as rplt
+from buzzni.ai.reco.mab.storage import Recommendation
 
 
 class BaseBandit(object):

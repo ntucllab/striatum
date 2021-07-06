@@ -9,7 +9,7 @@ import logging
 import six
 import numpy as np
 
-from striatum.bandit.bandit import BaseBandit
+from buzzni.ai.reco.mab.bandit.bandit import BaseBandit
 
 
 LOGGER = logging.getLogger(__name__)

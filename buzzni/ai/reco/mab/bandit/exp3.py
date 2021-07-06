@@ -7,8 +7,8 @@ import logging
 import numpy as np
 import six
 
-from .bandit import BaseBandit
-from ..utils import get_random_state
+from buzzni.ai.reco.mab.bandit.bandit import BaseBandit
+from buzzni.ai.reco.mab.utils import get_random_state
 
 LOGGER = logging.getLogger(__name__)
 

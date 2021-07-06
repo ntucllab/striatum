@@ -51,7 +51,7 @@ def feature_extraction(data):
 
     # streaming_batch: the result for testing bandit algrorithms
     top50_data = data[data['movie_id'].isin(actions)]
-    top50_data = top50_data.sort('timestamp', ascending=1)
+    top50_data = top50_data.sort_values('timestamp', ascending=1)
     streaming_batch = top50_data['user_id']
 
     # reward_list: if rating >=3, the user will watch the movie

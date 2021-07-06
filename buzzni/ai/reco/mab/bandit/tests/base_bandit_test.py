@@ -1,6 +1,6 @@
 """Unit test for LinUCB
 """
-from striatum.storage import (
+from buzzni.ai.reco.mab.storage import (
     MemoryHistoryStorage,
     MemoryModelStorage,
     MemoryActionStorage,

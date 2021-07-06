@@ -1,13 +1,13 @@
 import unittest
 
-from striatum.bandit import Exp3
-from striatum.storage import (
+from buzzni.ai.reco.mab.bandit import Exp3
+from buzzni.ai.reco.mab.storage import (
     MemoryHistoryStorage,
     MemoryModelStorage,
     MemoryActionStorage,
     Action,
 )
-from .base_bandit_test import BaseBanditTest, ChangeableActionSetBanditTest
+from buzzni.ai.reco.mab.bandit.tests.base_bandit_test import BaseBanditTest, ChangeableActionSetBanditTest
 
 
 class TestExp3(ChangeableActionSetBanditTest,

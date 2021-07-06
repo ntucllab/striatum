@@ -6,7 +6,7 @@ from __future__ import division
 import numpy as np
 import six
 
-from striatum.bandit.bandit import BaseBandit
+from buzzni.ai.reco.mab.bandit.bandit import BaseBandit
 
 
 class UCB1(BaseBandit):

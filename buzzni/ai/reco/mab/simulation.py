@@ -2,7 +2,7 @@ from six.moves import range
 import numpy as np
 import matplotlib.pyplot as plt
 
-from .utils import get_random_state
+from buzzni.ai.reco.mab.utils import get_random_state
 
 
 def simulate_data(n_rounds, context_dimension, action_storage, algorithm=None,

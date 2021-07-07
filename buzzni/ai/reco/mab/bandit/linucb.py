@@ -38,6 +38,12 @@ class LinUCB(BaseBandit):
     alpha: float
         The constant determines the width of the upper confidence bound.
 
+    gamma: float
+        forgetting factor in [0.0, 1.0]. When set to 1.0, the algorithm does not forget.
+
+    tikhonov_weight: float
+        tikhonov regularization term.
+
     References
     ----------
     .. [1]  Lihong Li, et al. "A Contextual-Bandit Approach to Personalized
@@ -46,44 +52,49 @@ class LinUCB(BaseBandit):
     """
 
     def __init__(self, history_storage, model_storage, action_storage,
-                 recommendation_cls=None, context_dimension=128, alpha=0.5):
+                 recommendation_cls=None, context_dimension=128, alpha=1.0, gamma=1.0, tikhonov_weight=1.0):
         super(LinUCB, self).__init__("LinUCB", history_storage, model_storage,
                                      action_storage, recommendation_cls)
         self.alpha = alpha
+        self.gamma = gamma
+        self.tikhonov_weight = tikhonov_weight
         self.context_dimension = context_dimension
 
+        if self.gamma < 0.0 or self.gamma > 1.0:
+            raise ValueError('Forgetting factor `gamma` must be in [0.0, 1.0].')
+
         # Initialize LinUCB Model Parameters
-        model = {
-            # dictionary - For any action a in actions,
-            # A[a] = (DaT*Da + I) the ridge reg solution
-            'A': {},
-            # dictionary - The inverse of each A[a] for action a
-            # in actions
-            'A_inv': {},
-            # dictionary - The cumulative return of action a, given the
-            # context xt.
-            'b': {},
-            # dictionary - The coefficient vector of actiona with
-            # linear model b = dot(xt, theta)
-            'theta': {},
-        }
+        model = {'A': {}, 'b': {}}
         for action_id in self._action_storage.iterids():
             self._init_action_model(model, action_id)
 
         self._model_storage.save_model(model)
 
     def _init_action_model(self, model, action_id):
-        model['A'][action_id] = np.identity(self.context_dimension)
-        model['A_inv'][action_id] = np.identity(self.context_dimension)
+        '''
+        tf-agents 구현체 따름
+        # variable 선언
+            - https://github.com/tensorflow/agents/blob/3719a8780d7054984ddc528dbfe99b51b9f10062/tf_agents/bandits/agents/linear_bandit_agent.py#L81
+        # 계산
+            - https://github.com/tensorflow/agents/blob/3719a8780d7054984ddc528dbfe99b51b9f10062/tf_agents/bandits/policies/linear_bandit_policy.py#L251
+        '''
+        model['A'][action_id] = np.zeros(shape=(self.context_dimension, self.context_dimension))
         model['b'][action_id] = np.zeros((self.context_dimension, 1))
-        model['theta'][action_id] = np.zeros((self.context_dimension, 1))
 
     def _linucb_score(self, context):
         """disjoint LINUCB algorithm.
         """
+        '''
+        tf-agents 구현체 따름
+        # 계산
+            - https://github.com/tensorflow/agents/blob/3719a8780d7054984ddc528dbfe99b51b9f10062/tf_agents/bandits/policies/linear_bandit_policy.py#L251
+        '''
+
+        # A_inv[action_id] = np.linalg.inv(A[action_id])
+        # theta[action_id] = A_inv[action_id].dot(b[action_id])
         model = self._model_storage.get_model()
-        A_inv = model['A_inv']  # pylint: disable=invalid-name
-        theta = model['theta']
+        A = model['A']  # pylint: disable=invalid-name
+        b = model['b']  # pylint: disable=invalid-name
 
         # The recommended actions should maximize the Linear UCB.
         estimated_reward = {}
@@ -91,10 +102,11 @@ class LinUCB(BaseBandit):
         score = {}
         for action_id in self._action_storage.iterids():
             action_context = np.reshape(context[action_id], (-1, 1))  # user feature: (dim, 1)
-            estimated_reward[action_id] = float(theta[action_id].T.dot(action_context))
-            uncertainty[action_id] = float(self.alpha * np.sqrt(action_context.T
-                                                                .dot(A_inv[action_id])
-                                                                .dot(action_context)))
+
+            A_inv_x = np.linalg.inv(A[action_id] + self.tikhonov_weight * np.identity(self.context_dimension)).dot(
+                action_context)  # (dim, 1)
+            estimated_reward[action_id] = float(b[action_id].T.dot(A_inv_x))
+            uncertainty[action_id] = float(self.alpha * np.sqrt(action_context.T.dot(A_inv_x)))
             score[action_id] = (estimated_reward[action_id]
                                 + uncertainty[action_id])
         return estimated_reward, uncertainty, score
@@ -172,21 +184,22 @@ class LinUCB(BaseBandit):
         # Update the model
         model = self._model_storage.get_model()
         A = model['A']  # pylint: disable=invalid-name
-        A_inv = model['A_inv']  # pylint: disable=invalid-name
         b = model['b']
-        theta = model['theta']
+
+        '''
+        tf-agents 구현체 따름
+        # gamma:
+            - https://github.com/tensorflow/agents/blob/3719a8780d7054984ddc528dbfe99b51b9f10062/tf_agents/bandits/agents/linear_bandit_agent.py#L110
+        '''
 
         for action_id, reward in six.viewitems(rewards):
             action_context = np.reshape(context[action_id], (-1, 1))
-            A[action_id] += action_context.dot(action_context.T)
-            A_inv[action_id] = np.linalg.inv(A[action_id])
-            b[action_id] += reward * action_context
-            theta[action_id] = A_inv[action_id].dot(b[action_id])
+            A[action_id] = self.gamma * A[action_id] + action_context.dot(action_context.T)
+            b[action_id] = self.gamma * b[action_id] + reward * action_context
+
         self._model_storage.save_model({
             'A': A,
-            'A_inv': A_inv,
-            'b': b,
-            'theta': theta,
+            'b': b
         })
 
         # Update the history
@@ -218,8 +231,6 @@ class LinUCB(BaseBandit):
         """
         model = self._model_storage.get_model()
         del model['A'][action_id]
-        del model['A_inv'][action_id]
         del model['b'][action_id]
-        del model['theta'][action_id]
         self._model_storage.save_model(model)
         self._action_storage.remove(action_id)

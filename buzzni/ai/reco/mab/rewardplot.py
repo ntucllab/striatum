@@ -62,8 +62,8 @@ def plot_avg_reward(policy):
     """
 
     avg_reward = calculate_avg_reward(policy)
-    plt.plot(avg_reward.keys(), avg_reward.values(), 'r-',
-             label="average reward")
+    plt.plot(avg_reward.keys(), avg_reward.values(),
+             label=policy._model_name)
     plt.xlabel('time')
     plt.ylabel('avg reward')
     plt.legend()
@@ -83,7 +83,7 @@ def plot_avg_regret(policy):
     avg_reward = calculate_avg_reward(policy)
     points = sorted(six.viewitems(avg_reward), key=lambda x: x[0])
     x, y = zip(*points)
-    plt.plot(x, [1 - reward for reward in y], 'r-', label="average regret")
+    plt.plot(x, [1 - reward for reward in y], label=policy._model_name)
     plt.xlabel('time')
     plt.ylabel('avg regret')
     plt.legend()

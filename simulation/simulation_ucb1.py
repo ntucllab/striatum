@@ -7,7 +7,7 @@ from buzzni.ai.reco.mab.storage import (
     MemoryActionStorage,
     Action,
 )
-from buzzni.ai.reco.mab.bandit import UCB1
+from buzzni.ai.reco.mab.bandit.ucb1 import UCB1
 from buzzni.ai.reco.mab import simulation
 
 

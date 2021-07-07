@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from buzzni.ai.reco.mab.storage import MemoryHistoryStorage, MemoryModelStorage
-from buzzni.ai.reco.mab.bandit import Exp4P
+from buzzni.ai.reco.mab.bandit.exp4p import Exp4P
 from buzzni.ai.reco.mab.storage import Action
 from buzzni.ai.reco.mab import simulation
 

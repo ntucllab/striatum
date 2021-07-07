@@ -7,7 +7,7 @@ from buzzni.ai.reco.mab.storage import (
     MemoryActionStorage,
     Action,
 )
-from buzzni.ai.reco.mab.bandit import Exp3
+from buzzni.ai.reco.mab.bandit.exp3 import Exp3
 from buzzni.ai.reco.mab import simulation
 
 

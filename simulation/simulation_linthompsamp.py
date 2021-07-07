@@ -8,7 +8,7 @@ from buzzni.ai.reco.mab.storage import (
     MemoryActionStorage,
     Action,
 )
-from buzzni.ai.reco.mab.bandit import LinThompSamp
+from buzzni.ai.reco.mab.bandit.linthompsamp import LinThompSamp
 from buzzni.ai.reco.mab import simulation
 
 

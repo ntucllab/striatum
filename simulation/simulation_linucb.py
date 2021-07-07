@@ -9,7 +9,7 @@ from buzzni.ai.reco.mab.storage import (
     MemoryActionStorage,
     Action,
 )
-from buzzni.ai.reco.mab.bandit import LinUCB
+from buzzni.ai.reco.mab.bandit.linucb import LinUCB
 
 
 def main():

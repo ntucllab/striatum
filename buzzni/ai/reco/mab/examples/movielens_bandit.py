@@ -110,14 +110,14 @@ def policy_evaluation(policy, bandit, streaming_batch, user_feature, reward_list
     actions_id = [action_id for action_id in actionstorage.iterids()]
     if bandit in ['LinUCB', 'LinThompSamp', 'UCB1', 'Exp3']:
         for t in tqdm(range(times), desc=f'{bandit}'):
-            feature = np.array(user_feature[user_feature.index == int(streaming_batch.iloc[t, 0])])[0]
+            feature = np.array(user_feature[user_feature.index == int(streaming_batch.iloc[t, 0])])[0] # user feature
             full_context = {}
             for action_id in actions_id:
-                full_context[action_id] = feature
+                full_context[action_id] = feature # arm마다 user feature 할당해둠.
             history_id, action = policy.get_action(full_context, 1)
             watched_list = reward_list[reward_list['user_id'] == int(streaming_batch.iloc[t, 0])]
 
-            if action[0].action.id not in list(watched_list['movie_id']):
+            if action[0].action.id not in list(watched_list['movie_id']): # 추천한 action이 정답셋에 안들어가는 경우
                 policy.reward(history_id, {action[0].action.id: 0.0})
                 if t == 0:
                     seq_error[t] = 1.0

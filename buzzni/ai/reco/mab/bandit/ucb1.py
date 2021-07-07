@@ -35,7 +35,7 @@ class UCB1(BaseBandit):
 
     def __init__(self, history_storage, model_storage, action_storage,
                  recommendation_cls=None):
-        super(UCB1, self).__init__(history_storage, model_storage,
+        super(UCB1, self).__init__("UCB1", history_storage, model_storage,
                                    action_storage, recommendation_cls)
         total_action_reward = {}
         action_times = {}

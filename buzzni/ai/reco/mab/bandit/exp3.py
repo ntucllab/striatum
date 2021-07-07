@@ -47,7 +47,7 @@ class Exp3(BaseBandit):
 
     def __init__(self, history_storage, model_storage, action_storage,
                  recommendation_cls=None, gamma=0.3, random_state=None):
-        super(Exp3, self).__init__(history_storage, model_storage,
+        super(Exp3, self).__init__("EXP3", history_storage, model_storage,
                                    action_storage, recommendation_cls)
         self.random_state = get_random_state(random_state)
 

@@ -62,7 +62,7 @@ class LinThompSamp(BaseBandit):
     def __init__(self, history_storage, model_storage, action_storage,
                  recommendation_cls=None, context_dimension=128, delta=0.5,
                  R=0.01, epsilon=0.5, random_state=None):
-        super(LinThompSamp, self).__init__(history_storage, model_storage,
+        super(LinThompSamp, self).__init__("LinThompSamp", history_storage, model_storage,
                                            action_storage, recommendation_cls)
         self.random_state = get_random_state(random_state)
         self.context_dimension = context_dimension

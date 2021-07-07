@@ -65,6 +65,70 @@ def simulate_data(n_rounds, context_dimension, action_storage, algorithm=None,
     return context, desired_actions
 
 
+def simulate_data_with_prob(n_rounds, context_dimension, action_storage, algorithm=None,
+                  random_state=None):
+    """Simulate dataset for the contextual bandit problem.
+
+    Parameters
+    ----------
+    n_rounds: int
+        Total number of (context, reward) tuples you want to generate.
+
+    context_dimension: int
+        Dimension of the context.
+
+    action_storage : ActionStorage object
+        The ActionStorage object to store actions.
+
+    algorithm: string
+        The bandit algorithm you want to use.
+
+    random_state: {int, np.random.RandomState} (default: None)
+        If int, np.random.RandomState will used it as seed. If None, a random
+        seed will be used.
+
+    Return
+    ---------
+    context: dict
+        The dict stores contexts (dict with {action_id: context_dimension
+        ndarray}) at each iteration.
+
+    desired_actions: dict
+        The action which will receive reward 1 ({history_id: action_id}).
+    """
+    random_state = get_random_state(random_state)
+
+    action_ids = list(action_storage.iterids())
+    action_probs = np.random.uniform(low=0.0, high=1.0, size=len(action_ids))
+    print('prob', action_probs)
+    context = {}
+    desired_actions = {}
+
+    if algorithm == 'Exp4P':
+        for t in range(n_rounds):
+            context[t] = random_state.uniform(0, 1, context_dimension)
+            context_sum = context[t].sum()
+            for action_i, action_id in enumerate(action_ids):
+                if (action_i * context_dimension / action_storage.count()
+                        < context_sum
+                        <= ((action_i + 1) * context_dimension
+                            / action_storage.count())):
+                    desired_actions[t] = action_id
+
+    else:
+        for t in range(n_rounds):
+            context[t] = {}
+            for action_id in action_ids:
+                context[t][action_id] = random_state.uniform(0, 1,
+                                                             context_dimension)
+            desired_actions[t] = np.random.choice(action_ids,
+                                                  p=action_probs / action_probs.sum())
+
+    return context, desired_actions
+
+
+
+
 def evaluate_policy(policy, context, desired_actions):
     """Evaluate a given policy based on a (context, desired_actions) dataset.
 
